@@ -1,0 +1,264 @@
+<div class="modal-backdrop" id="car-detail-modal">
+    <div class="modal-card modal-card-lg">
+        <div class="modal-header">
+            <div>
+                <h3 class="modal-title" id="detail-car-title">Car Specifications</h3>
+                <div id="detail-car-rating" style="font-size:0.85rem; margin-top:2px;"></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px;">
+                <div id="detail-car-price" style="font-size:1.4rem; font-weight:800;"></div>
+                <button class="modal-close" onclick="Customer.closeDetailModal()">&times;</button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="detail-modal-grid">
+                <div>
+                    <img src="" id="detail-main-img" class="gallery-main-img" alt="Main Car Photo" />
+                    <div class="gallery-thumbs" id="detail-thumbs-container"></div>
+                    <h4 style="font-size:0.95rem; font-weight:700; margin:20px 0 8px;">Vehicle Overview</h4>
+                    <p id="detail-description" style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+                    </p>
+                    <h4 style="font-size:0.95rem; font-weight:700; margin:20px 0 8px;">Included Amenities & Features
+                    </h4>
+                    <div class="features-pills" id="detail-features-container"></div>
+                </div>
+                <div>
+                    <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:10px;">Technical Specifications</h4>
+                    <table class="specs-table" id="detail-specs-table"></table>
+                    <h4 style="font-size:0.95rem; font-weight:700; margin:20px 0 8px;">Verified Customer Reviews</h4>
+                    <div id="detail-reviews-container" style="max-height:220px; overflow-y:auto; padding-right:6px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Customer.closeDetailModal()">Close</button>
+            <button class="btn btn-primary" id="detail-book-btn">
+                <i class="fa-solid fa-calendar-check"></i> Book This Vehicle
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Multi-Step Booking Wizard Modal -->
+<div class="modal-backdrop" id="booking-wizard-modal">
+    <div class="modal-card" style="max-width:700px;">
+        <div class="modal-header">
+            <div>
+                <h3 class="modal-title">Rental Reservation</h3>
+                <div id="wizard-car-header" style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
+                </div>
+            </div>
+            <button class="modal-close" onclick="BookingWizard.closeWizardModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="wizard-stepper">
+                <div class="wizard-step active">
+                    <div class="wizard-step-circle">1</div><span class="wizard-step-label">Protection</span>
+                </div>
+                <div class="wizard-step">
+                    <div class="wizard-step-circle">2</div><span class="wizard-step-label">Driver Info</span>
+                </div>
+                <div class="wizard-step">
+                    <div class="wizard-step-circle">3</div><span class="wizard-step-label">Review & Code</span>
+                </div>
+                <div class="wizard-step">
+                    <div class="wizard-step-circle">4</div><span class="wizard-step-label">Payment</span>
+                </div>
+                <div class="wizard-step">
+                    <div class="wizard-step-circle">5</div><span class="wizard-step-label">Confirmed</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: Protection & Addons -->
+            <div class="wizard-panel" data-step="1">
+                <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px;">Select Protection Plan</h4>
+                <div class="selectable-cards" style="margin-bottom:20px;">
+                    <div class="selectable-card insurance-card" data-plan="NONE"
+                        onclick="BookingWizard.selectInsurance('NONE')">
+                        <div class="selectable-info"><i class="fa-solid fa-shield selectable-icon"></i>
+                            <div>
+                                <div class="selectable-title">Basic Third-Party (Included)</div>
+                                <div class="selectable-desc">Standard minimum statutory coverage.</div>
+                            </div>
+                        </div>
+                        <div class="selectable-price">$0.00</div>
+                    </div>
+                    <div class="selectable-card insurance-card selected" data-plan="STANDARD"
+                        onclick="BookingWizard.selectInsurance('STANDARD')">
+                        <div class="selectable-info"><i class="fa-solid fa-shield-halved selectable-icon"></i>
+                            <div>
+                                <div class="selectable-title">Standard Protection Waiver (Recommended)</div>
+                                <div class="selectable-desc">Collision & vandalism waiver with $500 deductible.</div>
+                            </div>
+                        </div>
+                        <div class="selectable-price">+$15.00/day</div>
+                    </div>
+                    <div class="selectable-card insurance-card" data-plan="PREMIUM"
+                        onclick="BookingWizard.selectInsurance('PREMIUM')">
+                        <div class="selectable-info"><i class="fa-solid fa-shield-heart selectable-icon"></i>
+                            <div>
+                                <div class="selectable-title">Full Comprehensive Zero-Deductible</div>
+                                <div class="selectable-desc">Complete zero-liability peace of mind.</div>
+                            </div>
+                        </div>
+                        <div class="selectable-price">+$28.00/day</div>
+                    </div>
+                </div>
+
+                <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px;">Optional Equipment & Services</h4>
+                <div class="selectable-cards">
+                    <div class="selectable-card addon-card" data-addon="gps" onclick="BookingWizard.toggleAddon('gps')">
+                        <div class="selectable-info"><i class="fa-solid fa-location-crosshairs selectable-icon"></i>
+                            <div>
+                                <div class="selectable-title">GPS Navigation System</div>
+                                <div class="selectable-desc">Offline maps with real-time guidance.</div>
+                            </div>
+                        </div>
+                        <div class="selectable-price">+$8.00/day</div>
+                    </div>
+                    <div class="selectable-card addon-card" data-addon="child_seat"
+                        onclick="BookingWizard.toggleAddon('child_seat')">
+                        <div class="selectable-info"><i class="fa-solid fa-baby selectable-icon"></i>
+                            <div>
+                                <div class="selectable-title">Child Safety Seat</div>
+                                <div class="selectable-desc">Pre-installed for children up to 45 lbs.</div>
+                            </div>
+                        </div>
+                        <div class="selectable-price">+$10.00/day</div>
+                    </div>
+                    <div class="selectable-card addon-card" data-addon="extra_driver"
+                        onclick="BookingWizard.toggleAddon('extra_driver')">
+                        <div class="selectable-info"><i class="fa-solid fa-user-plus selectable-icon"></i>
+                            <div>
+                                <div class="selectable-title">Additional Registered Driver</div>
+                                <div class="selectable-desc">Authorize secondary driver on rental agreement.</div>
+                            </div>
+                        </div>
+                        <div class="selectable-price">+$12.00/day</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Driver Info -->
+            <div class="wizard-panel hidden" data-step="2">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div class="form-group"><label class="form-label">Primary Driver Full Name *</label><input
+                            type="text" id="b-driver-name" class="form-control" required /></div>
+                    <div class="form-group"><label class="form-label">Driver Phone Number *</label><input type="text"
+                            id="b-driver-phone" class="form-control" required /></div>
+                    <div class="form-group"><label class="form-label">Email Address</label><input type="email"
+                            id="b-driver-email" class="form-control" /></div>
+                    <div class="form-group"><label class="form-label">Driver's License Number</label><input type="text"
+                            id="b-driver-license" class="form-control" placeholder="e.g. DL-NY-9847291" /></div>
+                </div>
+                <div class="form-group"><label class="form-label">Special Requests / Pickup Notes
+                        (Optional)</label><textarea id="b-special-requests" class="form-control" rows="3"
+                        placeholder="e.g. Flight arrival time..."></textarea></div>
+            </div>
+
+            <!-- STEP 3: Review & Coupon -->
+            <div class="wizard-panel hidden" data-step="3">
+                <div class="form-group">
+                    <label class="form-label">Have a Promotional Coupon Code?</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="b-coupon-input" class="form-control"
+                            placeholder="e.g. DRIVE20, WELCOME10" style="text-transform:uppercase;" />
+                        <button type="button" class="btn btn-outline"
+                            onclick="BookingWizard.applyCoupon()">Apply</button>
+                    </div>
+                    <span style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Tip: Try code
+                        <code>DRIVE20</code> for 20% discount!</span>
+                </div>
+                <div class="quote-summary-card" id="wizard-quote-summary"></div>
+            </div>
+
+            <!-- STEP 4: Payment Method -->
+            <div class="wizard-panel hidden" data-step="4">
+                <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px;">Choose Payment Method</h4>
+                <div class="selectable-cards">
+                    <div class="selectable-card payment-card selected" data-provider="SANDBOX"
+                        onclick="BookingWizard.selectPaymentProvider('SANDBOX')">
+                        <div class="selectable-info"><i class="fa-solid fa-vial-circle-check selectable-icon"
+                                style="color:var(--success);"></i>
+                            <div>
+                                <div class="selectable-title">Instant Test Sandbox Checkout (Recommended for Demo)</div>
+                                <div class="selectable-desc">Instant 1-click test checkout without requiring live
+                                    merchant keys.</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-success">Instant</span>
+                    </div>
+                    <div class="selectable-card payment-card" data-provider="RAZORPAY"
+                        onclick="BookingWizard.selectPaymentProvider('RAZORPAY')">
+                        <div class="selectable-info"><i class="fa-solid fa-credit-card selectable-icon"
+                                style="color:var(--info);"></i>
+                            <div>
+                                <div class="selectable-title">Razorpay Gateway (Cards, UPI, Netbanking)</div>
+                                <div class="selectable-desc">Secure checkout via Razorpay modal with signature
+                                    verification.</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-info">Cards & UPI</span>
+                    </div>
+                    <div class="selectable-card payment-card" data-provider="STRIPE"
+                        onclick="BookingWizard.selectPaymentProvider('STRIPE')">
+                        <div class="selectable-info"><i class="fa-brands fa-stripe selectable-icon"
+                                style="color:var(--primary);"></i>
+                            <div>
+                                <div class="selectable-title">Stripe Payment (Global Cards & Apple Pay)</div>
+                                <div class="selectable-desc">Direct credit card payment intent via Stripe API.</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-primary">Stripe</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: Confirmation Voucher -->
+            <div class="wizard-panel hidden" data-step="5">
+                <div class="voucher-card" id="printable-voucher">
+                    <div class="voucher-header">
+                        <div>
+                            <h3 style="font-size:1.3rem; font-weight:800; color:#0b0c0e; margin-bottom:2px;">DRIVELUXE
+                                RENTAL VOUCHER</h3>
+                            <p style="font-size:0.8rem; color:#64748b;">Confirmed & Paid Digital Pass</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="voucher-code" id="v-booking-code">CR-2026-XXXX</div><span
+                                class="badge badge-success"
+                                style="color:#10b981; background:#ecfdf5; border:1px solid #a7f3d0;">PAID &
+                                CONFIRMED</span>
+                        </div>
+                    </div>
+                    <div class="voucher-grid">
+                        <div class="voucher-item"><label>Vehicle</label><span id="v-car-name"></span></div>
+                        <div class="voucher-item"><label>Primary Driver</label><span id="v-driver-name"></span></div>
+                        <div class="voucher-item"><label>Pickup Hub</label><span id="v-pickup-loc"></span></div>
+                        <div class="voucher-item"><label>Return Hub</label><span id="v-return-loc"></span></div>
+                        <div class="voucher-item"><label>Rental Start</label><span id="v-start-date"></span></div>
+                        <div class="voucher-item"><label>Rental End</label><span id="v-end-date"></span></div>
+                        <div class="voucher-item"><label>Total Paid</label><span id="v-total-amount"
+                                style="color:var(--primary); font-size:1.1rem;"></span></div>
+                        <div class="voucher-item"><label>Barcode Ref</label><span
+                                style="font-family:monospace; letter-spacing:2px;">||| | |||| ||| ||||</span></div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:center; gap:12px; margin-top:20px;">
+                    <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Print
+                        Voucher</button>
+                    <button class="btn btn-primary"
+                        onclick="BookingWizard.closeWizardModal(); CustomerPortal.openPortalModal('bookings');"><i
+                            class="fa-solid fa-user"></i> View in My Reservations</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer" id="wizard-modal-footer">
+            <button class="btn btn-secondary" onclick="BookingWizard.prevStep()" id="wizard-prev-btn">Back</button>
+            <button class="btn btn-primary" onclick="BookingWizard.nextStep()" id="wizard-next-btn">Continue</button>
+            <button class="btn btn-success hidden" id="pay-now-btn" onclick="BookingWizard.processFinalPayment()"><i
+                    class="fa-solid fa-lock"></i> Pay & Confirm Reservation</button>
+        </div>
+    </div>
+</div>

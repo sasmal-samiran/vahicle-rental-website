@@ -1,0 +1,184 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DriveLuxe{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/customer.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% block navbar %}
+    <!-- Header Navigation Bar -->
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="/" class="brand-logo">
+                <i class="fa-solid fa-car-tunnel"></i>
+                <span>Drive<span class="text-gradient">Luxe</span></span>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="/" class="active">Home</a></li>
+                <li><a href="/fleet/">Fleet Catalog</a></li>
+                <li><a href="/#features-section">Why Choose Us</a></li>
+                <li><a href="/#how-it-works-section">How It Works</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <div class="nav-user-dropdown hidden" id="nav-notif-container" style="display: none;">
+                    <button class="notif-btn" id="notif-btn" title="Notifications">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="notif-badge hidden" id="notif-badge">0</span>
+                    </button>
+                    <div class="dropdown-menu notif-dropdown" id="notif-dropdown-menu">
+                        <div class="notif-header">
+                            <strong style="font-size:0.9rem;">Notifications</strong>
+                            <button class="btn btn-sm btn-outline" style="padding:2px 8px; font-size:0.75rem;" onclick="Notifications.markAllRead()">Mark all read</button>
+                        </div>
+                        <div class="notif-list" id="notif-list-container"></div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-sm" id="nav-auth-btn" onclick="Auth.openAuthModal('otp')">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In / Register
+                </button>
+
+                <div class="nav-user-dropdown hidden" id="nav-user-menu" style="display: none;">
+                    <div class="user-avatar-btn" id="nav-user-btn">
+                        <div class="user-avatar-circle" id="nav-user-avatar">U</div>
+                        <span id="nav-user-name" style="font-size:0.9rem; font-weight:600;">User</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.7rem; color:var(--text-muted);"></i>
+                    </div>
+                    <div class="dropdown-menu" id="nav-user-dropdown-menu">
+                        <div class="dropdown-item" onclick="CustomerPortal.openPortalModal('bookings')">
+                            <i class="fa-solid fa-calendar-check" style="color:var(--primary);"></i> My Reservations
+                        </div>
+                        <div class="dropdown-item" onclick="CustomerPortal.openPortalModal('profile')">
+                            <i class="fa-solid fa-user-gear" style="color:var(--info);"></i> Profile & License
+                        </div>
+                        <a href="/admin-portal/" class="dropdown-item hidden" id="nav-admin-link">
+                            <i class="fa-solid fa-gauge-high" style="color:var(--warning);"></i> Admin Dashboard
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" onclick="Auth.logout()" style="color:var(--danger);">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Hamburger Toggle -->
+                <button class="nav-mobile-toggle" id="mobile-menu-toggle" aria-label="Toggle navigation menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    {% endblock %}
+
+    {% block search_widget %}
+    <!-- Dedicated Search Banner -->
+    <!-- Search Bar Form -->
+            <div class="search-widget-card" style="box-shadow: var(--shadow-primary);">
+                <form id="search-form">
+                    <div class="search-widget-grid">
+                        <div class="search-field">
+                            <label><i class="fa-solid fa-location-dot"></i> Pickup Location</label>
+                            <select id="search-pickup-location" class="form-control">
+                                <option value="">Loading locations...</option>
+                            </select>
+                        </div>
+
+                        <div class="search-field hidden" id="dropoff-location-container">
+                            <label><i class="fa-solid fa-location-arrow"></i> Return Location</label>
+                            <select id="search-dropoff-location" class="form-control">
+                                <option value="">Same as Pickup</option>
+                            </select>
+                        </div>
+
+                        <div class="search-field">
+                            <label><i class="fa-regular fa-calendar"></i> Pickup Date & Time</label>
+                            <input type="datetime-local" id="search-pickup-date" class="form-control" required />
+                        </div>
+
+                        <div class="search-field">
+                            <label><i class="fa-regular fa-calendar-check"></i> Return Date & Time</label>
+                            <input type="datetime-local" id="search-return-date" class="form-control" required />
+                        </div>
+
+                        <div>
+                            <button type="submit" class="btn btn-primary" style="width:100%; height:48px;">
+                                <i class="fa-solid fa-magnifying-glass"></i> Update Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <label class="search-checkbox-row">
+                        <input type="checkbox" id="same-location-checkbox" checked />
+                        <span>Return vehicle to the same pickup location</span>
+                    </label>
+                </form>
+            </div>
+    {% endblock %}
+
+    {% block content %}
+    {% include 'components/index.html' %}
+    {% endblock %}
+
+    <!-- ==================== MODALS ==================== -->
+    {% include 'components/register.html' %}
+    {% include 'components/car_modals.html' %}
+
+    {% block footer %}
+    <!-- Footer -->
+    <footer style="background:#f1f5f9; border-top:1px solid var(--border-color); padding:60px 0 170px;">
+        <div class="container">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:40px; margin-bottom:40px;">
+                <div>
+                    <a href="/" class="brand-logo" style="margin-bottom:14px;">
+                        <i class="fa-solid fa-car-tunnel"></i>
+                        <span>Drive<span class="text-gradient">Luxe</span></span>
+                    </a>
+                    <p style="color:var(--text-secondary); font-size:0.85rem; line-height:1.6;">
+                        Next-generation online vahicles rental platform connecting customers with vehicles through easy booking, real-time availability, secure payments, and efficient fleet management.
+                    </p>
+                </div>
+                <div>
+                    <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:16px;">Quick Links</h4>
+                    <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:var(--text-secondary);">
+                        <li><a href="/fleet/">Fleet Catalog & Search</a></li>
+                        <li><a href="#features-section">Why Choose DriveLuxe</a></li>
+                        <li><a href="#how-it-works-section">How It Works</a></li>
+                        <li><a href="/admin-portal/">Admin Operational Dashboard</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:16px;">Hub Locations</h4>
+                    <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:var(--text-secondary);">
+                        <li>New York (Manhattan & JFK Airport)</li>
+                        <li>Los Angeles (LAX Airport Hub)</li>
+                        <li>San Francisco (Union Square)</li>
+                        <li>Miami (South Beach)</li>
+                        <li>Chicago (O'Hare Airport)</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="border-top:1px solid var(--border-color); padding-top:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:0.8rem; color:var(--text-muted);">
+                <div>&copy; 2026 DriveLuxe Technologies Inc. All rights reserved.</div>
+                <div>Demo Accounts: Customer (<code>+15551234567</code> / <code>user123</code>) • Admin (<code>admin</code> / <code>admin123</code>)</div>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script type="module" src="{% static 'js/scripts.js' %}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

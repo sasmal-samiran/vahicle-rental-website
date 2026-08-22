@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}DriveLuxe | Fleet{% endblock %}
+
+{% block content %}
+    <!-- Dedicated Search Banner -->
+    <section class="fleet-search-banner" style="padding: 100px 0 0; background: linear-gradient(180deg, #edf2f7 0%, #f7f9fa 100%); border-bottom: 1px solid var(--border-color);">
+        <div class="container">
+            <div style="margin-bottom: 24px;">
+                <span class="section-tag"><i class="fa-solid fa-bolt"></i> Real-Time Vehicle Search</span>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">Filter by location, pickup and return dates, vehicle class, and budget.</p>
+            </div>
+        </div>
+    </section>
+    <!-- Main Catalog & Filter Area -->
+    <main class="catalog-section" style="padding-top: 25px;">
+        <div class="container">
+            <!-- Category Chips Tabs -->
+            <div class="category-tabs-container" id="category-tabs-container"></div>
+
+            <div class="catalog-layout">
+                <!-- Sidebar Filters -->
+                <aside class="filter-card">
+                    <div class="filter-header">
+                        <h3 class="filter-title"><i class="fa-solid fa-sliders"></i> Filter Fleet</h3>
+                        <button class="btn btn-sm btn-outline" style="padding:4px 10px; font-size:0.75rem;" onclick="Customer.resetFilters()">Reset All</button>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-group-title">Search Model or Brand</label>
+                        <input type="text" id="fleet-search-input" class="form-control" placeholder="e.g. Tesla, BMW, Porsche..." />
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-group-title">Max Daily Rate ($)</label>
+                        <input type="range" id="price-range-slider" min="40" max="350" step="10" value="350" style="width:100%; accent-color:var(--primary);" />
+                        <div class="price-slider-values">
+                            <span>$40</span>
+                            <strong id="price-max-display" style="color:var(--primary);">$350</strong>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-group-title">Transmission</label>
+                        <div class="filter-chips">
+                            <div class="filter-chip" data-group="transmission" data-value="AUTOMATIC">Automatic</div>
+                            <div class="filter-chip" data-group="transmission" data-value="MANUAL">Manual</div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-group-title">Powertrain / Fuel</label>
+                        <div class="filter-chips">
+                            <div class="filter-chip" data-group="fuel_type" data-value="ELECTRIC">Electric</div>
+                            <div class="filter-chip" data-group="fuel_type" data-value="HYBRID">Hybrid</div>
+                            <div class="filter-chip" data-group="fuel_type" data-value="PETROL">Petrol</div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-group-title">Passenger Capacity</label>
+                        <div class="filter-chips">
+                            <div class="filter-chip" data-group="seats" data-value="2">2+</div>
+                            <div class="filter-chip" data-group="seats" data-value="4">4+</div>
+                            <div class="filter-chip" data-group="seats" data-value="5">5+</div>
+                            <div class="filter-chip" data-group="seats" data-value="7">7+</div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Results & Car Cards Grid -->
+                <div>
+                    <div class="catalog-toolbar">
+                        <div class="results-count" id="results-count-display">Loading fleet...</div>
+                        <div class="toolbar-actions">
+                            <label style="font-size:0.85rem; color:var(--text-secondary);">Sort By:</label>
+                            <select id="fleet-sort-select" class="form-control" style="width:auto; padding:6px 12px; font-size:0.85rem;">
+                                <option value="">Recommended</option>
+                                <option value="price_per_day">Price: Low to High</option>
+                                <option value="-price_per_day">Price: High to Low</option>
+                                <option value="-year">Newest Model Year</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="cars-grid" id="cars-grid-container"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- 4. Customer Portal Modal -->
+    <div class="modal-backdrop" id="customer-portal-modal">
+        <div class="modal-card modal-card-lg">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fa-solid fa-user-circle text-gradient"></i> Customer Portal</h3>
+                <button class="modal-close" onclick="CustomerPortal.closePortalModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; gap:10px; margin-bottom:24px; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
+                    <button class="btn btn-sm portal-tab-btn active" data-tab="bookings"><i class="fa-solid fa-calendar-check"></i> My Reservations</button>
+                    <button class="btn btn-sm portal-tab-btn" data-tab="profile"><i class="fa-solid fa-id-card"></i> Profile & Driver License</button>
+                </div>
+                <div class="portal-panel" data-tab="bookings"><div id="portal-bookings-list"></div></div>
+                <div class="portal-panel hidden" data-tab="profile">
+                    <div style="max-width:540px; margin:0 auto;">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                            <div class="form-group"><label class="form-label">First Name</label><input type="text" id="prof-first-name" class="form-control" /></div>
+                            <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="prof-last-name" class="form-control" /></div>
+                        </div>
+                        <div class="form-group"><label class="form-label">Email Address</label><input type="email" id="prof-email" class="form-control" /></div>
+                        <div class="form-group"><label class="form-label">Phone Number</label><input type="text" id="prof-phone" class="form-control" readonly style="opacity:0.7;" /></div>
+                        <div class="form-group"><label class="form-label">Driver's License Number</label><input type="text" id="prof-license" class="form-control" placeholder="DL-XX-XXXXXXX" /></div>
+                        <div class="form-group"><label class="form-label">Residential Address</label><input type="text" id="prof-address" class="form-control" /></div>
+                        <button type="button" class="btn btn-primary" onclick="CustomerPortal.saveProfile()">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Leave Review Modal -->
+    <div class="modal-backdrop" id="review-modal">
+        <div class="modal-card" style="max-width:480px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Review Your Rental Experience</h3>
+                <button class="modal-close" onclick="CustomerPortal.closeReviewModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="rev-booking-code" />
+                <div class="form-group" style="text-align:center; margin-bottom:20px;">
+                    <label class="form-label">Overall Rating</label>
+                    <div style="display:flex; justify-content:center; gap:12px; font-size:1.8rem; color:var(--warning); margin-top:8px;">
+                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="5" checked style="display:none;" />★ 5</label>
+                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="4" style="display:none;" />★ 4</label>
+                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="3" style="display:none;" />★ 3</label>
+                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="2" style="display:none;" />★ 2</label>
+                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="1" style="display:none;" />★ 1</label>
+                    </div>
+                </div>
+                <div class="form-group"><label class="form-label">Review Headline</label><input type="text" id="rev-title" class="form-control" placeholder="e.g. Unforgettable trip!" /></div>
+                <div class="form-group"><label class="form-label">Detailed Feedback</label><textarea id="rev-comment" class="form-control" rows="4" placeholder="How was the vehicle condition, pickup process, and performance?"></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="CustomerPortal.closeReviewModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="CustomerPortal.submitReview()">Submit Review</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}

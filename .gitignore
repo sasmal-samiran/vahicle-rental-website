@@ -1,0 +1,14 @@
+# python
+__pycache__/
+.pyc
+
+# environments
+venv/
+.env
+
+# database
+db.sqlite3
+.db
+
+# extra 
+tests/
