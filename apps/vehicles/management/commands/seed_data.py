@@ -1,9 +1,13 @@
+import os
 import datetime
 from decimal import Decimal
+from django.core.files import File
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from apps.vehicles.models import Category, Location, Car, CarImage
+from apps.vehicles.services import download_and_save_car_image, download_and_save_gallery_image
 from apps.bookings.models import Booking, BookingAddon, Coupon
 from apps.payments.models import Payment
 from apps.reviews.models import Review
@@ -113,7 +117,13 @@ class Command(BaseCommand):
                 'transmission': 'AUTOMATIC', 'fuel_type': 'ELECTRIC', 'seats': 5, 'doors': 4,
                 'luggage_capacity': 4, 'mileage_limit': 'Unlimited', 'engine_capacity': 'Tri-Motor All-Wheel Drive',
                 'power_hp': 1020, 'price_per_day': Decimal('189.00'), 'security_deposit': Decimal('300.00'),
+                'main_image_path': 'media/cars/tesla_model_s.jpg',  # Provide local file path / image location here
                 'main_image_url': 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=1200&q=80',
+                'gallery_image_paths': [
+                    {'path': 'media/car_gallery/tesla_front.jpg', 'view_type': 'FRONT'},
+                    {'path': 'media/car_gallery/tesla_side.jpg', 'view_type': 'SIDE'},
+                    {'path': 'media/car_gallery/tesla_interior.jpg', 'view_type': 'INTERIOR'},
+                ],
                 'features': ['Full Self-Driving Capability', 'Yoke Steering Wheel', '17-inch Cinematic Display', 'Panoramic Glass Roof', 'Ventilated Heated Seats', 'Wireless Phone Charging', 'Premium 22-Speaker Audio'],
                 'description': 'Experience supercar performance in a whisper-quiet luxury electric sedan. 0-60 mph in 1.99s with over 390 miles of range.',
                 'status': 'AVAILABLE'
@@ -254,7 +264,52 @@ class Command(BaseCommand):
 
         created_cars = []
         for cdata in cars_data:
-            car_obj, _ = Car.objects.get_or_create(license_plate=cdata['license_plate'], defaults=cdata)
+            data = cdata.copy()
+            main_image_path = data.pop('main_image_path', None) or data.pop('image_location', None)
+            main_image_url = data.get('main_image_url')
+            gallery_paths = data.pop('gallery_image_paths', []) or data.pop('gallery_locations', [])
+            gallery_urls = data.pop('gallery_urls', [])
+
+            license_plate = data['license_plate']
+            car_obj, created = Car.objects.get_or_create(license_plate=license_plate, defaults=data)
+
+            # 1. Attach Local File if path provided and exists
+            image_saved = False
+            if main_image_path:
+                resolved_path = main_image_path if os.path.isabs(main_image_path) else os.path.join(settings.BASE_DIR, main_image_path)
+                if os.path.isfile(resolved_path):
+                    with open(resolved_path, 'rb') as f:
+                        car_obj.main_image.save(os.path.basename(resolved_path), File(f), save=True)
+                    image_saved = True
+                else:
+                    self.stdout.write(self.style.WARNING(f'Notice: Local image file not found at {resolved_path}.'))
+
+            # 2. If no local image, download from main_image_url, save to media/cars/ and store path in DB
+            if not image_saved and main_image_url and not car_obj.main_image:
+                self.stdout.write(f'Downloading image for {car_obj.display_name} from URL...')
+                download_and_save_car_image(car_obj, main_image_url)
+
+            # 3. Attach Local Gallery Files
+            for g_item in gallery_paths:
+                g_path = g_item if isinstance(g_item, str) else g_item.get('path')
+                v_type = 'OTHER' if isinstance(g_item, str) else g_item.get('view_type', 'OTHER')
+                if g_path:
+                    res_g_path = g_path if os.path.isabs(g_path) else os.path.join(settings.BASE_DIR, g_path)
+                    if os.path.isfile(res_g_path):
+                        with open(res_g_path, 'rb') as gf:
+                            CarImage.objects.get_or_create(
+                                car=car_obj,
+                                view_type=v_type,
+                                defaults={'image': File(gf, name=os.path.basename(res_g_path))}
+                            )
+
+            # 4. Download Gallery Images from URLs if provided
+            for g_url_item in gallery_urls:
+                u_url = g_url_item if isinstance(g_url_item, str) else g_url_item.get('url')
+                v_type = 'OTHER' if isinstance(g_url_item, str) else g_url_item.get('view_type', 'OTHER')
+                if u_url and not car_obj.images.filter(view_type=v_type).exists():
+                    download_and_save_gallery_image(car_obj, u_url, view_type=v_type)
+
             created_cars.append(car_obj)
 
         # 5. Coupons

@@ -1,4 +1,5 @@
-from rest_framework import generics, viewsets, permissions, status
+from rest_framework import generics, viewsets, permissions, status, parsers
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
@@ -106,6 +107,7 @@ class CheckCarAvailabilityView(APIView):
 
 class AdminCarViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
     queryset = Car.objects.all().order_by('-id')
     serializer_class = CarListSerializer
     filterset_class = CarFilter
@@ -115,3 +117,38 @@ class AdminCarViewSet(viewsets.ModelViewSet):
         if self.action in ['retrieve', 'update', 'partial_update']:
             return CarDetailSerializer
         return CarListSerializer
+
+    def perform_create(self, serializer):
+        car = serializer.save()
+        self._handle_gallery_uploads(car)
+
+    def perform_update(self, serializer):
+        car = serializer.save()
+        self._handle_gallery_uploads(car)
+
+    def _handle_gallery_uploads(self, car):
+        # Handle multiple uploaded gallery images from form-data
+        gallery_files = self.request.FILES.getlist('gallery_images')
+        view_types = self.request.data.getlist('gallery_view_types') if hasattr(self.request.data, 'getlist') else []
+        captions = self.request.data.getlist('gallery_captions') if hasattr(self.request.data, 'getlist') else []
+
+        for idx, img_file in enumerate(gallery_files):
+            v_type = view_types[idx] if idx < len(view_types) else 'OTHER'
+            cap = captions[idx] if idx < len(captions) else ''
+            CarImage.objects.create(
+                car=car,
+                image=img_file,
+                view_type=v_type,
+                caption=cap
+            )
+
+    @action(detail=True, methods=['delete'], url_path='gallery/(?P<image_id>[0-9]+)')
+    def delete_gallery_image(self, request, pk=None, image_id=None):
+        car = self.get_object()
+        try:
+            image = car.images.get(pk=image_id)
+            image.delete()
+            return Response({'detail': 'Image removed successfully.'}, status=status.HTTP_200_OK)
+        except CarImage.DoesNotExist:
+            return Response({'error': 'Image not found.'}, status=status.HTTP_404_NOT_FOUND)
+

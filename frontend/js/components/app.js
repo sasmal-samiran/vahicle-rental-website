@@ -32,6 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
         Admin.init();
     }
 
+    const searchWidget = document.querySelector('.search-widget-card');
+    const searchWidgetToggle = document.getElementById('search-widget-toggle');
+    if (searchWidget && searchWidgetToggle) {
+        searchWidgetToggle.addEventListener('click', () => {
+            const isOpen = searchWidget.classList.toggle('search-widget-open');
+            searchWidgetToggle.setAttribute('aria-expanded', String(isOpen));
+        });
+    }
+
     // 2. Navbar Scroll Effect & ScrollSpy (Light Theme)
     const navbar = document.querySelector('.navbar');
     const navLinksList = document.querySelectorAll('.nav-links a');
@@ -112,6 +121,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const adminSidebar = document.querySelector('.admin-sidebar');
+    const adminMobileToggle = document.getElementById('admin-mobile-toggle');
+    const adminSidebarClose = document.getElementById('admin-sidebar-close');
+    const adminSidebarBackdrop = document.getElementById('admin-sidebar-backdrop');
+    if (adminSidebar && adminMobileToggle) {
+        const setAdminSidebarOpen = (isOpen) => {
+            adminSidebar.classList.toggle('mobile-open', isOpen);
+            adminSidebarBackdrop?.classList.toggle('active', isOpen);
+            adminMobileToggle.setAttribute('aria-expanded', String(isOpen));
+            adminMobileToggle.innerHTML = isOpen
+                ? '<i class="fa-solid fa-xmark"></i>'
+                : '<i class="fa-solid fa-bars"></i>';
+        };
+
+        adminMobileToggle.addEventListener('click', () => {
+            setAdminSidebarOpen(!adminSidebar.classList.contains('mobile-open'));
+        });
+        adminSidebarClose?.addEventListener('click', () => setAdminSidebarOpen(false));
+        adminSidebarBackdrop?.addEventListener('click', () => setAdminSidebarOpen(false));
+        document.querySelectorAll('.sidebar-link[data-view]').forEach(link => {
+            link.addEventListener('click', () => setAdminSidebarOpen(false));
+        });
+    }
+
     // 4. User Menu Dropdown Toggle
     const userAvatarBtn = document.getElementById('nav-user-btn');
     const userDropdown = document.getElementById('nav-user-dropdown-menu');
@@ -125,13 +158,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Notification Menu Toggle
     const notifBtn = document.getElementById('notif-btn');
-    const notifDropdown = document.getElementById('notif-dropdown-menu');
-    if (notifBtn && notifDropdown) {
+    const notifModal = document.getElementById('notification-modal');
+    if (notifBtn && notifModal) {
         notifBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            notifDropdown.classList.toggle('show');
+            notifModal.classList.add('active');
         });
-        document.addEventListener('click', () => notifDropdown.classList.remove('show'));
     }
 
     // 6. Clear modal fields only when the close button is used.
@@ -154,6 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (otpStepOne) otpStepOne.classList.remove('hidden');
             if (otpStepTwo) otpStepTwo.classList.add('hidden');
             if (otpPreview) otpPreview.classList.add('hidden');
+
+            const targetModalId = closeButton.dataset.closeModal;
+            if (targetModalId) {
+                document.getElementById(targetModalId)?.classList.remove('active');
+            }
         }, true);
     });
 });

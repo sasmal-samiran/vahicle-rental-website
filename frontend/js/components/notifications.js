@@ -89,8 +89,8 @@ export const Notifications = {
         }
     },
 
-    toggleDropdown() {
-        const dropdown = document.getElementById('notif-dropdown-menu');
-        if (dropdown) dropdown.classList.toggle('show');
+    closeModal() {
+        const modal = document.getElementById('notification-modal');
+        if (modal) modal.classList.remove('active');
     }
 };

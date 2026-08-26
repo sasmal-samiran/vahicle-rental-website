@@ -7,7 +7,7 @@ export const CONFIG = {
         USER: 'cr_user_profile',
         SEARCH_PARAMS: 'cr_search_params'
     },
-    CURRENCY: '$'
+    CURRENCY: '₹'
 };
 
 export function formatCurrency(amount) {

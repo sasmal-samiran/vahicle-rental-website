@@ -377,14 +377,29 @@ export const Customer = {
             document.getElementById('detail-car-price').innerHTML = `${formatCurrency(car.price_per_day)}<span style="font-size:0.8rem; font-weight:normal; color:var(--text-secondary);"> /day</span>`;
             document.getElementById('detail-car-rating').innerHTML = `<i class="fa-solid fa-star" style="color:var(--warning);"></i> ${car.average_rating} (${car.total_reviews} reviews)`;
 
-            const mainImg = document.getElementById('detail-main-img');
-            if (mainImg) mainImg.src = car.primary_image || car.main_image_url;
-
             const thumbsContainer = document.getElementById('detail-thumbs-container');
-            const gallery = [car.primary_image, ...(car.images?.map(i => i.url) || [])].filter(Boolean);
+            const mainImg = document.getElementById('detail-main-img');
+            const badgeEl = document.getElementById('detail-angle-badge');
+
+            const gallery = [
+                { url: car.primary_image || car.main_image_url, label: 'Main Overview' },
+                ...(car.images?.map(i => ({
+                    url: i.url,
+                    label: i.view_type_display || i.view_type || i.caption || 'Angle View'
+                })) || [])
+            ].filter(item => Boolean(item.url));
+
+            if (mainImg && gallery.length) {
+                mainImg.src = gallery[0].url;
+                if (badgeEl) badgeEl.innerHTML = `<i class="fa-solid fa-camera"></i> ${gallery[0].label}`;
+            }
+
             if (thumbsContainer) {
-                thumbsContainer.innerHTML = gallery.map((imgUrl, i) => `
-                    <img src="${imgUrl}" class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="Customer.switchGalleryImage('${imgUrl}', this)" alt="Thumb" />
+                thumbsContainer.innerHTML = gallery.map((item, i) => `
+                    <div class="gallery-thumb-wrapper ${i === 0 ? 'active' : ''}" onclick="Customer.switchGalleryImage('${item.url}', '${item.label}', this)" style="cursor:pointer; flex-shrink:0; text-align:center;">
+                        <img src="${item.url}" class="gallery-thumb" style="width:70px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:2px solid ${i === 0 ? 'var(--primary)' : 'var(--border-color)'}; transition:var(--transition);" alt="${item.label}" />
+                        <span style="font-size:0.65rem; color:var(--text-secondary); display:block; margin-top:2px; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.label}</span>
+                    </div>
                 `).join('');
             }
 
@@ -451,11 +466,22 @@ export const Customer = {
         }
     },
 
-    switchGalleryImage(imgUrl, el) {
+    switchGalleryImage(imgUrl, label, el) {
         const mainImg = document.getElementById('detail-main-img');
+        const badgeEl = document.getElementById('detail-angle-badge');
         if (mainImg) mainImg.src = imgUrl;
-        document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
-        if (el) el.classList.add('active');
+        if (badgeEl && label) badgeEl.innerHTML = `<i class="fa-solid fa-camera"></i> ${label}`;
+        
+        document.querySelectorAll('.gallery-thumb-wrapper').forEach(w => {
+            w.classList.remove('active');
+            const img = w.querySelector('img');
+            if (img) img.style.borderColor = 'var(--border-color)';
+        });
+        if (el) {
+            el.classList.add('active');
+            const img = el.querySelector('img');
+            if (img) img.style.borderColor = 'var(--primary)';
+        }
     },
 
     closeDetailModal() {

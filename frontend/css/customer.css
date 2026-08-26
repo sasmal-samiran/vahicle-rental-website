@@ -2,7 +2,7 @@
 /* Hero Section */
 .hero-section {
     position: relative;
-    padding-top: 140px;
+    padding-top: 110px;
     padding-bottom: 90px;
     background-color: #ffffff;
     background-image:
@@ -121,6 +121,9 @@
 .search-widget-card .search-checkbox-row {
     margin: 0;
 }
+.search-widget-toggle {
+    display: none;
+}
 
 @media (max-width: 760px) {
     .search-widget-card {
@@ -128,6 +131,48 @@
         width: calc(100vw - 20px);
         padding: 12px;
         border-radius: 20px;
+    }
+
+    .search-widget-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 0;
+        background: transparent;
+        color: var(--text-primary);
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 2px 2px 0;
+        cursor: pointer;
+    }
+
+    .search-widget-toggle span {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .search-widget-toggle span i {
+        color: var(--primary);
+    }
+
+    .search-widget-toggle-icon {
+        transition: transform 0.2s ease;
+    }
+
+    .search-widget-content {
+        display: none;
+        padding-top: 12px;
+    }
+
+    .search-widget-card.search-widget-open .search-widget-content {
+        display: block;
+    }
+
+    .search-widget-card.search-widget-open .search-widget-toggle-icon {
+        transform: rotate(180deg);
     }
 
     .search-widget-grid {

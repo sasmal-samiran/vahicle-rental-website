@@ -76,7 +76,7 @@ class AdminDashboardStatsView(APIView):
         ]
 
         # Recent Bookings Feed
-        recent_bookings = Booking.objects.select_related('customer', 'car').order_by('-created_at')[:8]
+        recent_bookings = Booking.objects.select_related('customer', 'car').order_by('-created_at')[:10]
         recent_list = [
             {
                 'id': b.id,

@@ -107,15 +107,26 @@ class Car(models.Model):
         return 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'
 
 class CarImage(models.Model):
+    VIEW_CHOICES = (
+        ('FRONT', 'Front View'),
+        ('SIDE', 'Side Profile'),
+        ('REAR', 'Rear View'),
+        ('INTERIOR', 'Interior & Seating'),
+        ('DASHBOARD', 'Dashboard & Controls'),
+        ('ANGLE', '3/4 Perspective View'),
+        ('OTHER', 'Detail / Feature'),
+    )
+
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='car_gallery/', blank=True, null=True)
     image_url = models.URLField(max_length=500, blank=True, null=True)
+    view_type = models.CharField(max_length=20, choices=VIEW_CHOICES, default='OTHER', blank=True)
     caption = models.CharField(max_length=100, blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Image for {self.car.display_name}'
+        return f'{self.get_view_type_display()} for {self.car.display_name}'
 
     @property
     def url(self):

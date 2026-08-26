@@ -64,7 +64,7 @@
 * **Anomaly & Dent Detection**: AI models segment and compare photo sets to detect newly introduced scratches, dents, paint chips, or windshield cracks, eliminating manual disputes and speeding up security deposit returns.
 
 ### 4. 💬 AI Conversational Rental Assistant & Copilot
-* **Natural Language Search**: Enables intuitive search prompts like *"Find me a luxury 7-seater SUV in Downtown from Friday to Monday under $120/day"*.
+* **Natural Language Search**: Enables intuitive search prompts like *"Find me a luxury 7-seater SUV in Downtown from Friday to Monday under ₹120/day"*.
 * **24/7 Intelligent Virtual Concierge**: Answers policy inquiries, handles booking modifications, calculates instant quotes, and provides local driving recommendations.
 
 ### 5. 📊 Predictive Fleet Demand & Maintenance Forecasting
@@ -85,7 +85,7 @@
 * **⏱️ Real-Time Date-Overlap Availability**: High-concurrency booking engine prevents double-booking using mathematical window overlap queries (`start_date < requested_end AND end_date > requested_start`).
 * **🔍 Multi-Faceted Fleet Search & Filter**:
   * Category chips (*Luxury, Electric, SUV, Sports, Sedan, Compact*) with live vehicle counts
-  * Interactive price slider ($40 to $350+/day)
+  * Interactive price slider (₹40 to ₹350+/day)
   * Transmission (*Automatic, Manual*) and Fuel Type (*Electric, Hybrid, Petrol, Diesel*)
   * Seating capacity and horsepower sorting
 * **📸 Car Detail Modal & Specs Sheet**: High-res multi-angle photo gallery, mechanical specs (horsepower, luggage capacity, engine, transmission), included amenities, and verified renter reviews.
@@ -315,9 +315,9 @@ Test the checkout pricing engine using these pre-seeded coupon codes:
 
 | Coupon Code | Discount Type | Value | Minimum Spend | Description |
 |---|---|---|---|---|
-| **`DRIVE20`** | Percentage | **20% OFF** | $50.00 | 20% discount on total rental amount |
-| **`WELCOME10`** | Percentage | **10% OFF** | $0.00 | First-time renter welcome discount |
-| **`WEEKEND50`** | Fixed Amount | **$50.00 OFF** | $200.00 | Flat $50 discount on premium/weekend trips |
+| **`DRIVE20`** | Percentage | **20% OFF** | ₹50.00 | 20% discount on total rental amount |
+| **`WELCOME10`** | Percentage | **10% OFF** | ₹0.00 | First-time renter welcome discount |
+| **`WEEKEND50`** | Fixed Amount | **₹50.00 OFF** | ₹200.00 | Flat ₹50 discount on premium/weekend trips |
 
 ---
 

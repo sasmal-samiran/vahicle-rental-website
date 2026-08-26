@@ -13,8 +13,11 @@
         <div class="modal-body">
             <div class="detail-modal-grid">
                 <div>
-                    <img src="" id="detail-main-img" class="gallery-main-img" alt="Main Car Photo" />
-                    <div class="gallery-thumbs" id="detail-thumbs-container"></div>
+                    <div style="position:relative; border-radius:var(--radius-md); overflow:hidden; margin-bottom:10px;">
+                        <img src="" id="detail-main-img" class="gallery-main-img" alt="Main Car Photo" style="width:100%; border-radius:var(--radius-md); max-height:280px; object-fit:cover; display:block;" />
+                        <span id="detail-angle-badge" class="badge badge-primary" style="position:absolute; bottom:12px; left:12px; font-size:0.75rem; backdrop-filter:blur(8px); background:rgba(14, 77, 92, 0.9); box-shadow:var(--shadow-sm);"><i class="fa-solid fa-camera"></i> Main View</span>
+                    </div>
+                    <div class="gallery-thumbs" id="detail-thumbs-container" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px;"></div>
                     <h4 style="font-size:0.95rem; font-weight:700; margin:20px 0 8px;">Vehicle Overview</h4>
                     <p id="detail-description" style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
                     </p>
@@ -82,17 +85,17 @@
                                 <div class="selectable-desc">Standard minimum statutory coverage.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">$0.00</div>
+                        <div class="selectable-price">₹0.00</div>
                     </div>
                     <div class="selectable-card insurance-card selected" data-plan="STANDARD"
                         onclick="BookingWizard.selectInsurance('STANDARD')">
                         <div class="selectable-info"><i class="fa-solid fa-shield-halved selectable-icon"></i>
                             <div>
                                 <div class="selectable-title">Standard Protection Waiver (Recommended)</div>
-                                <div class="selectable-desc">Collision & vandalism waiver with $500 deductible.</div>
+                                <div class="selectable-desc">Collision & vandalism waiver with ₹500 deductible.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+$15.00/day</div>
+                        <div class="selectable-price">+₹15.00/day</div>
                     </div>
                     <div class="selectable-card insurance-card" data-plan="PREMIUM"
                         onclick="BookingWizard.selectInsurance('PREMIUM')">
@@ -102,7 +105,7 @@
                                 <div class="selectable-desc">Complete zero-liability peace of mind.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+$28.00/day</div>
+                        <div class="selectable-price">+₹28.00/day</div>
                     </div>
                 </div>
 
@@ -115,7 +118,7 @@
                                 <div class="selectable-desc">Offline maps with real-time guidance.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+$8.00/day</div>
+                        <div class="selectable-price">+₹8.00/day</div>
                     </div>
                     <div class="selectable-card addon-card" data-addon="child_seat"
                         onclick="BookingWizard.toggleAddon('child_seat')">
@@ -125,7 +128,7 @@
                                 <div class="selectable-desc">Pre-installed for children up to 45 lbs.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+$10.00/day</div>
+                        <div class="selectable-price">+₹10.00/day</div>
                     </div>
                     <div class="selectable-card addon-card" data-addon="extra_driver"
                         onclick="BookingWizard.toggleAddon('extra_driver')">
@@ -135,7 +138,7 @@
                                 <div class="selectable-desc">Authorize secondary driver on rental agreement.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+$12.00/day</div>
+                        <div class="selectable-price">+₹12.00/day</div>
                     </div>
                 </div>
             </div>

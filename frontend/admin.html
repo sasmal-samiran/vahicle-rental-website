@@ -20,6 +20,9 @@
                     <i class="fa-solid fa-gauge-high" style="color:var(--primary);"></i>
                     <span class="sidebar-brand">Admin<span class="text-gradient">Ops</span></span>
                 </a>
+                <button type="button" class="sidebar-close-btn" id="admin-sidebar-close" aria-label="Close admin navigation">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
             <ul class="sidebar-nav">
@@ -58,19 +61,23 @@
                 </button>
             </div>
         </aside>
+        <div class="admin-sidebar-backdrop" id="admin-sidebar-backdrop"></div>
 
         <!-- Main Content Area -->
         <main class="admin-main">
             <!-- Topbar -->
             <header class="admin-topbar">
+                <button type="button" class="admin-mobile-toggle" id="admin-mobile-toggle" aria-label="Open admin navigation" aria-expanded="false">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <h1 class="admin-topbar-title" id="admin-page-title">Dashboard Analytics</h1>
                 <div class="admin-topbar-actions">
-                    <button class="btn btn-outline btn-sm" onclick="Admin.loadDashboardAnalytics()" title="Refresh Analytics">
-                        <i class="fa-solid fa-rotate"></i> Refresh
+                    <button class="btn btn-outline btn-sm admin-refresh-btn" onclick="Admin.loadDashboardAnalytics()" title="Refresh Analytics" aria-label="Refresh analytics">
+                        <i class="fa-solid fa-rotate"></i><span>Refresh</span>
                     </button>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div class="user-avatar-circle" style="width:36px; height:36px; background:var(--primary-gradient);">A</div>
-                        <span style="font-weight:700; font-size:0.9rem;">Administrator</span>
+                        <span class="admin-user-name" style="font-weight:700; font-size:0.9rem;">Administrator</span>
                     </div>
                 </div>
             </header>
@@ -84,10 +91,10 @@
                         <div class="kpi-card">
                             <div>
                                 <div class="kpi-label">Total Revenue</div>
-                                <div class="kpi-value" id="kpi-revenue">$0.00</div>
+                                <div class="kpi-value" id="kpi-revenue">₹0.00</div>
                                 <div class="kpi-subtext"><i class="fa-solid fa-arrow-trend-up"></i> Net Paid Bookings</div>
                             </div>
-                            <div class="kpi-icon-box"><i class="fa-solid fa-dollar-sign"></i></div>
+                            <div class="kpi-icon-box"><i class="fa-solid fa-rupee-sign"></i></div>
                         </div>
 
                         <div class="kpi-card">
@@ -334,31 +341,31 @@
                     <input type="hidden" id="car-modal-id" />
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
                         <div class="form-group">
-                            <label class="form-label">Brand / Make *</label>
-                            <input type="text" id="car-modal-brand" class="form-control" placeholder="e.g. Tesla" required />
+                            <label class="form-label">Brand *</label>
+                            <input type="text" id="car-modal-brand" class="form-control" placeholder="e.g. BMW" required />
                         </div>
                         <div class="form-group">
                             <label class="form-label">Model *</label>
-                            <input type="text" id="car-modal-model" class="form-control" placeholder="e.g. Model S Plaid" required />
+                            <input type="text" id="car-modal-model" class="form-control" placeholder="e.g. BMW X5" required />
                         </div>
                         <div class="form-group">
                             <label class="form-label">Year *</label>
-                            <input type="number" id="car-modal-year" class="form-control" placeholder="2024" value="2024" required />
+                            <input type="number" id="car-modal-year" class="form-control" placeholder="2025" required />
                         </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
                         <div class="form-group">
                             <label class="form-label">License Plate *</label>
-                            <input type="text" id="car-modal-plate" class="form-control" placeholder="NY-TSLA-01" required />
+                            <input type="text" id="car-modal-plate" class="form-control" placeholder="MH-01-BX-5050" required />
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Price / Day ($) *</label>
-                            <input type="number" step="0.01" id="car-modal-price" class="form-control" placeholder="189.00" required />
+                            <label class="form-label">Price / Day (₹) *</label>
+                            <input type="number" step="0.01" id="car-modal-price" class="form-control" placeholder="14500.00" required />
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Security Deposit ($)</label>
-                            <input type="number" step="0.01" id="car-modal-deposit" class="form-control" placeholder="300.00" value="200.00" />
+                            <label class="form-label">Security Deposit (₹)</label>
+                            <input type="number" step="0.01" id="car-modal-deposit" class="form-control" placeholder="25000.00"/>
                         </div>
                     </div>
 
@@ -401,8 +408,45 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">High-Resolution Image URL</label>
-                        <input type="url" id="car-modal-image" class="form-control" placeholder="https://images.unsplash.com/photo-..." />
+                        <label class="form-label">Primary Hero Photo (Main Thumbnail)</label>
+                        <div class="image-upload-wrapper">
+                            <input type="file" id="car-modal-image-file" accept="image/*" onchange="Admin.handleImageFileSelect(event)" style="display:none;" />
+                            
+                            <div id="image-upload-dropzone" onclick="document.getElementById('car-modal-image-file').click()" style="cursor: pointer; padding: 8px 0;">
+                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.8rem; color: var(--primary); margin-bottom: 6px;"></i>
+                                <p style="font-size: 0.85rem; font-weight: 600; margin-bottom: 2px;">Click to upload main vehicle cover photo</p>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">Supports PNG, JPG, JPEG, WEBP</span>
+                            </div>
+
+                            <div id="car-image-preview-container" class="hidden">
+                                <img id="car-image-preview-img" src="" alt="Car Preview" style="max-height: 130px; max-width: 100%; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);" />
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <span id="car-image-preview-name" style="font-size: 0.8rem; color: var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                                    <button type="button" class="btn btn-sm btn-outline" style="padding: 2px 8px; font-size: 0.75rem;" onclick="document.getElementById('car-modal-image-file').click()">Change Main Photo</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Multi-Angle Trust Gallery Views -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label class="form-label" style="margin-bottom: 0;">
+                                <i class="fa-solid fa-camera" style="color: var(--primary);"></i> Multi-Angle Views (Front, Side, Rear, Interior & Dashboard)
+                            </label>
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 3px 10px; font-size: 0.75rem;" onclick="document.getElementById('car-modal-gallery-files').click()">
+                                <i class="fa-solid fa-plus"></i> Add Angle Photos
+                            </button>
+                        </div>
+                        <input type="file" id="car-modal-gallery-files" multiple accept="image/*" onchange="Admin.handleGalleryFilesSelect(event)" style="display:none;" />
+                        
+                        <div id="gallery-views-container" style="border: 1px dashed var(--border-color); border-radius: var(--radius-md); padding: 12px; background: rgba(0,0,0,0.15); min-height: 80px;">
+                            <div id="gallery-empty-hint" style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 12px 0;">
+                                <i class="fa-solid fa-images" style="font-size: 1.4rem; margin-bottom: 6px; display: block; opacity: 0.6;"></i>
+                                No extra angle views added yet. Upload side, rear, and cockpit views to increase customer trust!
+                            </div>
+                            <div id="gallery-previews-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px;"></div>
+                        </div>
                     </div>
 
                     <div class="form-group">

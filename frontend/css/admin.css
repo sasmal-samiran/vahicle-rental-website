@@ -330,6 +330,25 @@
     gap: 16px;
 }
 
+/* vachicle load and oupdate modal */
+.image-upload-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--border-color); 
+    border-radius: var(--radius-md); 
+    padding: 16px; text-align: center; 
+    background: rgba(0,0,0,0.2);
+}
+.image-upload-wrapper #car-image-preview-container{
+    flex: 1;
+    margin-top: 10px; 
+    display: none; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 8px;
+}
+
 /* =========================================================
    RESPONSIVE MEDIA QUERIES FOR MOBILE & TABLET DEVICES
    ========================================================= */
@@ -389,6 +408,22 @@
     }
     .admin-topbar-title {
         font-size: 1.1rem;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .admin-topbar-actions {
+        gap: 6px;
+    }
+    .admin-refresh-btn {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        flex: 0 0 40px;
+    }
+    .admin-refresh-btn span {
+        display: none;
     }
     .admin-user-name {
         display: none;

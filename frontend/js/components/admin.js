@@ -110,7 +110,7 @@ export const Admin = {
                 data: {
                     labels,
                     datasets: [{
-                        label: 'Revenue ($)',
+                        label: 'Revenue (₹)',
                         data: revenues,
                         borderColor: '#0e4d5c',
                         backgroundColor: 'rgba(14, 77, 92, 0.12)',
@@ -136,26 +136,68 @@ export const Admin = {
 
         // 2. Category Distribution Doughnut Chart
         const catCtx = document.getElementById('categoryDoughnutChart')?.getContext('2d');
+
         if (catCtx) {
-            if (this.categoryChart) this.categoryChart.destroy();
-            const labels = chartsData.category_breakdown.map(c => c.name);
+
+            if (this.categoryChart) {
+                this.categoryChart.destroy();
+            }
+
+            const labels = chartsData.category_breakdown.map(c =>
+                `${c.name} — Vehicles: ${c.vehicles}, Rentals: ${c.rentals}`
+            );
+
             const counts = chartsData.category_breakdown.map(c => c.vehicles);
 
             this.categoryChart = new Chart(catCtx, {
                 type: 'doughnut',
+
                 data: {
                     labels,
+
                     datasets: [{
                         data: counts,
-                        backgroundColor: ['#0e4d5c', '#d96b27', '#10b981', '#d97706', '#0284c7', '#64748b'],
+
+                        backgroundColor: [
+                            '#0e4d5c',
+                            '#d96b27',
+                            '#10b981',
+                            '#d97706',
+                            '#0284c7',
+                            '#64748b'
+                        ],
+
                         borderWidth: 0
                     }]
                 },
+
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+
                     plugins: {
-                        legend: { position: 'bottom', labels: { color: '#4b5563', boxWidth: 12 } }
+                        legend: {
+                            position: 'bottom',
+
+                            labels: {
+                                color: '#4b5563',
+                                boxWidth: 12
+                            }
+                        },
+
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const category =
+                                        chartsData.category_breakdown[context.dataIndex];
+
+                                    return [
+                                        `Vehicles: ${category.vehicles}`,
+                                        `Rentals: ${category.rentals}`
+                                    ];
+                                }
+                            }
+                        }
                     }
                 }
             });
@@ -232,9 +274,122 @@ export const Admin = {
         `).join('');
     },
 
+    pendingGalleryFiles: [],
+    existingGalleryImages: [],
+
+    handleImageFileSelect(event) {
+        const file = event.target.files?.[0];
+        const previewContainer = document.getElementById('car-image-preview-container');
+        const previewImg = document.getElementById('car-image-preview-img');
+        const previewName = document.getElementById('car-image-preview-name');
+
+        if (file) {
+            if (previewImg) previewImg.src = URL.createObjectURL(file);
+            if (previewName) previewName.innerText = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+            if (previewContainer) {
+                previewContainer.classList.remove('hidden');
+                previewContainer.style.display = 'flex';
+            }
+        }
+    },
+
+    handleGalleryFilesSelect(event) {
+        const files = Array.from(event.target.files || []);
+        files.forEach((file) => {
+            this.pendingGalleryFiles.push({
+                file,
+                url: URL.createObjectURL(file),
+                viewType: 'OTHER',
+                caption: ''
+            });
+        });
+        this.renderGalleryPreviews();
+        event.target.value = '';
+    },
+
+    removePendingGalleryFile(index) {
+        this.pendingGalleryFiles.splice(index, 1);
+        this.renderGalleryPreviews();
+    },
+
+    async deleteExistingGalleryImage(carId, imageId) {
+        if (!confirm('Remove this photo view from the vehicle gallery?')) return;
+        try {
+            await API.delete(`/admin/cars/${carId}/gallery/${imageId}/`);
+            this.existingGalleryImages = this.existingGalleryImages.filter(img => img.id !== imageId);
+            this.renderGalleryPreviews();
+            Toast.success('Gallery photo removed.');
+            this.loadFleet();
+        } catch (err) {
+            Toast.error(err.message || 'Could not delete photo.');
+        }
+    },
+
+    renderGalleryPreviews() {
+        const grid = document.getElementById('gallery-previews-grid');
+        const emptyHint = document.getElementById('gallery-empty-hint');
+        if (!grid) return;
+
+        const totalImages = this.existingGalleryImages.length + this.pendingGalleryFiles.length;
+        if (emptyHint) emptyHint.style.display = totalImages === 0 ? 'block' : 'none';
+
+        const carId = document.getElementById('car-modal-id')?.value;
+
+        const existingHtml = this.existingGalleryImages.map((img) => `
+            <div style="position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); background: #1f293d;">
+                <img src="${img.url}" alt="${img.caption || 'Car Angle'}" style="width: 100%; height: 75px; object-fit: cover; display: block;" />
+                <div style="padding: 4px 6px; font-size: 0.7rem; color: var(--text-secondary); background: rgba(0,0,0,0.7); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; color: #818cf8;">${img.view_type_display || img.view_type || 'Angle'}</span>
+                    ${carId ? `<button type="button" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0;" title="Delete Photo" onclick="Admin.deleteExistingGalleryImage(${carId}, ${img.id})"><i class="fa-solid fa-trash"></i></button>` : ''}
+                </div>
+            </div>
+        `).join('');
+
+        const pendingHtml = this.pendingGalleryFiles.map((item, idx) => `
+            <div style="position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 1px dashed var(--primary); background: #1f293d;">
+                <img src="${item.url}" alt="Preview" style="width: 100%; height: 75px; object-fit: cover; display: block;" />
+                <div style="padding: 4px; background: rgba(0,0,0,0.85);">
+                    <select class="form-control" style="padding: 2px 4px; font-size: 0.65rem; height: 22px; margin-bottom: 2px;" onchange="Admin.pendingGalleryFiles[${idx}].viewType = this.value">
+                        <option value="FRONT">Front View</option>
+                        <option value="SIDE">Side Profile</option>
+                        <option value="REAR">Rear View</option>
+                        <option value="INTERIOR">Interior</option>
+                        <option value="DASHBOARD">Dashboard</option>
+                        <option value="ANGLE">3/4 Angle</option>
+                        <option value="OTHER" selected>Other Detail</option>
+                    </select>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.65rem; color: #10b981; font-weight: 600;">Pending</span>
+                        <button type="button" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0;" title="Remove" onclick="Admin.removePendingGalleryFile(${idx})">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        grid.innerHTML = existingHtml + pendingHtml;
+    },
+
     openAddCarModal() {
         document.getElementById('car-modal-id').value = '';
         document.getElementById('car-form').reset();
+
+        this.pendingGalleryFiles = [];
+        this.existingGalleryImages = [];
+        this.renderGalleryPreviews();
+
+        const fileInput = document.getElementById('car-modal-image-file');
+        if (fileInput) fileInput.value = '';
+        const galleryInput = document.getElementById('car-modal-gallery-files');
+        if (galleryInput) galleryInput.value = '';
+
+        const previewContainer = document.getElementById('car-image-preview-container');
+        if (previewContainer) {
+            previewContainer.classList.add('hidden');
+            previewContainer.style.display = 'none';
+        }
+
         document.getElementById('car-modal-title').innerText = 'Add New Vehicle to Fleet';
         document.getElementById('admin-car-modal').classList.add('active');
     },
@@ -242,6 +397,9 @@ export const Admin = {
     openEditCarModal(carId) {
         const car = this.fleet.find(c => c.id === carId);
         if (!car) return;
+
+        this.pendingGalleryFiles = [];
+        this.existingGalleryImages = car.images || [];
 
         document.getElementById('car-modal-id').value = car.id;
         document.getElementById('car-modal-brand').value = car.brand;
@@ -256,8 +414,29 @@ export const Admin = {
         document.getElementById('car-modal-fuel').value = car.fuel_type;
         document.getElementById('car-modal-seats').value = car.seats;
         document.getElementById('car-modal-hp').value = car.power_hp;
-        document.getElementById('car-modal-image').value = car.main_image_url || '';
         document.getElementById('car-modal-desc').value = car.description || '';
+
+        const fileInput = document.getElementById('car-modal-image-file');
+        if (fileInput) fileInput.value = '';
+        const galleryInput = document.getElementById('car-modal-gallery-files');
+        if (galleryInput) galleryInput.value = '';
+
+        const previewContainer = document.getElementById('car-image-preview-container');
+        const previewImg = document.getElementById('car-image-preview-img');
+        const previewName = document.getElementById('car-image-preview-name');
+
+        const currentImg = car.primary_image || car.main_image_url;
+        if (currentImg && previewContainer && previewImg) {
+            previewImg.src = currentImg;
+            if (previewName) previewName.innerText = `Current Image: ${car.brand} ${car.model}`;
+            previewContainer.classList.remove('hidden');
+            previewContainer.style.display = 'flex';
+        } else if (previewContainer) {
+            previewContainer.classList.add('hidden');
+            previewContainer.style.display = 'none';
+        }
+
+        this.renderGalleryPreviews();
 
         document.getElementById('car-modal-title').innerText = `Edit ${car.brand} ${car.model}`;
         document.getElementById('admin-car-modal').classList.add('active');
@@ -269,30 +448,40 @@ export const Admin = {
 
     async saveCar() {
         const id = document.getElementById('car-modal-id').value;
-        const data = {
-            brand: document.getElementById('car-modal-brand').value.trim(),
-            model: document.getElementById('car-modal-model').value.trim(),
-            year: parseInt(document.getElementById('car-modal-year').value),
-            license_plate: document.getElementById('car-modal-plate').value.trim(),
-            price_per_day: parseFloat(document.getElementById('car-modal-price').value),
-            security_deposit: parseFloat(document.getElementById('car-modal-deposit').value || 200),
-            category_id: parseInt(document.getElementById('car-modal-category').value),
-            location_id: parseInt(document.getElementById('car-modal-location').value),
-            transmission: document.getElementById('car-modal-transmission').value,
-            fuel_type: document.getElementById('car-modal-fuel').value,
-            seats: parseInt(document.getElementById('car-modal-seats').value),
-            power_hp: parseInt(document.getElementById('car-modal-hp').value || 200),
-            main_image_url: document.getElementById('car-modal-image').value.trim(),
-            description: document.getElementById('car-modal-desc').value.trim(),
-            features: ['Apple CarPlay', 'GPS Navigation', 'Rearview Camera', 'Keyless Entry', 'Bluetooth']
-        };
+        const formData = new FormData();
+
+        formData.append('brand', document.getElementById('car-modal-brand').value.trim());
+        formData.append('model', document.getElementById('car-modal-model').value.trim());
+        formData.append('year', document.getElementById('car-modal-year').value);
+        formData.append('license_plate', document.getElementById('car-modal-plate').value.trim());
+        formData.append('price_per_day', document.getElementById('car-modal-price').value);
+        formData.append('security_deposit', document.getElementById('car-modal-deposit').value || '0');
+        formData.append('category_id', document.getElementById('car-modal-category').value);
+        formData.append('location_id', document.getElementById('car-modal-location').value);
+        formData.append('transmission', document.getElementById('car-modal-transmission').value);
+        formData.append('fuel_type', document.getElementById('car-modal-fuel').value);
+        formData.append('seats', document.getElementById('car-modal-seats').value || '4');
+        formData.append('power_hp', document.getElementById('car-modal-hp').value || '200');
+        formData.append('description', document.getElementById('car-modal-desc').value.trim());
+        formData.append('features', JSON.stringify(['Apple CarPlay', 'GPS Navigation', 'Rearview Camera', 'Keyless Entry', 'Bluetooth']));
+
+        const fileInput = document.getElementById('car-modal-image-file');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            formData.append('main_image', fileInput.files[0]);
+        }
+
+        this.pendingGalleryFiles.forEach((item) => {
+            formData.append('gallery_images', item.file);
+            formData.append('gallery_view_types', item.viewType || 'OTHER');
+            formData.append('gallery_captions', item.caption || '');
+        });
 
         try {
             if (id) {
-                await API.patch(`/admin/cars/${id}/`, data);
+                await API.patch(`/admin/cars/${id}/`, formData);
                 Toast.success('Vehicle details updated.');
             } else {
-                await API.post('/admin/cars/', data);
+                await API.post('/admin/cars/', formData);
                 Toast.success('New vehicle successfully added to fleet.');
             }
             this.closeCarModal();

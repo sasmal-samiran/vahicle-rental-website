@@ -36,13 +36,6 @@
                         <i class="fa-regular fa-bell"></i>
                         <span class="notif-badge hidden" id="notif-badge">0</span>
                     </button>
-                    <div class="dropdown-menu notif-dropdown" id="notif-dropdown-menu">
-                        <div class="notif-header">
-                            <strong style="font-size:0.9rem;">Notifications</strong>
-                            <button class="btn btn-sm btn-outline" style="padding:2px 8px; font-size:0.75rem;" onclick="Notifications.markAllRead()">Mark all read</button>
-                        </div>
-                        <div class="notif-list" id="notif-list-container"></div>
-                    </div>
                 </div>
 
                 <button class="btn btn-primary btn-sm" id="nav-auth-btn" onclick="Auth.openAuthModal('otp')">
@@ -86,6 +79,12 @@
     <!-- Dedicated Search Banner -->
     <!-- Search Bar Form -->
             <div class="search-widget-card" style="box-shadow: var(--shadow-primary);">
+                <button type="button" class="search-widget-toggle" id="search-widget-toggle"
+                    aria-expanded="false" aria-controls="search-widget-content">
+                    <span><i class="fa-solid fa-sliders"></i> Search vehicles</span>
+                    <i class="fa-solid fa-chevron-up search-widget-toggle-icon"></i>
+                </button>
+                <div class="search-widget-content" id="search-widget-content">
                 <form id="search-form">
                     <div class="search-widget-grid">
                         <div class="search-field">
@@ -124,6 +123,7 @@
                         <span>Return vehicle to the same pickup location</span>
                     </label>
                 </form>
+                </div>
             </div>
     {% endblock %}
 
@@ -134,6 +134,7 @@
     <!-- ==================== MODALS ==================== -->
     {% include 'components/register.html' %}
     {% include 'components/car_modals.html' %}
+    {% include 'components/notification.html' %}
 
     {% block footer %}
     <!-- Footer -->
