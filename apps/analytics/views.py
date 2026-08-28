@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.shortcuts import get_object_or_404
-from vehicles.models import Car
+from apps.vehicles.models import Car
 from apps.vehicles.search_engine import CarSearchService
 from .services import RecommendationService
 from .models import SearchLog, RecommendationClick
