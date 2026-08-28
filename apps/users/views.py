@@ -1,4 +1,4 @@
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics, permissions, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -87,6 +87,12 @@ class VerifyOTPView(APIView):
         user = User.objects.filter(Q(phone_number=identifier) | Q(email__iexact=identifier) | Q(username__iexact=identifier)).first()
         
         if not user:
+            if purpose in ['REGISTER', 'VERIFY']:
+                return Response({
+                    'detail': 'OTP verified successfully.',
+                    'verified': True,
+                    'identifier': identifier
+                }, status=status.HTTP_200_OK)
             return Response({
                 'error': 'Account not found. Please register first.'
             }, status=status.HTTP_404_NOT_FOUND)
@@ -148,6 +154,7 @@ class PasswordLoginView(APIView):
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
     serializer_class = UserSerializer
 
     def get_object(self):

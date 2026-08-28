@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}DriveLuxe | Customer Portal{% endblock %}
+
+{% block search_widget %}{% endblock %}
+
+{% block content %}
+<div class="customer-portal-page" id="customer-portal-container">
+    <!-- 1. Customer Hero Header -->
+    <section class="portal-hero-section">
+        <div class="container">
+            <div class="portal-hero-card">
+                <div class="portal-user-profile">
+                    <div class="portal-avatar-circle" id="portal-header-avatar">U</div>
+                    <div class="portal-user-meta">
+                        <div class="portal-user-name-row">
+                            <h2 id="portal-header-name">Loading profile...</h2>
+                            <span class="portal-license-badge" id="portal-license-badge">
+                                <i class="fa-solid fa-id-card"></i> Driver License Pending
+                            </span>
+                        </div>
+                        <div class="portal-contact-chips">
+                            <span id="portal-header-email"><i class="fa-regular fa-envelope"></i> --</span>
+                            <span id="portal-header-phone"><i class="fa-solid fa-phone"></i> --</span>
+                            <span id="portal-header-joined"><i class="fa-regular fa-calendar"></i> Member</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="portal-hero-actions">
+                    <a href="/fleet/" class="btn btn-primary">
+                        <i class="fa-solid fa-car"></i> Explore Fleet & Book
+                    </a>
+                </div>
+            </div>
+
+            <!-- 2. Portal KPI Stats Bar -->
+            <div class="portal-kpi-grid">
+                <div class="portal-kpi-card">
+                    <div class="portal-kpi-icon" style="background: rgba(14, 77, 92, 0.12); color: var(--primary);">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+                    <div class="portal-kpi-info">
+                        <div class="portal-kpi-value" id="portal-kpi-active">0</div>
+                        <div class="portal-kpi-label">Active / Ongoing Rentals</div>
+                    </div>
+                </div>
+                <div class="portal-kpi-card">
+                    <div class="portal-kpi-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div class="portal-kpi-info">
+                        <div class="portal-kpi-value" id="portal-kpi-total">0</div>
+                        <div class="portal-kpi-label">Total Reservations</div>
+                    </div>
+                </div>
+                <div class="portal-kpi-card">
+                    <div class="portal-kpi-icon" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
+                        <i class="fa-solid fa-flag-checkered"></i>
+                    </div>
+                    <div class="portal-kpi-info">
+                        <div class="portal-kpi-value" id="portal-kpi-completed">0</div>
+                        <div class="portal-kpi-label">Completed Trips</div>
+                    </div>
+                </div>
+                <div class="portal-kpi-card">
+                    <div class="portal-kpi-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <div class="portal-kpi-info">
+                        <div class="portal-kpi-value" id="portal-kpi-spent">₹0.00</div>
+                        <div class="portal-kpi-label">Lifetime Rental Spend</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Portal Main Content Area -->
+    <main class="portal-main-section">
+        <div class="container">
+            <!-- Navigation Tabs -->
+            <div class="portal-nav-tabs">
+                <button type="button" class="portal-tab-btn active" data-tab="bookings">
+                    <i class="fa-solid fa-calendar-check"></i> My Reservations
+                    <span class="portal-tab-badge" id="portal-tab-bookings-count">0</span>
+                </button>
+                <button type="button" class="portal-tab-btn" data-tab="profile">
+                    <i class="fa-solid fa-user-gear"></i> Profile & Driver License
+                </button>
+                <button type="button" class="portal-tab-btn" data-tab="reviews">
+                    <i class="fa-solid fa-star"></i> My Reviews & Ratings
+                    <span class="portal-tab-badge" id="portal-tab-reviews-count">0</span>
+                </button>
+            </div>
+
+            <!-- PANEL 1: My Reservations -->
+            <div class="portal-tab-panel" id="panel-bookings" data-tab="bookings">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Your Reservations History</h3>
+                        <p class="portal-panel-subtitle">Track pickup statuses, view vouchers, leave vehicle feedback, or manage cancellations.</p>
+                    </div>
+                    <div class="portal-status-filter-pills">
+                        <button type="button" class="portal-filter-pill active" onclick="CustomerPortal.filterBookings('ALL', this)">All</button>
+                        <button type="button" class="portal-filter-pill" onclick="CustomerPortal.filterBookings('ACTIVE', this)">Active / Confirmed</button>
+                        <button type="button" class="portal-filter-pill" onclick="CustomerPortal.filterBookings('COMPLETED', this)">Completed</button>
+                        <button type="button" class="portal-filter-pill" onclick="CustomerPortal.filterBookings('CANCELLED', this)">Cancelled</button>
+                    </div>
+                </div>
+
+                <div id="portal-bookings-list">
+                    <div style="text-align:center; padding:60px 0;">
+                        <i class="fa-solid fa-circle-notch fa-spin text-gradient" style="font-size:2.4rem;"></i>
+                        <p style="margin-top:14px; color:var(--text-secondary);">Loading your reservations...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 2: Profile & Driver License -->
+            <div class="portal-tab-panel hidden" id="panel-profile" data-tab="profile">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Customer Profile & Driver Verification</h3>
+                        <p class="portal-panel-subtitle">Keep your contact information and driver's license updated for expedited vehicle handovers.</p>
+                    </div>
+                </div>
+
+                <div class="portal-profile-card">
+                    <!-- Avatar Upload Header -->
+                    <div style="display:flex; align-items:center; gap:20px; margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--border-color); flex-wrap:wrap;">
+                        <div style="position:relative;">
+                            <div class="portal-avatar-circle" id="prof-avatar-preview" style="width:80px; height:80px; font-size:2rem; overflow:hidden; cursor:pointer;" onclick="document.getElementById('prof-avatar-input').click()">
+                                <span>U</span>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm" style="position:absolute; bottom:-4px; right:-4px; width:28px; height:28px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center; border:2px solid #ffffff;" onclick="document.getElementById('prof-avatar-input').click()" title="Upload Photo">
+                                <i class="fa-solid fa-camera" style="font-size:0.75rem;"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <h4 style="font-size:1rem; font-weight:700; margin-bottom:4px;">Profile Photo</h4>
+                            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px;">
+                                Upload a clear JPEG, PNG, or WEBP photo (max 5MB) for verified driver identity.
+                            </p>
+                            <input type="file" id="prof-avatar-input" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="CustomerPortal.handleAvatarFileSelect(event)" />
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" class="btn btn-outline btn-sm" style="padding:4px 12px; font-size:0.8rem;" onclick="document.getElementById('prof-avatar-input').click()">
+                                    <i class="fa-solid fa-arrow-up-from-bracket"></i> Choose Photo
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm hidden" id="prof-avatar-remove-btn" style="padding:4px 12px; font-size:0.8rem;" onclick="CustomerPortal.removeAvatar()">
+                                    <i class="fa-solid fa-trash-can"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="portal-profile-form" onsubmit="event.preventDefault(); CustomerPortal.saveProfile();">
+                        <div class="portal-form-grid">
+                            <div class="form-group">
+                                <label class="form-label">First Name</label>
+                                <input type="text" id="prof-first-name" class="form-control" placeholder="Enter first name" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" id="prof-last-name" class="form-control" placeholder="Enter last name" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" id="prof-email" class="form-control" placeholder="name@example.com" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone Number (Verified Account Login)</label>
+                                <input type="text" id="prof-phone" class="form-control" readonly style="background:rgba(0,0,0,0.05); cursor:not-allowed;" />
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label">
+                                    <i class="fa-solid fa-id-card" style="color:var(--primary);"></i> Driver's License Number
+                                </label>
+                                <input type="text" id="prof-license" class="form-control" placeholder="e.g. DL-NY-9847291" required />
+                                <small style="color:var(--text-muted); font-size:0.78rem; display:block; margin-top:4px;">
+                                    Required for vehicle pickup and insurance waiver validation.
+                                </small>
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label">Residential / Billing Address</label>
+                                <input type="text" id="prof-address" class="form-control" placeholder="Street address, City, State, ZIP" />
+                            </div>
+                        </div>
+
+                        <div style="margin-top:24px; display:flex; justify-content:flex-end; gap:12px;">
+                            <button type="submit" class="btn btn-primary" id="prof-save-btn">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PANEL 3: My Reviews & Ratings -->
+            <div class="portal-tab-panel hidden" id="panel-reviews" data-tab="reviews">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">My Vehicle Reviews & Ratings</h3>
+                        <p class="portal-panel-subtitle">Feedback and star ratings you have provided for completed vehicle rentals.</p>
+                    </div>
+                </div>
+
+                <div id="portal-reviews-list">
+                    <div style="text-align:center; padding:60px 0;">
+                        <i class="fa-solid fa-circle-notch fa-spin text-gradient" style="font-size:2.4rem;"></i>
+                        <p style="margin-top:14px; color:var(--text-secondary);">Loading your reviews...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Leave Review Modal -->
+<div class="modal-backdrop" id="review-modal">
+    <div class="modal-card" style="max-width:480px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Review Your Rental Experience</h3>
+            <button class="modal-close" onclick="CustomerPortal.closeReviewModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="rev-booking-code" />
+            <div class="form-group" style="text-align:center; margin-bottom:20px;">
+                <label class="form-label">Overall Rating</label>
+                <div id="review-rating-stars" style="display:flex; justify-content:center; gap:12px; font-size:1.8rem; margin-top:8px;">
+                    <label class="review-rating-star" data-rating="1" style="cursor:pointer;"><input type="radio" name="rev-rating" value="1" style="position:absolute; opacity:0; width:1px; height:1px;" /><i class="fa-solid fa-star"></i></label>
+                    <label class="review-rating-star" data-rating="2" style="cursor:pointer;"><input type="radio" name="rev-rating" value="2" style="position:absolute; opacity:0; width:1px; height:1px;" /><i class="fa-solid fa-star"></i></label>
+                    <label class="review-rating-star" data-rating="3" style="cursor:pointer;"><input type="radio" name="rev-rating" value="3" style="position:absolute; opacity:0; width:1px; height:1px;" /><i class="fa-solid fa-star"></i></label>
+                    <label class="review-rating-star" data-rating="4" style="cursor:pointer;"><input type="radio" name="rev-rating" value="4" style="position:absolute; opacity:0; width:1px; height:1px;" /><i class="fa-solid fa-star"></i></label>
+                    <label class="review-rating-star" data-rating="5" style="cursor:pointer;"><input type="radio" name="rev-rating" value="5" checked style="position:absolute; opacity:0; width:1px; height:1px;" /><i class="fa-solid fa-star"></i></label>
+                </div>
+            </div>
+            <div class="form-group"><label class="form-label">Review Headline</label><input type="text" id="rev-title" class="form-control" placeholder="e.g. Unforgettable trip!" /></div>
+            <div class="form-group"><label class="form-label">Detailed Feedback</label><textarea id="rev-comment" class="form-control" rows="4" placeholder="How was the vehicle condition, pickup process, and performance?"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="CustomerPortal.closeReviewModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="CustomerPortal.submitReview()">Submit Review</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

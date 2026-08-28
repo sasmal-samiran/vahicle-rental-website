@@ -14,39 +14,59 @@ class CarFilter(filters.FilterSet):
     min_price = filters.NumberFilter(field_name='price_per_day', lookup_expr='gte')
     max_price = filters.NumberFilter(field_name='price_per_day', lookup_expr='lte')
     seats = filters.NumberFilter(field_name='seats', lookup_expr='gte')
-    status = filters.CharFilter(field_name='status', lookup_expr='iexact')
+    status = filters.CharFilter(method='filter_status')
+    available_only = filters.BooleanFilter(method='filter_available_only')
 
-    # Date overlap filters
-    pickup_date = filters.CharFilter(method='filter_by_availability')
+    pickup_date = filters.CharFilter(method='filter_noop')
     return_date = filters.CharFilter(method='filter_noop')
 
     class Meta:
         model = Car
-        fields = ['category', 'category_id', 'location_id', 'city', 'transmission', 'fuel_type', 'min_price', 'max_price', 'seats', 'status']
+        fields = ['category', 'category_id', 'location_id', 'city', 'transmission', 'fuel_type', 'min_price', 'max_price', 'seats', 'status', 'available_only']
 
     def filter_noop(self, queryset, name, value):
         return queryset
 
-    def filter_by_availability(self, queryset, name, value):
-        pickup_str = self.data.get('pickup_date')
-        return_str = self.data.get('return_date')
-        
-        if not pickup_str or not return_str:
+    def filter_status(self, queryset, name, value):
+        if not value:
             return queryset
+        val = value.strip().upper()
+        if val == 'AVAILABLE':
+            pickup_str = self.data.get('pickup_date')
+            return_str = self.data.get('return_date')
+            if pickup_str and return_str:
+                from .serializers import parse_datetime_param
+                start = parse_datetime_param(pickup_str, is_end=False)
+                end = parse_datetime_param(return_str, is_end=True)
+                if start and end:
+                    overlapping_car_ids = Booking.objects.filter(
+                        status__in=['CONFIRMED', 'ONGOING', 'PENDING'],
+                        start_date__lt=end,
+                        end_date__gt=start
+                    ).values_list('car_id', flat=True)
+                    return queryset.filter(status='AVAILABLE').exclude(id__in=overlapping_car_ids)
+            return queryset.filter(status='AVAILABLE')
+        elif val in ['RESERVED', 'RESERVED_FOR_DATES', 'BOOKED', 'RESERVED_DATES']:
+            pickup_str = self.data.get('pickup_date')
+            return_str = self.data.get('return_date')
+            if pickup_str and return_str:
+                from .serializers import parse_datetime_param
+                start = parse_datetime_param(pickup_str, is_end=False)
+                end = parse_datetime_param(return_str, is_end=True)
+                if start and end:
+                    overlapping_car_ids = Booking.objects.filter(
+                        status__in=['CONFIRMED', 'ONGOING', 'PENDING'],
+                        start_date__lt=end,
+                        end_date__gt=start
+                    ).values_list('car_id', flat=True)
+                    return queryset.filter(status='AVAILABLE', id__in=overlapping_car_ids)
+            booked_car_ids = Booking.objects.filter(
+                status__in=['CONFIRMED', 'ONGOING', 'PENDING']
+            ).values_list('car_id', flat=True)
+            return queryset.filter(id__in=booked_car_ids)
+        return queryset.filter(status=val)
 
-        # Support both full ISO datetime or simple YYYY-MM-DD
-        start = parse_datetime(pickup_str) or parse_date(pickup_str)
-        end = parse_datetime(return_str) or parse_date(return_str)
-
-        if not start or not end:
+    def filter_available_only(self, queryset, name, value):
+        if not value:
             return queryset
-
-        # Find car IDs with overlapping active bookings
-        # Condition for overlap: booking.start_date < requested_end AND booking.end_date > requested_start
-        overlapping_car_ids = Booking.objects.filter(
-            status__in=['CONFIRMED', 'ONGOING', 'PENDING'],
-            start_date__lt=end,
-            end_date__gt=start
-        ).values_list('car_id', flat=True)
-
-        return queryset.exclude(id__in=overlapping_car_ids)
+        return self.filter_status(queryset, 'status', 'AVAILABLE')

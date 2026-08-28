@@ -32,7 +32,7 @@ class InitiatePaymentView(APIView):
             res = PaymentService.initiate_payment(
                 booking=booking,
                 provider=data.get('provider', 'SANDBOX'),
-                currency=data.get('currency', 'USD')
+                currency=data.get('currency', 'INR')
             )
             return Response(res, status=status.HTTP_200_OK)
 
@@ -113,7 +113,7 @@ class MockCheckoutView(APIView):
                 provider='SANDBOX',
                 gateway_order_id='mock_ord_' + secrets.token_hex(4),
                 amount=booking.total_amount,
-                currency='USD',
+                currency='INR',
                 status='INITIATED'
             )
 

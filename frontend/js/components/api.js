@@ -37,7 +37,11 @@ export const API = {
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                const errorMsg = data.error || data.detail || (data.non_field_errors ? data.non_field_errors[0] : null) || 'An error occurred.';
+                const fieldErrors = Object.values(data)
+                    .flat()
+                    .filter(value => typeof value === 'string')
+                    .join(' ');
+                const errorMsg = data.error || data.detail || fieldErrors || 'An error occurred.';
                 throw new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
             }
             return data;

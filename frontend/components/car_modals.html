@@ -15,7 +15,7 @@
                 <div>
                     <div style="position:relative; border-radius:var(--radius-md); overflow:hidden; margin-bottom:10px;">
                         <img src="" id="detail-main-img" class="gallery-main-img" alt="Main Car Photo" style="width:100%; border-radius:var(--radius-md); max-height:280px; object-fit:cover; display:block;" />
-                        <span id="detail-angle-badge" class="badge badge-primary" style="position:absolute; bottom:12px; left:12px; font-size:0.75rem; backdrop-filter:blur(8px); background:rgba(14, 77, 92, 0.9); box-shadow:var(--shadow-sm);"><i class="fa-solid fa-camera"></i> Main View</span>
+                        <span id="detail-angle-badge" class="badge badge-primary" style="position:absolute; bottom:12px; left:12px; font-size:0.75rem; backdrop-filter:blur(8px); color:white; background:rgba(14, 77, 92, 0.9); box-shadow:var(--shadow-sm);"><i class="fa-solid fa-camera"></i> Main View</span>
                     </div>
                     <div class="gallery-thumbs" id="detail-thumbs-container" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px;"></div>
                     <h4 style="font-size:0.95rem; font-weight:700; margin:20px 0 8px;">Vehicle Overview</h4>
@@ -45,7 +45,7 @@
 
 <!-- 2. Multi-Step Booking Wizard Modal -->
 <div class="modal-backdrop" id="booking-wizard-modal">
-    <div class="modal-card" style="max-width:700px;">
+    <div class="modal-card" style="max-width:760px; width:95%;">
         <div class="modal-header">
             <div>
                 <h3 class="modal-title">Rental Reservation</h3>
@@ -57,24 +57,93 @@
         <div class="modal-body">
             <div class="wizard-stepper">
                 <div class="wizard-step active">
-                    <div class="wizard-step-circle">1</div><span class="wizard-step-label">Protection</span>
+                    <div class="wizard-step-circle">1</div><span class="wizard-step-label">Trip Schedule</span>
                 </div>
                 <div class="wizard-step">
-                    <div class="wizard-step-circle">2</div><span class="wizard-step-label">Driver Info</span>
+                    <div class="wizard-step-circle">2</div><span class="wizard-step-label">Protection</span>
                 </div>
                 <div class="wizard-step">
-                    <div class="wizard-step-circle">3</div><span class="wizard-step-label">Review & Code</span>
+                    <div class="wizard-step-circle">3</div><span class="wizard-step-label">Driver Info</span>
                 </div>
                 <div class="wizard-step">
-                    <div class="wizard-step-circle">4</div><span class="wizard-step-label">Payment</span>
+                    <div class="wizard-step-circle">4</div><span class="wizard-step-label">Review & Pay</span>
                 </div>
                 <div class="wizard-step">
                     <div class="wizard-step-circle">5</div><span class="wizard-step-label">Confirmed</span>
                 </div>
             </div>
 
-            <!-- STEP 1: Protection & Addons -->
+            <!-- STEP 1: Trip Schedule & Hub Locations -->
             <div class="wizard-panel" data-step="1">
+                <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="font-size:0.95rem; font-weight:700; margin:0; display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-calendar-days text-gradient"></i> Pickup & Return Schedule
+                        </h4>
+                        <span id="b-trip-duration-badge" class="badge badge-primary" style="font-size:0.75rem; font-weight:700;">
+                            3 Days Rental
+                        </span>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+                        <!-- Pickup Column -->
+                        <div style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:16px;">
+                            <div style="font-weight:700; font-size:0.85rem; color:var(--text-main); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Pickup Details
+                            </div>
+                            <div class="form-group" style="margin-bottom:12px;">
+                                <label class="form-label" style="font-size:0.75rem; font-weight:700;">Pickup Hub Location *</label>
+                                <select id="b-pickup-loc" class="form-control" style="padding:8px 10px; font-size:0.85rem;" onchange="BookingWizard.onScheduleChange()"></select>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.75rem; font-weight:700;">Pickup Date *</label>
+                                    <input type="date" id="b-pickup-date" class="form-control" style="padding:8px 10px; font-size:0.85rem;" onchange="BookingWizard.onScheduleChange()" required />
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.75rem; font-weight:700;">Pickup Time *</label>
+                                    <select id="b-pickup-time" class="form-control" style="padding:8px 8px; font-size:0.85rem; min-width:115px;" onchange="BookingWizard.onScheduleChange()"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Return Column -->
+                        <div style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:16px;">
+                            <div style="font-weight:700; font-size:0.85rem; color:var(--text-main); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-flag-checkered" style="color:var(--accent);"></i> Return / Drop-off Details
+                            </div>
+                            <div class="form-group" style="margin-bottom:12px;">
+                                <label class="form-label" style="font-size:0.75rem; font-weight:700;">Return Hub Location *</label>
+                                <select id="b-return-loc" class="form-control" style="padding:8px 10px; font-size:0.85rem;" onchange="BookingWizard.onScheduleChange()"></select>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.75rem; font-weight:700;">Return Date *</label>
+                                    <input type="date" id="b-return-date" class="form-control" style="padding:8px 10px; font-size:0.85rem;" onchange="BookingWizard.onScheduleChange()" required />
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" style="font-size:0.75rem; font-weight:700;">Return Time *</label>
+                                    <select id="b-return-time" class="form-control" style="padding:8px 8px; font-size:0.85rem; min-width:115px;" onchange="BookingWizard.onScheduleChange()"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Availability Status Banner -->
+                    <div id="b-availability-banner" style="margin-top:14px; padding:10px 14px; border-radius:var(--radius-sm); font-size:0.85rem; display:flex; align-items:center; gap:8px; background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.25);">
+                        <i id="b-availability-icon" class="fa-solid fa-circle-check"></i>
+                        <span id="b-availability-text">Checking vehicle availability for your selected schedule...</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:12px; font-size:0.8rem; color:var(--text-muted); background:var(--bg-card); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                    <i class="fa-solid fa-circle-info" style="color:var(--primary); font-size:1rem;"></i>
+                    <span>Free cancellation up to 24 hours before pickup. Instant vehicle handover at your designated hub.</span>
+                </div>
+            </div>
+
+            <!-- STEP 2: Protection & Addons -->
+            <div class="wizard-panel hidden" data-step="2">
                 <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px;">Select Protection Plan</h4>
                 <div class="selectable-cards" style="margin-bottom:20px;">
                     <div class="selectable-card insurance-card" data-plan="NONE"
@@ -82,30 +151,30 @@
                         <div class="selectable-info"><i class="fa-solid fa-shield selectable-icon"></i>
                             <div>
                                 <div class="selectable-title">Basic Third-Party (Included)</div>
-                                <div class="selectable-desc">Standard minimum statutory coverage.</div>
+                                <div class="selectable-desc" id="plan-desc-none">Standard minimum statutory third-party liability coverage.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">₹0.00</div>
+                        <div class="selectable-price" id="plan-price-none">₹0.00</div>
                     </div>
                     <div class="selectable-card insurance-card selected" data-plan="STANDARD"
                         onclick="BookingWizard.selectInsurance('STANDARD')">
                         <div class="selectable-info"><i class="fa-solid fa-shield-halved selectable-icon"></i>
                             <div>
                                 <div class="selectable-title">Standard Protection Waiver (Recommended)</div>
-                                <div class="selectable-desc">Collision & vandalism waiver with ₹500 deductible.</div>
+                                <div class="selectable-desc" id="plan-desc-standard">Collision & accidental damage waiver with capped deductible.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+₹15.00/day</div>
+                        <div class="selectable-price" id="plan-price-standard">+₹750.00/day</div>
                     </div>
                     <div class="selectable-card insurance-card" data-plan="PREMIUM"
                         onclick="BookingWizard.selectInsurance('PREMIUM')">
                         <div class="selectable-info"><i class="fa-solid fa-shield-heart selectable-icon"></i>
                             <div>
                                 <div class="selectable-title">Full Comprehensive Zero-Deductible</div>
-                                <div class="selectable-desc">Complete zero-liability peace of mind.</div>
+                                <div class="selectable-desc" id="plan-desc-premium">Complete 100% zero-liability peace of mind.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+₹28.00/day</div>
+                        <div class="selectable-price" id="plan-price-premium">+₹1,350.00/day</div>
                     </div>
                 </div>
 
@@ -115,36 +184,46 @@
                         <div class="selectable-info"><i class="fa-solid fa-location-crosshairs selectable-icon"></i>
                             <div>
                                 <div class="selectable-title">GPS Navigation System</div>
-                                <div class="selectable-desc">Offline maps with real-time guidance.</div>
+                                <div class="selectable-desc" id="addon-desc-gps">Offline maps with real-time turn-by-turn guidance.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+₹8.00/day</div>
+                        <div class="selectable-price" id="addon-price-gps">+₹9.00/day</div>
                     </div>
                     <div class="selectable-card addon-card" data-addon="child_seat"
                         onclick="BookingWizard.toggleAddon('child_seat')">
                         <div class="selectable-info"><i class="fa-solid fa-baby selectable-icon"></i>
                             <div>
                                 <div class="selectable-title">Child Safety Seat</div>
-                                <div class="selectable-desc">Pre-installed for children up to 45 lbs.</div>
+                                <div class="selectable-desc" id="addon-desc-child_seat">Pre-installed sanitized ISOFIX seat for infants & toddlers.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+₹10.00/day</div>
+                        <div class="selectable-price" id="addon-price-child_seat">+₹249.00/day</div>
                     </div>
                     <div class="selectable-card addon-card" data-addon="extra_driver"
                         onclick="BookingWizard.toggleAddon('extra_driver')">
                         <div class="selectable-info"><i class="fa-solid fa-user-plus selectable-icon"></i>
                             <div>
                                 <div class="selectable-title">Additional Registered Driver</div>
-                                <div class="selectable-desc">Authorize secondary driver on rental agreement.</div>
+                                <div class="selectable-desc" id="addon-desc-extra_driver">Authorize & legally insure secondary driver on rental agreement.</div>
                             </div>
                         </div>
-                        <div class="selectable-price">+₹12.00/day</div>
+                        <div class="selectable-price" id="addon-price-extra_driver">+₹299.00/day</div>
+                    </div>
+                    <div class="selectable-card addon-card" data-addon="wifi"
+                        onclick="BookingWizard.toggleAddon('wifi')">
+                        <div class="selectable-info"><i class="fa-solid fa-wifi selectable-icon"></i>
+                            <div>
+                                <div class="selectable-title">4G LTE In-Car Wi-Fi Hotspot</div>
+                                <div class="selectable-desc" id="addon-desc-wifi">High-speed portable Wi-Fi dongle for unlimited in-cabin connectivity.</div>
+                            </div>
+                        </div>
+                        <div class="selectable-price" id="addon-price-wifi">+₹99.00/day</div>
                     </div>
                 </div>
             </div>
 
-            <!-- STEP 2: Driver Info -->
-            <div class="wizard-panel hidden" data-step="2">
+            <!-- STEP 3: Driver Info -->
+            <div class="wizard-panel hidden" data-step="3">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                     <div class="form-group"><label class="form-label">Primary Driver Full Name *</label><input
                             type="text" id="b-driver-name" class="form-control" required /></div>
@@ -153,16 +232,16 @@
                     <div class="form-group"><label class="form-label">Email Address</label><input type="email"
                             id="b-driver-email" class="form-control" /></div>
                     <div class="form-group"><label class="form-label">Driver's License Number</label><input type="text"
-                            id="b-driver-license" class="form-control" placeholder="e.g. DL-NY-9847291" /></div>
+                            id="b-driver-license" class="form-control" placeholder="e.g. WB-05-20260001234" /></div>
                 </div>
                 <div class="form-group"><label class="form-label">Special Requests / Pickup Notes
                         (Optional)</label><textarea id="b-special-requests" class="form-control" rows="3"
-                        placeholder="e.g. Flight arrival time..."></textarea></div>
+                        placeholder="e.g. Landmark near pickup hub, flight arrival time, or specific vehicle handover notes..."></textarea></div>
             </div>
 
-            <!-- STEP 3: Review & Coupon -->
-            <div class="wizard-panel hidden" data-step="3">
-                <div class="form-group">
+            <!-- STEP 4: Review & Payment -->
+            <div class="wizard-panel hidden" data-step="4">
+                <div class="form-group" style="margin-bottom:16px;">
                     <label class="form-label">Have a Promotional Coupon Code?</label>
                     <div style="display:flex; gap:8px;">
                         <input type="text" id="b-coupon-input" class="form-control"
@@ -173,11 +252,9 @@
                     <span style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Tip: Try code
                         <code>DRIVE20</code> for 20% discount!</span>
                 </div>
-                <div class="quote-summary-card" id="wizard-quote-summary"></div>
-            </div>
+                
+                <div class="quote-summary-card" id="wizard-quote-summary" style="margin-bottom:20px;"></div>
 
-            <!-- STEP 4: Payment Method -->
-            <div class="wizard-panel hidden" data-step="4">
                 <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px;">Choose Payment Method</h4>
                 <div class="selectable-cards">
                     <div class="selectable-card payment-card selected" data-provider="SANDBOX"
@@ -251,7 +328,7 @@
                     <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Print
                         Voucher</button>
                     <button class="btn btn-primary"
-                        onclick="BookingWizard.closeWizardModal(); CustomerPortal.openPortalModal('bookings');"><i
+                        onclick="BookingWizard.closeWizardModal(); window.location.href = '/customer-portal/?tab=bookings';"><i
                             class="fa-solid fa-user"></i> View in My Reservations</button>
                 </div>
             </div>
@@ -260,7 +337,7 @@
         <div class="modal-footer" id="wizard-modal-footer">
             <button class="btn btn-secondary" onclick="BookingWizard.prevStep()" id="wizard-prev-btn">Back</button>
             <button class="btn btn-primary" onclick="BookingWizard.nextStep()" id="wizard-next-btn">Continue</button>
-            <button class="btn btn-success hidden" id="pay-now-btn" onclick="BookingWizard.processFinalPayment()"><i
+            <button class="btn btn-primary hidden" id="pay-now-btn" onclick="BookingWizard.processFinalPayment()"><i
                     class="fa-solid fa-lock"></i> Pay & Confirm Reservation</button>
         </div>
     </div>

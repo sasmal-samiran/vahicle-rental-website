@@ -1,7 +1,7 @@
 from rest_framework import generics, viewsets, permissions, status
 from rest_framework.response import Response
 from .models import Review
-from .serializers import ReviewSerializer, ReviewCreateSerializer
+from .serializers import ReviewSerializer, ReviewCreateSerializer, ReviewUpdateSerializer
 
 class CarReviewListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
@@ -20,6 +20,16 @@ class CreateReviewView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         review = serializer.save()
         return Response(ReviewSerializer(review).data, status=status.HTTP_201_CREATED)
+
+class UpdateReviewView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ReviewUpdateSerializer
+    queryset = Review.objects.all()
+    lookup_field = 'booking__booking_code'
+    lookup_url_kwarg = 'booking_code'
+
+    def get_queryset(self):
+        return super().get_queryset().filter(customer=self.request.user)
 
 class AdminReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]

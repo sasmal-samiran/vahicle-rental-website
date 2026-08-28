@@ -1,7 +1,25 @@
 import json
 from rest_framework import serializers
 from django.db.models import Avg
+from django.utils.dateparse import parse_datetime, parse_date
 from .models import Category, Location, Car, CarImage
+
+def parse_datetime_param(val, is_end=False):
+    if not val:
+        return None
+    import datetime
+    from django.utils import timezone
+    val = str(val).strip()
+    dt = parse_datetime(val)
+    if dt is None and ' ' in val:
+        dt = parse_datetime(val.replace(' ', '+'))
+    if dt is None:
+        d = parse_date(val)
+        if d:
+            dt = datetime.datetime.combine(d, datetime.time.max if is_end else datetime.time.min)
+    if dt and timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    return dt
 
 class CategorySerializer(serializers.ModelSerializer):
     car_count = serializers.SerializerMethodField()
@@ -11,7 +29,7 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'icon', 'description', 'image_url', 'car_count']
 
     def get_car_count(self, obj):
-        return obj.cars.filter(status='AVAILABLE').count()
+        return obj.cars.exclude(status='INACTIVE').count()
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,6 +67,7 @@ class CarListSerializer(serializers.ModelSerializer):
     display_name = serializers.ReadOnlyField()
     average_rating = serializers.SerializerMethodField()
     total_reviews = serializers.SerializerMethodField()
+    is_available_for_dates = serializers.SerializerMethodField()
     main_image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
@@ -59,6 +78,7 @@ class CarListSerializer(serializers.ModelSerializer):
             'transmission', 'fuel_type', 'seats', 'doors', 'luggage_capacity',
             'mileage_limit', 'engine_capacity', 'power_hp', 'price_per_day',
             'security_deposit', 'primary_image', 'main_image', 'main_image_url', 'images', 'status',
+            'is_available_for_dates',
             'features', 'description', 'average_rating', 'total_reviews', 'created_at'
         ]
 
@@ -88,6 +108,26 @@ class CarListSerializer(serializers.ModelSerializer):
     def get_total_reviews(self, obj):
         return obj.reviews.filter(is_approved=True).count()
 
+    def get_is_available_for_dates(self, obj):
+        if obj.status != 'AVAILABLE':
+            return False
+        request = self.context.get('request')
+        if not request:
+            return True
+        pickup_str = request.query_params.get('pickup_date')
+        return_str = request.query_params.get('return_date')
+        if not pickup_str or not return_str:
+            return True
+
+        from apps.bookings.services import BookingService
+        start = parse_datetime_param(pickup_str, is_end=False)
+        end = parse_datetime_param(return_str, is_end=True)
+
+        if not start or not end:
+            return True
+
+        return BookingService.is_car_available(obj, start, end)
+
 class CarDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     location = LocationSerializer(read_only=True)
@@ -102,6 +142,7 @@ class CarDetailSerializer(serializers.ModelSerializer):
     display_name = serializers.ReadOnlyField()
     average_rating = serializers.SerializerMethodField()
     total_reviews = serializers.SerializerMethodField()
+    is_available_for_dates = serializers.SerializerMethodField()
     recent_reviews = serializers.SerializerMethodField()
     main_image = serializers.ImageField(required=False, allow_null=True)
 
@@ -112,7 +153,7 @@ class CarDetailSerializer(serializers.ModelSerializer):
             'category', 'category_id', 'location', 'location_id', 'transmission', 'fuel_type', 'seats', 'doors',
             'luggage_capacity', 'mileage_limit', 'engine_capacity', 'power_hp',
             'price_per_day', 'security_deposit', 'primary_image', 'main_image', 'main_image_url',
-            'images', 'status', 'features', 'description', 'average_rating',
+            'images', 'status', 'is_available_for_dates', 'features', 'description', 'average_rating',
             'total_reviews', 'recent_reviews', 'created_at', 'updated_at'
         ]
 
@@ -141,6 +182,26 @@ class CarDetailSerializer(serializers.ModelSerializer):
 
     def get_total_reviews(self, obj):
         return obj.reviews.filter(is_approved=True).count()
+
+    def get_is_available_for_dates(self, obj):
+        if obj.status != 'AVAILABLE':
+            return False
+        request = self.context.get('request')
+        if not request:
+            return True
+        pickup_str = request.query_params.get('pickup_date')
+        return_str = request.query_params.get('return_date')
+        if not pickup_str or not return_str:
+            return True
+
+        from apps.bookings.services import BookingService
+        start = parse_datetime_param(pickup_str, is_end=False)
+        end = parse_datetime_param(return_str, is_end=True)
+
+        if not start or not end:
+            return True
+
+        return BookingService.is_car_available(obj, start, end)
 
     def get_recent_reviews(self, obj):
         from apps.reviews.serializers import ReviewSerializer

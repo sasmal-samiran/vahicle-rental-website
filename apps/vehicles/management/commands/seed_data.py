@@ -22,62 +22,100 @@ class Command(BaseCommand):
         self.stdout.write('Starting database seeding...')
 
         # 1. Admin & Customer Users
-        admin_user, _ = User.objects.get_or_create(
-            username='admin',
+        admin_user1, _ = User.objects.get_or_create(
+            username='samiran',
             defaults={
-                'email': 'admin@carrental.com',
-                'phone_number': '+18005550199',
-                'first_name': 'System',
-                'last_name': 'Administrator',
+                'email': 'admin1@gmail.com',
+                'phone_number': '8710066414',
+                'first_name': 'Samiran',
+                'last_name': 'Sasmal',
                 'role': 'ADMIN',
                 'is_staff': True,
                 'is_superuser': True,
                 'is_phone_verified': True
             }
         )
-        admin_user.set_password('admin123')
-        admin_user.save()
+        admin_user1.set_password('samiran123')
+        admin_user1.save()
 
-        alex, _ = User.objects.get_or_create(
-            username='alex_morgan',
+        admin_user2, _ = User.objects.get_or_create(
+            username='asim',
             defaults={
-                'email': 'alex@example.com',
-                'phone_number': '+15551234567',
-                'first_name': 'Alex',
+                'email': 'admin2@gmail.com',
+                'phone_number': '9734635590',
+                'first_name': 'Asim',
+                'last_name': 'Giri',
+                'role': 'ADMIN',
+                'is_staff': True,
+                'is_superuser': True,
+                'is_phone_verified': True
+            }
+        )
+        admin_user2.set_password('asim123')
+        admin_user2.save()
+
+        admin_user3, _ = User.objects.get_or_create(
+            username='debargha',
+            defaults={
+                'email': 'admin3@gmail.com',
+                'phone_number': '8927057274',
+                'first_name': 'Debargha',
+                'last_name': 'Mondal',
+                'role': 'ADMIN',
+                'is_staff': True,
+                'is_superuser': True,
+                'is_phone_verified': True
+            }
+        )
+        admin_user3.set_password('debargha123')
+        admin_user3.save()
+
+        rahul, _ = User.objects.get_or_create(
+            username='rahul_morgan',
+            defaults={
+                'email': 'rahul@example.com',
+                'phone_number': '9835754632',
+                'first_name': 'Rahul',
                 'last_name': 'Morgan',
                 'role': 'CUSTOMER',
                 'driver_license_number': 'DL-NY-9847291',
-                'address': '742 Evergreen Terrace',
-                'city': 'New York',
+                'address': '12 Park Street',
+                'city': 'Kolkata',
                 'is_phone_verified': True
             }
         )
-        alex.set_password('user123')
-        alex.save()
+        rahul.set_password('rahul123')
+        rahul.save()
 
-        sarah, _ = User.objects.get_or_create(
-            username='sarah_j',
+        priya, _ = User.objects.get_or_create(
+            username='priya_j',
             defaults={
-                'email': 'sarah@example.com',
-                'phone_number': '+15559876543',
-                'first_name': 'Sarah',
+                'email': 'priya@example.com',
+                'phone_number': '8567439521',
+                'first_name': 'Priya',
                 'last_name': 'Jenkins',
                 'role': 'CUSTOMER',
                 'driver_license_number': 'DL-CA-4491028',
-                'address': '120 Ocean Avenue',
-                'city': 'Los Angeles',
+                'address': 'Jadavpur',
+                'city': 'Kolkata',
                 'is_phone_verified': True
             }
         )
-        sarah.set_password('user123')
-        sarah.save()
+        priya.set_password('priya123')
+        priya.save()
 
         # 2. Categories
         categories_data = [
             {'name': 'Luxury & Executive', 'slug': 'luxury', 'icon': 'fa-crown', 'description': 'Premium luxury sedans and executive cruisers with supreme comfort.', 'image_url': 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&q=80'},
             {'name': 'Electric & Hybrid', 'slug': 'electric', 'icon': 'fa-bolt', 'description': 'Eco-friendly high-tech zero-emission vehicles with instant torque.', 'image_url': 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=600&q=80'},
             {'name': 'SUVs & Crossovers', 'slug': 'suv', 'icon': 'fa-mountain', 'description': 'Spacious and capable vehicles suited for family trips and mountain adventures.', 'image_url': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=600&q=80'},
-            {'name': 'Sports & Performance', 'slug': 'sports', 'icon': 'fa-fire', 'description': 'Exhilarating acceleration, precise handling, and pure driving thrill.', 'image_url': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&q=80'},
+            {
+        'name': '7-Seater & Family',
+        'slug': 'family',
+        'icon': 'fa-users',
+        'description': 'Comfortable family vehicles with extra seating and luggage space for group travel and holidays.',
+        'image_url': 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=600&q=80'
+    },
             {'name': 'Sedans', 'slug': 'sedan', 'icon': 'fa-car-side', 'description': 'Comfortable, fuel-efficient daily commuter sedans with modern amenities.', 'image_url': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80'},
             {'name': 'Compact & Hatchback', 'slug': 'compact', 'icon': 'fa-car', 'description': 'Agile, easy to park, and extremely fuel-efficient city cars.', 'image_url': 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=600&q=80'},
         ]
@@ -89,178 +127,698 @@ class Command(BaseCommand):
 
         # 3. Hub Locations
         locations_data = [
-            {'name': 'Downtown Manhattan Hub', 'city': 'New York', 'address': '450 Lexington Ave, New York, NY 10017', 'phone': '+1 (212) 555-0144', 'email': 'manhattan@carrental.com'},
-            {'name': 'JFK International Airport (T4)', 'city': 'New York', 'address': 'JFK Terminal 4 Rental Concourse, Jamaica, NY 11430', 'phone': '+1 (718) 555-0192', 'email': 'jfk@carrental.com'},
-            {'name': 'LAX Airport Fleet Hub', 'city': 'Los Angeles', 'address': '9217 Airport Blvd, Los Angeles, CA 90045', 'phone': '+1 (310) 555-0188', 'email': 'lax@carrental.com'},
-            {'name': 'San Francisco Union Square', 'city': 'San Francisco', 'address': '333 Post St, San Francisco, CA 94108', 'phone': '+1 (415) 555-0120', 'email': 'sf@carrental.com'},
-            {'name': 'Miami South Beach Hub', 'city': 'Miami', 'address': '1100 Ocean Drive, Miami Beach, FL 33139', 'phone': '+1 (305) 555-0177', 'email': 'miami@carrental.com'},
-            {'name': 'Chicago O\'Hare Airport Hub', 'city': 'Chicago', 'address': '10000 W O\'Hare Ave, Chicago, IL 60666', 'phone': '+1 (773) 555-0163', 'email': 'chicago@carrental.com'},
-        ]
+    # ==================== KOLKATA ====================
+    {
+        'name': 'Kolkata Airport Hub',
+        'city': 'Kolkata',
+        'address': 'Netaji Subhas Chandra Bose International Airport, Kolkata, West Bengal 700052',
+        'phone': '+91 90000 10001',
+        'email': 'airport@driveluxe.in'
+    },
+    {
+        'name': 'Park Street Hub',
+        'city': 'Kolkata',
+        'address': 'Park Street, Kolkata, West Bengal 700016',
+        'phone': '+91 90000 10002',
+        'email': 'parkstreet@driveluxe.in'
+    },
+    {
+        'name': 'Salt Lake Sector V Hub',
+        'city': 'Kolkata',
+        'address': 'Sector V, Bidhannagar, Kolkata, West Bengal 700091',
+        'phone': '+91 90000 10003',
+        'email': 'saltlake@driveluxe.in'
+    },
+    {
+        'name': 'New Town Hub',
+        'city': 'Kolkata',
+        'address': 'New Town, Kolkata, West Bengal 700156',
+        'phone': '+91 90000 10004',
+        'email': 'newtown@driveluxe.in'
+    },
+    {
+        'name': 'Howrah Station Hub',
+        'city': 'Howrah',
+        'address': 'Howrah Railway Station Area, Howrah, West Bengal 711101',
+        'phone': '+91 90000 10005',
+        'email': 'howrah@driveluxe.in'
+    },
+    {
+        'name': 'Garia Hub',
+        'city': 'Kolkata',
+        'address': 'Garia, Kolkata, West Bengal 700084',
+        'phone': '+91 90000 10006',
+        'email': 'garia@driveluxe.in'
+    },
+    {
+        'name': 'Behala Hub',
+        'city': 'Kolkata',
+        'address': 'Behala, Kolkata, West Bengal 700034',
+        'phone': '+91 90000 10007',
+        'email': 'behala@driveluxe.in'
+    },
+
+    # ==================== SOUTH BENGAL ====================
+    {
+        'name': 'Durgapur Hub',
+        'city': 'Durgapur',
+        'address': 'City Centre, Durgapur, West Bengal 713216',
+        'phone': '+91 90000 10008',
+        'email': 'durgapur@driveluxe.in'
+    },
+    {
+        'name': 'Asansol Hub',
+        'city': 'Asansol',
+        'address': 'Asansol, West Bengal 713304',
+        'phone': '+91 90000 10009',
+        'email': 'asansol@driveluxe.in'
+    },
+    {
+        'name': 'Bardhaman Hub',
+        'city': 'Bardhaman',
+        'address': 'Bardhaman, West Bengal 713101',
+        'phone': '+91 90000 10010',
+        'email': 'bardhaman@driveluxe.in'
+    },
+    {
+        'name': 'Kharagpur Hub',
+        'city': 'Kharagpur',
+        'address': 'Kharagpur, West Bengal 721301',
+        'phone': '+91 90000 10011',
+        'email': 'kharagpur@driveluxe.in'
+    },
+    {
+        'name': 'Haldia Hub',
+        'city': 'Haldia',
+        'address': 'Haldia, Purba Medinipur, West Bengal 721607',
+        'phone': '+91 90000 10012',
+        'email': 'haldia@driveluxe.in'
+    },
+    {
+        'name': 'Digha Coastal Hub',
+        'city': 'Digha',
+        'address': 'Digha, Purba Medinipur, West Bengal 721428',
+        'phone': '+91 90000 10013',
+        'email': 'digha@driveluxe.in'
+    },
+    {
+        'name': 'Mandarmani Hub',
+        'city': 'Mandarmani',
+        'address': 'Mandarmani, Purba Medinipur, West Bengal 721423',
+        'phone': '+91 90000 10014',
+        'email': 'mandarmani@driveluxe.in'
+    },
+
+    # ==================== CENTRAL / CULTURAL ====================
+    {
+        'name': 'Shantiniketan Hub',
+        'city': 'Bolpur',
+        'address': 'Bolpur-Shantiniketan, Birbhum, West Bengal 731204',
+        'phone': '+91 90000 10015',
+        'email': 'shantiniketan@driveluxe.in'
+    },
+    {
+        'name': 'Bishnupur Heritage Hub',
+        'city': 'Bishnupur',
+        'address': 'Bishnupur, Bankura, West Bengal 722122',
+        'phone': '+91 90000 10016',
+        'email': 'bishnupur@driveluxe.in'
+    },
+    {
+        'name': 'Murshidabad Heritage Hub',
+        'city': 'Murshidabad',
+        'address': 'Murshidabad, West Bengal 742149',
+        'phone': '+91 90000 10017',
+        'email': 'murshidabad@driveluxe.in'
+    },
+    {
+        'name': 'Krishnanagar Hub',
+        'city': 'Krishnanagar',
+        'address': 'Krishnanagar, Nadia, West Bengal 741101',
+        'phone': '+91 90000 10018',
+        'email': 'krishnanagar@driveluxe.in'
+    },
+
+    # ==================== NORTH BENGAL ====================
+    {
+        'name': 'Siliguri Hub',
+        'city': 'Siliguri',
+        'address': 'Siliguri, West Bengal 734001',
+        'phone': '+91 90000 10019',
+        'email': 'siliguri@driveluxe.in'
+    },
+    {
+        'name': 'Bagdogra Airport Hub',
+        'city': 'Bagdogra',
+        'address': 'Bagdogra Airport Area, West Bengal 734421',
+        'phone': '+91 90000 10020',
+        'email': 'bagdogra@driveluxe.in'
+    },
+    {
+        'name': 'Darjeeling Hub',
+        'city': 'Darjeeling',
+        'address': 'Darjeeling, West Bengal 734101',
+        'phone': '+91 90000 10021',
+        'email': 'darjeeling@driveluxe.in'
+    },
+    {
+        'name': 'Kalimpong Hub',
+        'city': 'Kalimpong',
+        'address': 'Kalimpong, West Bengal 734301',
+        'phone': '+91 90000 10022',
+        'email': 'kalimpong@driveluxe.in'
+    },
+    {
+        'name': 'Jalpaiguri Hub',
+        'city': 'Jalpaiguri',
+        'address': 'Jalpaiguri, West Bengal 735101',
+        'phone': '+91 90000 10023',
+        'email': 'jalpaiguri@driveluxe.in'
+    },
+    {
+        'name': 'Cooch Behar Hub',
+        'city': 'Cooch Behar',
+        'address': 'Cooch Behar, West Bengal 736101',
+        'phone': '+91 90000 10024',
+        'email': 'coochbehar@driveluxe.in'
+    },
+    {
+        'name': 'Malda Hub',
+        'city': 'Malda',
+        'address': 'Malda, West Bengal 732101',
+        'phone': '+91 90000 10025',
+        'email': 'malda@driveluxe.in'
+    },
+
+    # ==================== HILL / NATURE ====================
+    {
+        'name': 'Dooars Hub',
+        'city': 'Lataguri',
+        'address': 'Lataguri, Jalpaiguri, West Bengal 735219',
+        'phone': '+91 90000 10026',
+        'email': 'dooars@driveluxe.in'
+    },
+    {
+        'name': 'Sundarbans Gateway Hub',
+        'city': 'Canning',
+        'address': 'Canning, South 24 Parganas, West Bengal 743329',
+        'phone': '+91 90000 10027',
+        'email': 'sundarbans@driveluxe.in'
+    }
+]
 
         loc_objs = []
+
         for loc in locations_data:
-            l_obj, _ = Location.objects.get_or_create(name=loc['name'], defaults=loc)
+            l_obj, _ = Location.objects.get_or_create(
+                name=loc['name'],
+                defaults=loc
+            )
             loc_objs.append(l_obj)
 
-        loc_ny = loc_objs[0]
-        loc_jfk = loc_objs[1]
-        loc_lax = loc_objs[2]
-        loc_sf = loc_objs[3]
-        loc_miami = loc_objs[4]
-        loc_chicago = loc_objs[5]
+        loc_kolkata_airport = loc_objs[0]
+        loc_park_street = loc_objs[1]
+        loc_salt_lake = loc_objs[2]
+        loc_new_town = loc_objs[3]
+        loc_howrah = loc_objs[4]
+        loc_garia = loc_objs[5]
+        loc_behala = loc_objs[6]
+
+        loc_durgapur = loc_objs[7]
+        loc_asansol = loc_objs[8]
+        loc_bardhaman = loc_objs[9]
+        loc_kharagpur = loc_objs[10]
+        loc_haldia = loc_objs[11]
+        loc_digha = loc_objs[12]
+        loc_mandarmani = loc_objs[13]
+
+        loc_shantiniketan = loc_objs[14]
+        loc_bishnupur = loc_objs[15]
+        loc_murshidabad = loc_objs[16]
+        loc_krishnanagar = loc_objs[17]
+
+        loc_siliguri = loc_objs[18]
+        loc_bagdogra = loc_objs[19]
+        loc_darjeeling = loc_objs[20]
+        loc_kalimpong = loc_objs[21]
+        loc_jalpaiguri = loc_objs[22]
+        loc_cooch_behar = loc_objs[23]
+        loc_malda = loc_objs[24]
+
+        loc_dooars = loc_objs[25]
+        loc_sundarbans = loc_objs[26]
 
         # 4. Fleet of Cars
         cars_data = [
-            {
-                'brand': 'Tesla', 'model': 'Model S Plaid', 'year': 2024, 'license_plate': 'NY-TSLA-01',
-                'category': cat_map['electric'], 'location': loc_ny,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'ELECTRIC', 'seats': 5, 'doors': 4,
-                'luggage_capacity': 4, 'mileage_limit': 'Unlimited', 'engine_capacity': 'Tri-Motor All-Wheel Drive',
-                'power_hp': 1020, 'price_per_day': Decimal('189.00'), 'security_deposit': Decimal('300.00'),
-                'main_image_path': 'media/cars/tesla_model_s.jpg',  # Provide local file path / image location here
-                'main_image_url': 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=1200&q=80',
-                'gallery_image_paths': [
-                    {'path': 'media/car_gallery/tesla_front.jpg', 'view_type': 'FRONT'},
-                    {'path': 'media/car_gallery/tesla_side.jpg', 'view_type': 'SIDE'},
-                    {'path': 'media/car_gallery/tesla_interior.jpg', 'view_type': 'INTERIOR'},
-                ],
-                'features': ['Full Self-Driving Capability', 'Yoke Steering Wheel', '17-inch Cinematic Display', 'Panoramic Glass Roof', 'Ventilated Heated Seats', 'Wireless Phone Charging', 'Premium 22-Speaker Audio'],
-                'description': 'Experience supercar performance in a whisper-quiet luxury electric sedan. 0-60 mph in 1.99s with over 390 miles of range.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Porsche', 'model': '911 Carrera S', 'year': 2024, 'license_plate': 'CA-PRSH-911',
-                'category': cat_map['sports'], 'location': loc_lax,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 4, 'doors': 2,
-                'luggage_capacity': 2, 'mileage_limit': '200 miles/day', 'engine_capacity': '3.0L Twin-Turbo Boxer 6',
-                'power_hp': 443, 'price_per_day': Decimal('249.00'), 'security_deposit': Decimal('500.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80',
-                'features': ['Sport Chrono Package', 'PDK 8-Speed Dual-Clutch', 'Bose Surround Sound', 'Active Suspension (PASM)', 'Sport Exhaust System', 'Apple CarPlay & Android Auto', 'Keyless Entry'],
-                'description': 'The definitive sports car. Unmatched balance, iconic silhouette, razor-sharp throttle response, and breathtaking handling.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'BMW', 'model': 'M4 Competition Coupe', 'year': 2024, 'license_plate': 'NY-BMWM-04',
-                'category': cat_map['sports'], 'location': loc_jfk,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 4, 'doors': 2,
-                'luggage_capacity': 3, 'mileage_limit': '250 miles/day', 'engine_capacity': '3.0L BMW M TwinPower Turbo',
-                'power_hp': 503, 'price_per_day': Decimal('195.00'), 'security_deposit': Decimal('400.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80',
-                'features': ['M Carbon Bucket Seats', 'Harman Kardon Audio', 'Head-Up Display', 'M xDrive AWD System', 'Adaptive M Suspension', 'Carbon Fiber Roof'],
-                'description': 'High-performance coupe precision engineered by BMW M GmbH. Exhilarating power meets daily drivability.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Mercedes-Benz', 'model': 'C300 4MATIC AMG Line', 'year': 2023, 'license_plate': 'FL-MBZ-300',
-                'category': cat_map['luxury'], 'location': loc_miami,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
-                'luggage_capacity': 3, 'mileage_limit': 'Unlimited', 'engine_capacity': '2.0L Inline-4 Turbo w/ Mild Hybrid',
-                'power_hp': 255, 'price_per_day': Decimal('115.00'), 'security_deposit': Decimal('200.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80',
-                'features': ['Burmester 3D Surround Sound', '64-Color Ambient Lighting', 'MBUX Augmented Video Navigation', 'Panoramic Sunroof', 'Blind Spot Assist', 'Heated Steering Wheel'],
-                'description': 'Sophisticated German engineering with cutting-edge digital cockpit and smooth, responsive driving dynamics.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Audi', 'model': 'Q7 55 TFSI Prestige', 'year': 2024, 'license_plate': 'IL-AUDI-07',
-                'category': cat_map['suv'], 'location': loc_chicago,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 7, 'doors': 4,
-                'luggage_capacity': 5, 'mileage_limit': 'Unlimited', 'engine_capacity': '3.0L V6 Turbocharged Quattro',
-                'power_hp': 335, 'price_per_day': Decimal('155.00'), 'security_deposit': Decimal('250.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1541348263662-e0c866c5c9e1?auto=format&fit=crop&w=1200&q=80',
-                'features': ['3 Rows / 7 Passenger Seating', 'Audi Virtual Cockpit Plus', 'Bang & Olufsen 3D Premium Sound', 'Adaptive Air Suspension', 'Top-View 360 Camera', 'Wireless Apple CarPlay'],
-                'description': 'The ultimate luxury 3-row family SUV with Quattro all-weather confidence and premium acoustic glass cabin.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Land Rover', 'model': 'Range Rover Sport HSE', 'year': 2024, 'license_plate': 'CA-RRSP-88',
-                'category': cat_map['luxury'], 'location': loc_sf,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
-                'luggage_capacity': 4, 'mileage_limit': 'Unlimited', 'engine_capacity': '3.0L Turbocharged i6 MHEV',
-                'power_hp': 395, 'price_per_day': Decimal('220.00'), 'security_deposit': Decimal('400.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=1200&q=80',
-                'features': ['Dynamic Air Suspension', 'Meridian Signature Sound System', 'Pivi Pro Curved Touchscreen', 'Terrain Response 2', 'Massage Seats', 'Soft-Close Doors'],
-                'description': 'Peerless luxury meets commanding all-terrain capability. Effortless power and refined road manners.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Ford', 'model': 'Mustang GT 5.0 V8 Convertible', 'year': 2023, 'license_plate': 'FL-MSTG-50',
-                'category': cat_map['sports'], 'location': loc_miami,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 4, 'doors': 2,
-                'luggage_capacity': 2, 'mileage_limit': 'Unlimited', 'engine_capacity': '5.0L Ti-VCT Coyote V8',
-                'power_hp': 450, 'price_per_day': Decimal('130.00'), 'security_deposit': Decimal('250.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=1200&q=80',
-                'features': ['Power Retractable Soft-Top', 'Active Valve Performance Exhaust', 'Brembo 6-Piston Brakes', 'B&O 12-Speaker Sound', 'Digital Instrument Cluster'],
-                'description': 'Iconic American muscle car with a roaring 5.0L V8 and open-top cruising thrill perfect for the coast.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Tesla', 'model': 'Model Y Long Range AWD', 'year': 2024, 'license_plate': 'CA-TSLA-0Y',
-                'category': cat_map['electric'], 'location': loc_sf,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'ELECTRIC', 'seats': 5, 'doors': 4,
-                'luggage_capacity': 5, 'mileage_limit': 'Unlimited', 'engine_capacity': 'Dual Motor All-Wheel Drive',
-                'power_hp': 384, 'price_per_day': Decimal('129.00'), 'security_deposit': Decimal('200.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1561580125-028ee3bd62eb?auto=format&fit=crop&w=1200&q=80',
-                'features': ['Autopilot Convenience Features', 'Huge Glass Roof', '330 Miles Range', 'HEPA Filtration System', 'Camp Mode & Dog Mode', 'Supercharger Access'],
-                'description': 'The world’s best-selling electric crossover. Superb efficiency, maximum cargo versatility, and instant acceleration.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Toyota', 'model': 'RAV4 Hybrid XSE AWD', 'year': 2024, 'license_plate': 'NY-TYTA-04',
-                'category': cat_map['suv'], 'location': loc_ny,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'HYBRID', 'seats': 5, 'doors': 4,
-                'luggage_capacity': 4, 'mileage_limit': 'Unlimited', 'engine_capacity': '2.5L 4-Cylinder Hybrid System',
-                'power_hp': 219, 'price_per_day': Decimal('75.00'), 'security_deposit': Decimal('150.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1581540222194-0def2dda95b8?auto=format&fit=crop&w=1200&q=80',
-                'features': ['40 MPG City/Highway', 'Toyota Safety Sense 2.5', 'JBL Premium Audio', 'Heated Front Seats', 'Apple CarPlay & Android Auto'],
-                'description': 'Reliable, highly fuel-efficient hybrid SUV ideal for road trips and city adventures alike.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Hyundai', 'model': 'Ioniq 5 Limited AWD', 'year': 2024, 'license_plate': 'IL-HYUN-05',
-                'category': cat_map['electric'], 'location': loc_chicago,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'ELECTRIC', 'seats': 5, 'doors': 4,
-                'luggage_capacity': 4, 'mileage_limit': 'Unlimited', 'engine_capacity': 'Dual Electric Motor AWD',
-                'power_hp': 320, 'price_per_day': Decimal('95.00'), 'security_deposit': Decimal('200.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80',
-                'features': ['Ultra-Fast 800V DC Charging', 'Vehicle-to-Load (V2L) Power', 'Sliding Center Console', 'Head-Up Display with AR', 'Smart Cruise Control'],
-                'description': 'Award-winning futuristic electric SUV with spacious lounge interior and lightning-fast charging capability.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Honda', 'model': 'Civic Touring Sedan', 'year': 2023, 'license_plate': 'CA-HND-10',
-                'category': cat_map['sedan'], 'location': loc_lax,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
-                'luggage_capacity': 3, 'mileage_limit': 'Unlimited', 'engine_capacity': '1.5L Turbo 4-Cylinder',
-                'power_hp': 180, 'price_per_day': Decimal('59.00'), 'security_deposit': Decimal('150.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=1200&q=80',
-                'features': ['Leather Trimmed Seats', 'Bose 12-Speaker Audio', 'Wireless Apple CarPlay', 'Honda Sensing Suite', 'Moonroof'],
-                'description': 'Smooth, comfortable, and economic executive compact sedan with class-leading safety features.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Volkswagen', 'model': 'Golf GTI Autobahn', 'year': 2024, 'license_plate': 'NY-VW-GTI',
-                'category': cat_map['compact'], 'location': loc_jfk,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
-                'luggage_capacity': 3, 'mileage_limit': 'Unlimited', 'engine_capacity': '2.0L TSI Turbocharged 4-Cyl',
-                'power_hp': 241, 'price_per_day': Decimal('68.00'), 'security_deposit': Decimal('150.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=1200&q=80',
-                'features': ['Sport Tuned Suspension', 'DCC Adaptive Chassis Control', 'Panoramic Sunroof', 'Harman Kardon Audio', 'Clark Plaid Interior Accents'],
-                'description': 'The original hot hatchback. Practical 5-door daily driver with sports-car agility and turbo punch.',
-                'status': 'AVAILABLE'
-            },
-            {
-                'brand': 'Cadillac', 'model': 'Escalade ESV Premium Luxury', 'year': 2023, 'license_plate': 'FL-CAD-09',
-                'category': cat_map['luxury'], 'location': loc_miami,
-                'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 8, 'doors': 4,
-                'luggage_capacity': 6, 'mileage_limit': 'Unlimited', 'engine_capacity': '6.2L V8 Engine',
-                'power_hp': 420, 'price_per_day': Decimal('275.00'), 'security_deposit': Decimal('500.00'),
-                'main_image_url': 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1200&q=80',
-                'features': ['38-inch Curved OLED Display', 'AKG Studio 36-Speaker Audio', 'Rear Seat Entertainment', 'Super Cruise Hands-Free Driving', 'Magnetic Ride Control'],
-                'description': 'The pinnacle of American full-size luxury SUVs. Seating for 8 VIPs with immense luggage volume.',
-                'status': 'AVAILABLE'
-            },
-        ]
+    # ==================== PREMIUM & LUXURY ====================
+    {
+        'brand': 'Toyota', 'model': 'Camry', 'year': 2024, 'license_plate': 'WB-01-LUX-01',
+        'category': cat_map['luxury'], 'location': loc_park_street,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'HYBRID', 'seats': 5, 'doors': 4,
+        'luggage_capacity': 3, 'mileage_limit': '250 km/day',
+        'engine_capacity': '2.5L Petrol Hybrid', 'power_hp': 215,
+        'price_per_day': Decimal('6500.00'), 'security_deposit': Decimal('15000.00'),
+        # 'main_image_path': 'media/cars/toyota_camry.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/camry_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/camry_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/camry_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Leather Seats', 'Panoramic Sunroof', 'Adaptive Cruise Control',
+            'Automatic Climate Control', 'Wireless Charging', 'Premium Audio'
+        ],
+        'description': 'Premium hybrid sedan ideal for executive travel, business meetings and comfortable long-distance journeys.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Mercedes-Benz', 'model': 'C-Class', 'year': 2024, 'license_plate': 'WB-02-LUX-02',
+        'category': cat_map['luxury'], 'location': loc_new_town,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
+        'luggage_capacity': 3, 'mileage_limit': '200 km/day',
+        'engine_capacity': '1.5L Turbo Petrol', 'power_hp': 201,
+        'price_per_day': Decimal('9500.00'), 'security_deposit': Decimal('25000.00'),
+        # 'main_image_path': 'media/cars/mercedes_c_class.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/mercedes_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/mercedes_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/mercedes_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'MBUX Infotainment', 'Leather Interior', 'Panoramic Sunroof',
+            'Ambient Lighting', '360-Degree Camera', 'Wireless Apple CarPlay'
+        ],
+        'description': 'Luxury executive sedan designed for premium city travel, corporate journeys and special occasions.',
+        'status': 'AVAILABLE'
+    },
+
+    # ==================== ELECTRIC & HYBRID ====================
+    {
+        'brand': 'Tata', 'model': 'Nexon EV', 'year': 2025, 'license_plate': 'WB-03-EV-01',
+        'category': cat_map['electric'], 'location': loc_salt_lake,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'ELECTRIC', 'seats': 5, 'doors': 5,
+        'luggage_capacity': 2, 'mileage_limit': '250 km/day',
+        'engine_capacity': 'Electric Motor', 'power_hp': 145,
+        'price_per_day': Decimal('2200.00'), 'security_deposit': Decimal('7000.00'),
+        # 'main_image_path': 'media/cars/tata_nexon_ev.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/nexon_ev_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/nexon_ev_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/nexon_ev_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Fast Charging', 'Touchscreen Infotainment', 'Connected Car Technology',
+            'Automatic Climate Control', 'Reverse Camera', 'Regenerative Braking'
+        ],
+        'description': 'Practical electric SUV for eco-friendly Kolkata commuting and short-distance trips.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'MG', 'model': 'ZS EV', 'year': 2024, 'license_plate': 'WB-04-EV-02',
+        'category': cat_map['electric'], 'location': loc_kolkata_airport,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'ELECTRIC', 'seats': 5, 'doors': 5,
+        'luggage_capacity': 3, 'mileage_limit': '250 km/day',
+        'engine_capacity': 'Electric Motor', 'power_hp': 174,
+        'price_per_day': Decimal('3000.00'), 'security_deposit': Decimal('8000.00'),
+        # 'main_image_path': 'media/cars/mg_zs_ev.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/mg_zs_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/mg_zs_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/mg_zs_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Panoramic Sunroof', 'Wireless Charging', '360-Degree Camera',
+            'Connected Car Features', 'Cruise Control', 'Premium Interior'
+        ],
+        'description': 'Premium electric SUV suitable for airport transfers, city travel and comfortable family journeys.',
+        'status': 'AVAILABLE'
+    },
+
+    # ==================== SUVs & MUVs ====================
+    {
+        'brand': 'Toyota', 'model': 'Innova Crysta', 'year': 2024, 'license_plate': 'WB-05-SUV-01',
+        'category': cat_map['suv'], 'location': loc_howrah,
+        'transmission': 'MANUAL', 'fuel_type': 'DIESEL', 'seats': 7, 'doors': 5,
+        'luggage_capacity': 4, 'mileage_limit': '300 km/day',
+        'engine_capacity': '2.4L Diesel', 'power_hp': 148,
+        'price_per_day': Decimal('3200.00'), 'security_deposit': Decimal('9000.00'),
+        # 'main_image_path': 'media/cars/innova_crysta.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/innova_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/innova_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/innova_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            '7 Seats', 'Captain Seats', 'Rear AC', 'Touchscreen Infotainment',
+            'Cruise Control', 'Large Luggage Space'
+        ],
+        'description': 'Spacious and reliable MUV ideal for family vacations, railway pickups and West Bengal intercity travel.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Mahindra', 'model': 'XUV700', 'year': 2025, 'license_plate': 'WB-06-SUV-02',
+        'category': cat_map['suv'], 'location': loc_durgapur,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 7, 'doors': 5,
+        'luggage_capacity': 4, 'mileage_limit': '300 km/day',
+        'engine_capacity': '2.0L Turbo Petrol', 'power_hp': 197,
+        'price_per_day': Decimal('3500.00'), 'security_deposit': Decimal('10000.00'),
+        # 'main_image_path': 'media/cars/mahindra_xuv700.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/xuv700_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/xuv700_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/xuv700_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'ADAS', 'Panoramic Sunroof', '7 Seats', '360-Degree Camera',
+            'Connected Car Technology', 'Dual-Zone Climate Control'
+        ],
+        'description': 'Powerful and feature-rich SUV for family road trips, highways and long-distance travel.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Mahindra', 'model': 'Scorpio-N', 'year': 2024, 'license_plate': 'WB-07-SUV-03',
+        'category': cat_map['suv'], 'location': loc_siliguri,
+        'transmission': 'MANUAL', 'fuel_type': 'DIESEL', 'seats': 7, 'doors': 5,
+        'luggage_capacity': 4, 'mileage_limit': '300 km/day',
+        'engine_capacity': '2.2L Diesel', 'power_hp': 172,
+        'price_per_day': Decimal('3000.00'), 'security_deposit': Decimal('9000.00'),
+        # 'main_image_path': 'media/cars/scorpio_n.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/scorpio_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/scorpio_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/scorpio_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            '7 Seats', 'High Ground Clearance', 'Terrain Modes',
+            'Hill Hold Assist', 'Cruise Control', 'Large Cabin'
+        ],
+        'description': 'Rugged SUV suited for North Bengal, Darjeeling, Kalimpong and challenging road conditions.',
+        'status': 'AVAILABLE'
+    },
+
+    # ==================== SEDANS ====================
+    {
+        'brand': 'Honda', 'model': 'City', 'year': 2024, 'license_plate': 'WB-08-SED-01',
+        'category': cat_map['sedan'], 'location': loc_park_street,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
+        'luggage_capacity': 3, 'mileage_limit': '250 km/day',
+        'engine_capacity': '1.5L Petrol', 'power_hp': 119,
+        'price_per_day': Decimal('2000.00'), 'security_deposit': Decimal('6000.00'),
+        # 'main_image_path': 'media/cars/honda_city.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/city_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/city_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/city_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Honda Sensing', 'Sunroof', 'Automatic Climate Control',
+            'Rear Camera', 'Cruise Control', 'Wireless Android Auto'
+        ],
+        'description': 'Comfortable and refined sedan for Kolkata city travel, business trips and intercity journeys.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Hyundai', 'model': 'Verna', 'year': 2025, 'license_plate': 'WB-09-SED-02',
+        'category': cat_map['sedan'], 'location': loc_new_town,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
+        'luggage_capacity': 3, 'mileage_limit': '250 km/day',
+        'engine_capacity': '1.5L Turbo Petrol', 'power_hp': 158,
+        'price_per_day': Decimal('2300.00'), 'security_deposit': Decimal('6500.00'),
+        # 'main_image_path': 'media/cars/hyundai_verna.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/verna_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/verna_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/verna_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'ADAS', 'Ventilated Seats', 'Electric Sunroof',
+            'Dual-Zone Climate Control', '360-Degree Camera', 'Wireless Charging'
+        ],
+        'description': 'Modern turbocharged sedan combining performance, comfort and advanced safety features.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Skoda', 'model': 'Slavia', 'year': 2024, 'license_plate': 'WB-10-SED-03',
+        'category': cat_map['sedan'], 'location': loc_durgapur,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
+        'luggage_capacity': 3, 'mileage_limit': '250 km/day',
+        'engine_capacity': '1.5L TSI Petrol', 'power_hp': 148,
+        'price_per_day': Decimal('2400.00'), 'security_deposit': Decimal('7000.00'),
+        # 'main_image_path': 'media/cars/skoda_slavia.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/slavia_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/slavia_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/slavia_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Turbo Petrol Engine', 'Ventilated Seats', 'Sunroof',
+            'Cruise Control', 'Touchscreen Infotainment', 'Large Boot'
+        ],
+        'description': 'Premium European-style sedan suitable for highway travel and comfortable intercity journeys.',
+        'status': 'AVAILABLE'
+    },
+
+    # ==================== HATCHBACK & COMPACT ====================
+    {
+        'brand': 'Maruti Suzuki', 'model': 'Swift', 'year': 2025, 'license_plate': 'WB-11-CMP-01',
+        'category': cat_map['compact'], 'location': loc_garia,
+        'transmission': 'MANUAL', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 5,
+        'luggage_capacity': 2, 'mileage_limit': '250 km/day',
+        'engine_capacity': '1.2L Petrol', 'power_hp': 80,
+        'price_per_day': Decimal('1200.00'), 'security_deposit': Decimal('4000.00'),
+        # 'main_image_path': 'media/cars/maruti_swift.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/swift_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/swift_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/swift_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Fuel Efficient', 'Reverse Parking Sensors', 'Touchscreen Infotainment',
+            'Android Auto', 'Air Conditioning', 'Compact Design'
+        ],
+        'description': 'Affordable and fuel-efficient hatchback ideal for everyday Kolkata commuting and city traffic.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Hyundai', 'model': 'i20', 'year': 2024, 'license_plate': 'WB-12-CMP-02',
+        'category': cat_map['compact'], 'location': loc_behala,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 5,
+        'luggage_capacity': 2, 'mileage_limit': '250 km/day',
+        'engine_capacity': '1.2L Petrol', 'power_hp': 82,
+        'price_per_day': Decimal('1500.00'), 'security_deposit': Decimal('4500.00'),
+        # 'main_image_path': 'media/cars/hyundai_i20.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/i20_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/i20_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/i20_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Automatic Transmission', 'Sunroof', 'Touchscreen Infotainment',
+            'Cruise Control', 'Rear Camera', 'Wireless Android Auto'
+        ],
+        'description': 'Premium compact hatchback that is easy to drive and park in busy Kolkata city traffic.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Tata', 'model': 'Altroz', 'year': 2024, 'license_plate': 'WB-13-CMP-03',
+        'category': cat_map['compact'], 'location': loc_howrah,
+        'transmission': 'MANUAL', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 5,
+        'luggage_capacity': 2, 'mileage_limit': '250 km/day',
+        'engine_capacity': '1.2L Petrol', 'power_hp': 86,
+        'price_per_day': Decimal('1300.00'), 'security_deposit': Decimal('4000.00'),
+        # 'main_image_path': 'media/cars/tata_altroz.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/altroz_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/altroz_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/altroz_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            '5-Star Safety Rating', 'Touchscreen Infotainment',
+            'Cruise Control', 'Rear Camera', 'Automatic Climate Control'
+        ],
+        'description': 'Safety-focused compact hatchback suitable for affordable daily and weekend travel.',
+        'status': 'AVAILABLE'
+    },
+
+    # ==================== 7-SEATER & FAMILY ====================
+    {
+        'brand': 'Maruti Suzuki', 'model': 'Ertiga', 'year': 2024, 'license_plate': 'WB-14-FAM-01',
+        'category': cat_map['family'], 'location': loc_siliguri,
+        'transmission': 'MANUAL', 'fuel_type': 'PETROL', 'seats': 7, 'doors': 5,
+        'luggage_capacity': 4, 'mileage_limit': '300 km/day',
+        'engine_capacity': '1.5L Petrol', 'power_hp': 102,
+        'price_per_day': Decimal('2200.00'), 'security_deposit': Decimal('6000.00'),
+        # 'main_image_path': 'media/cars/maruti_ertiga.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/ertiga_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/ertiga_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/ertiga_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            '7 Seats', 'Large Luggage Space', 'Rear AC',
+            'Touchscreen Infotainment', 'Fuel Efficient', 'Multiple USB Ports'
+        ],
+        'description': 'Practical 7-seater MPV for families travelling to Darjeeling, Dooars and other West Bengal destinations.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Kia', 'model': 'Carens', 'year': 2024, 'license_plate': 'WB-15-FAM-02',
+        'category': cat_map['family'], 'location': loc_bagdogra,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'DIESEL', 'seats': 7, 'doors': 5,
+        'luggage_capacity': 4, 'mileage_limit': '300 km/day',
+        'engine_capacity': '1.5L Diesel', 'power_hp': 113,
+        'price_per_day': Decimal('2800.00'), 'security_deposit': Decimal('7500.00'),
+        # 'main_image_path': 'media/cars/kia_carens.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/carens_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/carens_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/carens_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            '7 Seats', 'Ventilated Seats', 'Rear AC',
+            'Panoramic Sunroof', 'Cruise Control', 'Large Cabin'
+        ],
+        'description': 'Comfortable family MPV particularly suited for airport pickups and North Bengal holiday trips.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Toyota', 'model': 'Innova HyCross', 'year': 2025, 'license_plate': 'WB-16-FAM-03',
+        'category': cat_map['family'], 'location': loc_darjeeling,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'HYBRID', 'seats': 7, 'doors': 5,
+        'luggage_capacity': 4, 'mileage_limit': '300 km/day',
+        'engine_capacity': '2.0L Petrol Hybrid', 'power_hp': 183,
+        'price_per_day': Decimal('4000.00'), 'security_deposit': Decimal('12000.00'),
+        # 'main_image_path': 'media/cars/innova_hycross.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/hycross_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/hycross_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/hycross_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Hybrid Powertrain', '7 Seats', 'Captain Seats',
+            'Panoramic Sunroof', 'ADAS', 'Premium Interior'
+        ],
+        'description': 'Premium hybrid family vehicle for comfortable long-distance journeys across West Bengal.',
+        'status': 'AVAILABLE'
+    },
+
+    # ==================== TOURIST / NORTH BENGAL ====================
+    {
+        'brand': 'Toyota', 'model': 'Fortuner', 'year': 2024, 'license_plate': 'WB-17-TUR-01',
+        'category': cat_map['suv'], 'location': loc_darjeeling,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'DIESEL', 'seats': 7, 'doors': 5,
+        'luggage_capacity': 4, 'mileage_limit': '250 km/day',
+        'engine_capacity': '2.8L Turbo Diesel', 'power_hp': 201,
+        'price_per_day': Decimal('5000.00'), 'security_deposit': Decimal('15000.00'),
+        # 'main_image_path': 'media/cars/toyota_fortuner.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/fortuner_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/fortuner_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/fortuner_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            '4x4 Capability', '7 Seats', 'High Ground Clearance',
+            'Cruise Control', 'Terrain Assist', 'Premium Interior'
+        ],
+        'description': 'Premium rugged SUV suitable for North Bengal road trips, mountain travel and large family groups.',
+        'status': 'AVAILABLE'
+    },
+
+    # ==================== ECONOMICAL INTERCITY ====================
+    {
+        'brand': 'Maruti Suzuki', 'model': 'Dzire', 'year': 2025, 'license_plate': 'WB-18-ECO-01',
+        'category': cat_map['sedan'], 'location': loc_digha,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
+        'luggage_capacity': 3, 'mileage_limit': '300 km/day',
+        'engine_capacity': '1.2L Petrol', 'power_hp': 80,
+        'price_per_day': Decimal('1400.00'), 'security_deposit': Decimal('4000.00'),
+        # 'main_image_path': 'media/cars/maruti_dzire.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/dzire_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/dzire_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/dzire_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Excellent Fuel Economy', 'Automatic Transmission',
+            'Rear Camera', 'Touchscreen Infotainment', 'Large Boot'
+        ],
+        'description': 'Budget-friendly sedan ideal for affordable weekend trips to Digha, Mandarmani and nearby destinations.',
+        'status': 'AVAILABLE'
+    },
+
+    {
+        'brand': 'Hyundai', 'model': 'Creta', 'year': 2025, 'license_plate': 'WB-19-TRIP-01',
+        'category': cat_map['suv'], 'location': loc_shantiniketan,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 5,
+        'luggage_capacity': 3, 'mileage_limit': '300 km/day',
+        'engine_capacity': '1.5L Petrol', 'power_hp': 113,
+        'price_per_day': Decimal('2700.00'), 'security_deposit': Decimal('7500.00'),
+        # 'main_image_path': 'media/cars/hyundai_creta.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/creta_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/creta_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/creta_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Panoramic Sunroof', 'ADAS', 'Ventilated Seats',
+            '360-Degree Camera', 'Cruise Control', 'Connected Car Technology'
+        ],
+        'description': 'Comfortable crossover SUV ideal for weekend trips to Shantiniketan, Bishnupur and other destinations.',
+        'status': 'AVAILABLE'
+    },
+
+    # ==================== ADDITIONAL PREMIUM CAR ====================
+    {
+        'brand': 'Audi', 'model': 'A4', 'year': 2024, 'license_plate': 'WB-20-LUX-03',
+        'category': cat_map['luxury'], 'location': loc_new_town,
+        'transmission': 'AUTOMATIC', 'fuel_type': 'PETROL', 'seats': 5, 'doors': 4,
+        'luggage_capacity': 3, 'mileage_limit': '200 km/day',
+        'engine_capacity': '2.0L TFSI Turbo Petrol', 'power_hp': 187,
+        'price_per_day': Decimal('8500.00'), 'security_deposit': Decimal('22000.00'),
+        # 'main_image_path': 'media/cars/audi_a4.jpg',
+        'main_image_url': 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1200&q=80',
+        # 'gallery_image_paths': [
+        #     {'path': 'media/car_gallery/audi_a4_front.jpg', 'view_type': 'FRONT'},
+        #     {'path': 'media/car_gallery/audi_a4_side.jpg', 'view_type': 'SIDE'},
+        #     {'path': 'media/car_gallery/audi_a4_interior.jpg', 'view_type': 'INTERIOR'},
+        # ],
+        'features': [
+            'Virtual Cockpit', 'Leather Seats', 'LED Matrix Headlights',
+            'Premium Audio', 'Cruise Control', 'Wireless Charging'
+        ],
+        'description': 'Premium executive sedan for corporate travel, weddings, events and luxury journeys in Kolkata.',
+        'status': 'AVAILABLE'
+    },
+]
 
         created_cars = []
         for cdata in cars_data:
@@ -318,192 +876,318 @@ class Command(BaseCommand):
             defaults={
                 'discount_type': 'PERCENTAGE',
                 'discount_value': Decimal('20.00'),
-                'min_booking_amount': Decimal('50.00'),
-                'max_discount_amount': Decimal('200.00'),
+                'min_booking_amount': Decimal('3000.00'),
+                'max_discount_amount': Decimal('1500.00'),
                 'is_active': True
             }
         )
+
         Coupon.objects.get_or_create(
             code='WELCOME10',
             defaults={
                 'discount_type': 'PERCENTAGE',
                 'discount_value': Decimal('10.00'),
-                'min_booking_amount': Decimal('30.00'),
-                'is_active': True
-            }
-        )
-        Coupon.objects.get_or_create(
-            code='WEEKEND50',
-            defaults={
-                'discount_type': 'FIXED',
-                'discount_value': Decimal('50.00'),
-                'min_booking_amount': Decimal('200.00'),
+                'min_booking_amount': Decimal('1000.00'),
+                'max_discount_amount': Decimal('1000.00'),
                 'is_active': True
             }
         )
 
+        Coupon.objects.get_or_create(
+            code='WEEKEND500',
+            defaults={
+                'discount_type': 'FIXED',
+                'discount_value': Decimal('500.00'),
+                'min_booking_amount': Decimal('3000.00'),
+                'is_active': True
+            }
+        )
+
+        Coupon.objects.get_or_create(
+            code='TRIP1000',
+            defaults={
+                'discount_type': 'FIXED',
+                'discount_value': Decimal('1000.00'),
+                'min_booking_amount': Decimal('7000.00'),
+                'is_active': True
+            }
+        )
+
+        Coupon.objects.get_or_create(
+            code='WESTBENGAL15',
+            defaults={
+                'discount_type': 'PERCENTAGE',
+                'discount_value': Decimal('15.00'),
+                'min_booking_amount': Decimal('5000.00'),
+                'max_discount_amount': Decimal('2000.00'),
+                'is_active': True
+            }
+        )
+        
         # 6. Sample Bookings & Reviews
-        tesla_car = created_cars[0] # Tesla Model S
-        porsche_car = created_cars[1] # Porsche 911
-        bmw_car = created_cars[2] # BMW M4
-        mbz_car = created_cars[3] # Mercedes C300
+        swift_car = created_cars[0]       # Maruti Suzuki Swift
+        city_car = created_cars[1]        # Honda City
+        creta_car = created_cars[2]       # Hyundai Creta
+        innova_car = created_cars[3]      # Toyota Innova Crysta
 
         now = timezone.now()
 
-        # Completed Booking 1 for Alex (Tesla)
+        # ============================================================
+        # Completed Booking 1 - Rahul (Maruti Suzuki Swift)
+        # ============================================================
         b1, _ = Booking.objects.get_or_create(
-            booking_code='CR-2026-TSLA01',
+            booking_code='DL-2026-SWFT01',
             defaults={
-                'customer': alex,
-                'car': tesla_car,
-                'pickup_location': loc_ny,
-                'return_location': loc_ny,
+                'customer': rahul,
+                'car': swift_car,
+                'pickup_location': loc_kolkata_airport,
+                'return_location': loc_kolkata_airport,
                 'start_date': now - datetime.timedelta(days=12),
                 'end_date': now - datetime.timedelta(days=9),
                 'total_days': 3,
-                'daily_rate': tesla_car.price_per_day,
-                'rental_charge': tesla_car.price_per_day * 3,
-                'insurance_plan': 'PREMIUM',
-                'insurance_amount': Decimal('84.00'),
-                'tax_amount': Decimal('65.10'),
-                'deposit_amount': Decimal('300.00'),
-                'total_amount': Decimal('1016.10'),
+                'daily_rate': swift_car.price_per_day,
+                'rental_charge': swift_car.price_per_day * 3,
+                'insurance_plan': 'STANDARD',
+                'insurance_amount': Decimal('450.00'),
+                'tax_amount': Decimal('630.00'),
+                'deposit_amount': Decimal('5000.00'),
+                'total_amount': (
+                    swift_car.price_per_day * 3
+                    + Decimal('450.00')
+                    + Decimal('630.00')
+                ),
                 'status': 'COMPLETED',
                 'payment_status': 'PAID',
-                'driver_name': 'Alex Morgan',
-                'driver_phone': '+15551234567',
-                'driver_email': 'alex@example.com',
-                'driver_license': 'DL-NY-9847291'
+                'driver_name': 'Rahul Sharma',
+                'driver_phone': '+919876543210',
+                'driver_email': 'rahul.sharma@example.com',
+                'driver_license': 'WB-0120260012345'
             }
         )
+
         Payment.objects.get_or_create(
             booking=b1,
             defaults={
-                'transaction_id': 'TXN-DEMO-001',
-                'provider': 'SANDBOX',
+                'transaction_id': 'TXN-DL-001',
+                'provider': 'RAZORPAY',
                 'amount': b1.total_amount,
-                'currency': 'USD',
+                'currency': 'INR',
+                'status': 'SUCCESS',
+                'payment_method': 'UPI'
+            }
+        )
+
+        Review.objects.get_or_create(
+            booking=b1,
+            defaults={
+                'car': swift_car,
+                'customer': rahul,
+                'rating': 5,
+                'title': 'Perfect car for Kolkata city travel',
+                'comment': (
+                    'The Swift was clean and well maintained. Pickup at Kolkata '
+                    'Airport was smooth and the car was very easy to drive through '
+                    'Kolkata traffic. The booking process was quick and convenient.'
+                ),
+                'is_approved': True
+            }
+        )
+
+
+        # ============================================================
+        # Completed Booking 2 - Priya (Honda City)
+        # ============================================================
+        b2, _ = Booking.objects.get_or_create(
+            booking_code='DL-2026-CITY02',
+            defaults={
+                'customer': priya,
+                'car': city_car,
+                'pickup_location': loc_park_street,
+                'return_location': loc_park_street,
+                'start_date': now - datetime.timedelta(days=8),
+                'end_date': now - datetime.timedelta(days=5),
+                'total_days': 3,
+                'daily_rate': city_car.price_per_day,
+                'rental_charge': city_car.price_per_day * 3,
+                'insurance_plan': 'PREMIUM',
+                'insurance_amount': Decimal('900.00'),
+                'tax_amount': Decimal('1100.00'),
+                'deposit_amount': Decimal('10000.00'),
+                'total_amount': (
+                    city_car.price_per_day * 3
+                    + Decimal('900.00')
+                    + Decimal('1100.00')
+                ),
+                'status': 'COMPLETED',
+                'payment_status': 'PAID',
+                'driver_name': 'Priya Banerjee',
+                'driver_phone': '+919876543211',
+                'driver_email': 'priya.banerjee@example.com',
+                'driver_license': 'WB-0220260067890'
+            }
+        )
+
+        Payment.objects.get_or_create(
+            booking=b2,
+            defaults={
+                'transaction_id': 'TXN-DL-002',
+                'provider': 'RAZORPAY',
+                'amount': b2.total_amount,
+                'currency': 'INR',
                 'status': 'SUCCESS',
                 'payment_method': 'VISA (•••• 4242)'
             }
         )
+
         Review.objects.get_or_create(
-            booking=b1,
+            booking=b2,
             defaults={
-                'car': tesla_car,
-                'customer': alex,
+                'car': city_car,
+                'customer': priya,
                 'rating': 5,
-                'title': 'Unbelievable acceleration and flawless booking experience!',
-                'comment': 'The Tesla Model S Plaid was in pristine showroom condition with 100% battery at pickup. The instant OTP login and digital checkout took less than 2 minutes. Will definitely rent again!',
+                'title': 'Excellent car for a weekend trip',
+                'comment': (
+                    'The Honda City was comfortable and smooth throughout the trip. '
+                    'We used it for a Kolkata to Shantiniketan journey. The pickup '
+                    'and return process was simple and the vehicle was in excellent condition.'
+                ),
                 'is_approved': True
             }
         )
 
-        # Completed Booking 2 for Sarah (Porsche)
-        b2, _ = Booking.objects.get_or_create(
-            booking_code='CR-2026-PRSH02',
-            defaults={
-                'customer': sarah,
-                'car': porsche_car,
-                'pickup_location': loc_lax,
-                'return_location': loc_lax,
-                'start_date': now - datetime.timedelta(days=6),
-                'end_date': now - datetime.timedelta(days=4),
-                'total_days': 2,
-                'daily_rate': porsche_car.price_per_day,
-                'rental_charge': porsche_car.price_per_day * 2,
-                'insurance_plan': 'STANDARD',
-                'insurance_amount': Decimal('30.00'),
-                'tax_amount': Decimal('52.80'),
-                'deposit_amount': Decimal('500.00'),
-                'total_amount': Decimal('1080.80'),
-                'status': 'COMPLETED',
-                'payment_status': 'PAID',
-                'driver_name': 'Sarah Jenkins',
-                'driver_phone': '+15559876543',
-                'driver_email': 'sarah@example.com',
-                'driver_license': 'DL-CA-4491028'
-            }
-        )
-        Payment.objects.get_or_create(
-            booking=b2,
-            defaults={
-                'transaction_id': 'TXN-DEMO-002',
-                'provider': 'STRIPE',
-                'amount': b2.total_amount,
-                'currency': 'USD',
-                'status': 'SUCCESS',
-                'payment_method': 'MASTERCARD (•••• 8812)'
-            }
-        )
-        Review.objects.get_or_create(
-            booking=b2,
-            defaults={
-                'car': porsche_car,
-                'customer': sarah,
-                'rating': 5,
-                'title': 'Drove down Pacific Coast Highway - unforgettable!',
-                'comment': 'The Carrera S was pure perfection on PCH. Pick up at LAX was frictionless and customer support was wonderful.',
-                'is_approved': True
-            }
-        )
 
-        # Active Ongoing Booking (BMW M4)
+        # ============================================================
+        # Active Ongoing Booking - Arjun (Hyundai Creta)
+        # ============================================================
         b3, _ = Booking.objects.get_or_create(
-            booking_code='CR-2026-BMWM03',
+            booking_code='DL-2026-CRET03',
             defaults={
-                'customer': alex,
-                'car': bmw_car,
-                'pickup_location': loc_jfk,
-                'return_location': loc_jfk,
+                'customer': priya,
+                'car': creta_car,
+                'pickup_location': loc_siliguri,
+                'return_location': loc_darjeeling,
                 'start_date': now - datetime.timedelta(days=1),
-                'end_date': now + datetime.timedelta(days=2),
-                'total_days': 3,
-                'daily_rate': bmw_car.price_per_day,
-                'rental_charge': bmw_car.price_per_day * 3,
+                'end_date': now + datetime.timedelta(days=3),
+                'total_days': 4,
+                'daily_rate': creta_car.price_per_day,
+                'rental_charge': creta_car.price_per_day * 4,
                 'insurance_plan': 'PREMIUM',
-                'insurance_amount': Decimal('84.00'),
-                'tax_amount': Decimal('66.90'),
-                'deposit_amount': Decimal('400.00'),
-                'total_amount': Decimal('1135.90'),
+                'insurance_amount': Decimal('1200.00'),
+                'tax_amount': Decimal('1500.00'),
+                'deposit_amount': Decimal('15000.00'),
+                'total_amount': (
+                    creta_car.price_per_day * 4
+                    + Decimal('1200.00')
+                    + Decimal('1500.00')
+                ),
                 'status': 'ONGOING',
                 'payment_status': 'PAID',
-                'driver_name': 'Alex Morgan',
-                'driver_phone': '+15551234567',
-                'driver_email': 'alex@example.com',
-                'driver_license': 'DL-NY-9847291'
+                'driver_name': 'Arjun Das',
+                'driver_phone': '+919876543212',
+                'driver_email': 'arjun.das@example.com',
+                'driver_license': 'WB-0320260045678'
             }
         )
+
         Payment.objects.get_or_create(
             booking=b3,
             defaults={
-                'transaction_id': 'TXN-DEMO-003',
+                'transaction_id': 'TXN-DL-003',
                 'provider': 'RAZORPAY',
                 'amount': b3.total_amount,
-                'currency': 'USD',
+                'currency': 'INR',
                 'status': 'SUCCESS',
-                'payment_method': 'RAZORPAY_UPI'
+                'payment_method': 'RAZORPAY UPI'
             }
         )
 
+
+        # ============================================================
+        # Upcoming Booking - Sneha (Toyota Innova Crysta)
+        # ============================================================
+        b4, _ = Booking.objects.get_or_create(
+            booking_code='DL-2026-INNV04',
+            defaults={
+                'customer': rahul,
+                'car': innova_car,
+                'pickup_location': loc_new_town,
+                'return_location': loc_digha,
+                'start_date': now + datetime.timedelta(days=3),
+                'end_date': now + datetime.timedelta(days=6),
+                'total_days': 3,
+                'daily_rate': innova_car.price_per_day,
+                'rental_charge': innova_car.price_per_day * 3,
+                'insurance_plan': 'PREMIUM',
+                'insurance_amount': Decimal('1500.00'),
+                'tax_amount': Decimal('1800.00'),
+                'deposit_amount': Decimal('20000.00'),
+                'total_amount': (
+                    innova_car.price_per_day * 3
+                    + Decimal('1500.00')
+                    + Decimal('1800.00')
+                ),
+                'status': 'CONFIRMED',
+                'payment_status': 'PAID',
+                'driver_name': 'Sneha Mukherjee',
+                'driver_phone': '+919876543213',
+                'driver_email': 'sneha.mukherjee@example.com',
+                'driver_license': 'WB-0420260098765'
+            }
+        )
+
+        Payment.objects.get_or_create(
+            booking=b4,
+            defaults={
+                'transaction_id': 'TXN-DL-004',
+                'provider': 'RAZORPAY',
+                'amount': b4.total_amount,
+                'currency': 'INR',
+                'status': 'SUCCESS',
+                'payment_method': 'UPI'
+            }
+        )
+
+
+        # ============================================================
         # Notifications
+        # ============================================================
+
         Notification.objects.get_or_create(
-            user=alex,
+            user=priya,
             title='Upcoming Return Reminder',
             defaults={
-                'message': f'Your ongoing rental for {bmw_car.display_name} is scheduled for return at JFK Airport in 2 days.',
+                'message': (
+                    f'Your ongoing rental for {creta_car.display_name} is scheduled '
+                    'for return at Darjeeling Hub in 3 days.'
+                ),
                 'type': 'REMINDER'
             }
         )
+
         Notification.objects.get_or_create(
-            user=alex,
+            user=rahul,
+            title='Booking Confirmed',
+            defaults={
+                'message': (
+                    f'Your booking for {innova_car.display_name} from New Town '
+                    'to Digha has been confirmed successfully.'
+                ),
+                'type': 'BOOKING'
+            }
+        )
+
+        Notification.objects.get_or_create(
+            user=rahul,
             title='Special 20% Off Promotion',
             defaults={
-                'message': 'Use promo code DRIVE20 on your next booking to enjoy 20% off any vehicle!',
+                'message': (
+                    'Use promo code DRIVE20 on your next booking and enjoy '
+                    '20% off on selected vehicles!'
+                ),
                 'type': 'PROMO'
             }
         )
 
         self.stdout.write(self.style.SUCCESS('Database seeding completed successfully!'))
         self.stdout.write(self.style.SUCCESS('Admin Login: admin / admin123 (or OTP with +18005550199)'))
-        self.stdout.write(self.style.SUCCESS('Customer Login: alex_morgan / user123 (or OTP with +15551234567)'))
+        self.stdout.write(self.style.SUCCESS('Customer Login: rahul_morgan / user123 (or OTP with +15551234567)'))

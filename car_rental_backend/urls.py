@@ -25,6 +25,7 @@ urlpatterns = [
     # Frontend Single Page / Multi View Routes
     path('', TemplateView.as_view(template_name='base.html'), name='customer-home'),
     path('fleet/', TemplateView.as_view(template_name='fleet.html'), name='fleet-catalog'),
+    path('customer-portal/', TemplateView.as_view(template_name='customer_portal.html'), name='customer-portal'),
     path('admin-portal/', TemplateView.as_view(template_name='admin.html'), name='admin-portal'),
 ]
 

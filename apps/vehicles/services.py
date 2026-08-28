@@ -1,8 +1,31 @@
 import os
 import requests
+import uuid
 from django.core.files.base import ContentFile
+from django.utils.text import slugify
 from urllib.parse import urlparse
 from .models import Car, CarImage
+
+def rename_uploaded_image_file(uploaded_file, car, image_type='main', view_type=None):
+    """Assign a safe, descriptive filename to an uploaded car image."""
+    if not uploaded_file:
+        return uploaded_file
+
+    extension = os.path.splitext(uploaded_file.name or '')[1].lower() or '.jpg'
+    if isinstance(car, dict):
+        brand = car.get('brand', '')
+        model = car.get('model', '')
+        license_plate = car.get('license_plate', '')
+        fallback = 'car'
+    else:
+        brand = car.brand
+        model = car.model
+        license_plate = car.license_plate
+        fallback = f'car-{car.pk}'
+    car_name = slugify(f'{brand}-{model}-{license_plate}') or fallback
+    image_name = slugify(view_type or image_type) or 'image'
+    uploaded_file.name = f'{car_name}_{image_name}_{uuid.uuid4().hex[:10]}{extension}'
+    return uploaded_file
 
 def download_and_save_car_image(car, image_url, filename=None):
     """

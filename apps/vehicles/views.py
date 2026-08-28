@@ -13,11 +13,13 @@ from .serializers import (
     CarImageSerializer
 )
 from .filters import CarFilter
+from .services import rename_uploaded_image_file
 from apps.bookings.models import Booking
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    pagination_class = None
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -27,6 +29,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class LocationViewSet(viewsets.ModelViewSet):
     queryset = Location.objects.filter(is_active=True)
     serializer_class = LocationSerializer
+    pagination_class = None
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -36,16 +39,16 @@ class LocationViewSet(viewsets.ModelViewSet):
 class CarListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CarListSerializer
+    pagination_class = None
     filterset_class = CarFilter
     search_fields = ['brand', 'model', 'category__name', 'location__city', 'location__name', 'description']
     ordering_fields = ['price_per_day', 'year', 'created_at']
 
     def get_queryset(self):
         queryset = Car.objects.select_related('category', 'location').prefetch_related('images', 'reviews')
-        # If not admin, show only AVAILABLE cars by default (unless filtered)
+        # Public view excludes INACTIVE cars, showing AVAILABLE, RENTED, and MAINTENANCE cars
         if not (self.request.user.is_authenticated and self.request.user.is_staff):
-            if 'status' not in self.request.query_params:
-                queryset = queryset.filter(status='AVAILABLE')
+            queryset = queryset.exclude(status='INACTIVE')
         return queryset
 
 class CarDetailView(generics.RetrieveAPIView):
@@ -108,6 +111,7 @@ class CheckCarAvailabilityView(APIView):
 class AdminCarViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+    pagination_class = None
     queryset = Car.objects.all().order_by('-id')
     serializer_class = CarListSerializer
     filterset_class = CarFilter
@@ -119,10 +123,21 @@ class AdminCarViewSet(viewsets.ModelViewSet):
         return CarListSerializer
 
     def perform_create(self, serializer):
+        main_image = self.request.FILES.get('main_image')
+        if main_image:
+            rename_uploaded_image_file(main_image, serializer.validated_data, 'main')
         car = serializer.save()
         self._handle_gallery_uploads(car)
 
     def perform_update(self, serializer):
+        main_image = self.request.FILES.get('main_image')
+        if main_image:
+            car_fields = {
+                'brand': serializer.validated_data.get('brand', serializer.instance.brand),
+                'model': serializer.validated_data.get('model', serializer.instance.model),
+                'license_plate': serializer.validated_data.get('license_plate', serializer.instance.license_plate),
+            }
+            rename_uploaded_image_file(main_image, car_fields, 'main')
         car = serializer.save()
         self._handle_gallery_uploads(car)
 
@@ -135,6 +150,7 @@ class AdminCarViewSet(viewsets.ModelViewSet):
         for idx, img_file in enumerate(gallery_files):
             v_type = view_types[idx] if idx < len(view_types) else 'OTHER'
             cap = captions[idx] if idx < len(captions) else ''
+            rename_uploaded_image_file(img_file, car, 'gallery', v_type)
             CarImage.objects.create(
                 car=car,
                 image=img_file,

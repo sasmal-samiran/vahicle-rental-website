@@ -1,13 +1,13 @@
     <!-- Hero Section -->
     <header class="hero-section">
-        <div class="container hero-container" style="text-align: center; max-width: 860px;">
+        <div class="container hero-container" style="text-align: center; max-width: 1100px;">
             <div class="hero-badge">
                 <i class="fa-solid fa-bolt"></i> Instant 2-Minute Digital Rental Checkout
             </div>
-            <h1 class="hero-title" style="font-size: clamp(2.4rem, 5vw, 3.8rem); line-height: 1.15; margin-bottom: 20px;">
+            <h1 class="hero-title" style="font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.15; margin-bottom: 20px;">
                 Drive the <span class="text-gradient">Extraordinary</span> Every Journey.
             </h1>
-            <p class="hero-subtitle" style="font-size: 1.15rem; max-width: 680px; margin: 0 auto 36px;">
+            <p class="hero-subtitle" style="font-size: 1.18rem; max-width: 850px; margin: 0 auto 36px;">
                 Access luxury sedans, electric supercars, high-performance coupes, and 7-seat SUVs with contactless booking, transparent pricing, and zero hidden fees.
             </p>
 
@@ -159,61 +159,3 @@
         </div>
     </section>
 
-    <!-- 4. Customer Portal Modal -->
-    <div class="modal-backdrop" id="customer-portal-modal">
-        <div class="modal-card modal-card-lg">
-            <div class="modal-header">
-                <h3 class="modal-title"><i class="fa-solid fa-user-circle text-gradient"></i> Customer Portal</h3>
-                <button class="modal-close" onclick="CustomerPortal.closePortalModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div style="display:flex; gap:10px; margin-bottom:24px; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
-                    <button class="btn btn-sm portal-tab-btn active" data-tab="bookings"><i class="fa-solid fa-calendar-check"></i> My Reservations</button>
-                    <button class="btn btn-sm portal-tab-btn" data-tab="profile"><i class="fa-solid fa-id-card"></i> Profile & Driver License</button>
-                </div>
-                <div class="portal-panel" data-tab="bookings"><div id="portal-bookings-list"></div></div>
-                <div class="portal-panel hidden" data-tab="profile">
-                    <div style="max-width:540px; margin:0 auto;">
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                            <div class="form-group"><label class="form-label">First Name</label><input type="text" id="prof-first-name" class="form-control" /></div>
-                            <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="prof-last-name" class="form-control" /></div>
-                        </div>
-                        <div class="form-group"><label class="form-label">Email Address</label><input type="email" id="prof-email" class="form-control" /></div>
-                        <div class="form-group"><label class="form-label">Phone Number</label><input type="text" id="prof-phone" class="form-control" readonly style="opacity:0.7;" /></div>
-                        <div class="form-group"><label class="form-label">Driver's License Number</label><input type="text" id="prof-license" class="form-control" placeholder="DL-XX-XXXXXXX" /></div>
-                        <div class="form-group"><label class="form-label">Residential Address</label><input type="text" id="prof-address" class="form-control" /></div>
-                        <button type="button" class="btn btn-primary" onclick="CustomerPortal.saveProfile()">Save Changes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. Leave Review Modal -->
-    <div class="modal-backdrop" id="review-modal">
-        <div class="modal-card" style="max-width:480px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Review Your Rental Experience</h3>
-                <button class="modal-close" onclick="CustomerPortal.closeReviewModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="rev-booking-code" />
-                <div class="form-group" style="text-align:center; margin-bottom:20px;">
-                    <label class="form-label">Overall Rating</label>
-                    <div style="display:flex; justify-content:center; gap:12px; font-size:1.8rem; color:var(--warning); margin-top:8px;">
-                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="5" checked style="display:none;" />★ 5</label>
-                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="4" style="display:none;" />★ 4</label>
-                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="3" style="display:none;" />★ 3</label>
-                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="2" style="display:none;" />★ 2</label>
-                        <label style="cursor:pointer;"><input type="radio" name="rev-rating" value="1" style="display:none;" />★ 1</label>
-                    </div>
-                </div>
-                <div class="form-group"><label class="form-label">Review Headline</label><input type="text" id="rev-title" class="form-control" placeholder="e.g. Unforgettable trip!" /></div>
-                <div class="form-group"><label class="form-label">Detailed Feedback</label><textarea id="rev-comment" class="form-control" rows="4" placeholder="How was the vehicle condition, pickup process, and performance?"></textarea></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="CustomerPortal.closeReviewModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="CustomerPortal.submitReview()">Submit Review</button>
-            </div>
-        </div>
-    </div>

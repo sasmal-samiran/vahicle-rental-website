@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (document.getElementById('cars-grid-container') || document.getElementById('featured-cars-grid')) {
         Customer.init();
+    }
+
+    if (document.getElementById('customer-portal-container')) {
         CustomerPortal.init();
     }
 

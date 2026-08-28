@@ -12,7 +12,8 @@ export const Customer = {
         category: '',
         search: '',
         min_price: 0,
-        max_price: 350,
+        max_price: 10000,
+        status: '',
         transmission: '',
         fuel_type: '',
         seats: '',
@@ -45,6 +46,7 @@ export const Customer = {
         if (params.get('pickup_date')) this.filters.pickup_date = params.get('pickup_date');
         if (params.get('return_date')) this.filters.return_date = params.get('return_date');
         if (params.get('category')) this.filters.category = params.get('category');
+        if (params.get('status')) this.filters.status = params.get('status');
         if (params.get('search')) this.filters.search = params.get('search');
     },
 
@@ -79,7 +81,7 @@ export const Customer = {
         if (priceSlider) {
             priceSlider.addEventListener('input', (e) => {
                 this.filters.max_price = e.target.value;
-                if (priceMaxDisplay) priceMaxDisplay.innerText = `$${e.target.value}`;
+                if (priceMaxDisplay) priceMaxDisplay.innerText = `₹${e.target.value}`;
                 this.applyFiltersDebounced();
             });
         }
@@ -103,15 +105,28 @@ export const Customer = {
             });
         }
 
-        // Filter chips (Transmission, Fuel, Seats)
+        // Status dropdown selector
+        const statusSelect = document.getElementById('fleet-status-select');
+        if (statusSelect) {
+            if (this.filters.status) statusSelect.value = this.filters.status;
+            statusSelect.addEventListener('change', (e) => {
+                this.filters.status = e.target.value;
+                this.fetchCars();
+            });
+        }
+
+        // Filter chips (Status, Transmission, Fuel, Seats)
         document.querySelectorAll('.filter-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 const group = chip.dataset.group;
-                const value = chip.dataset.value;
+                const value = chip.dataset.value || '';
+                
                 document.querySelectorAll(`.filter-chip[data-group="${group}"]`).forEach(c => c.classList.remove('active'));
                 
-                if (this.filters[group] === value) {
+                if (this.filters[group] === value && value !== '') {
                     this.filters[group] = '';
+                    const defaultChip = document.querySelector(`.filter-chip[data-group="${group}"][data-value=""]`);
+                    if (defaultChip) defaultChip.classList.add('active');
                 } else {
                     chip.classList.add('active');
                     this.filters[group] = value;
@@ -251,6 +266,7 @@ export const Customer = {
             const params = {
                 category: this.filters.category,
                 search: this.filters.search,
+                status: this.filters.status,
                 max_price: this.filters.max_price,
                 transmission: this.filters.transmission,
                 fuel_type: this.filters.fuel_type,
@@ -264,7 +280,20 @@ export const Customer = {
             const data = await API.get('/cars/', params);
             this.cars = data.results || data;
 
-            if (countEl) countEl.innerText = `${this.cars.length} Vehicle${this.cars.length === 1 ? '' : 's'} Available`;
+            if (countEl) {
+                const total = this.cars.length;
+                const available = this.cars.filter(c => c.status === 'AVAILABLE' && c.is_available_for_dates !== false).length;
+                const bookedDates = this.cars.filter(c => c.status === 'AVAILABLE' && c.is_available_for_dates === false).length;
+                const rented = this.cars.filter(c => c.status === 'RENTED').length;
+                const maintenance = this.cars.filter(c => c.status === 'MAINTENANCE').length;
+                let breakdownParts = [];
+                if (available) breakdownParts.push(`${available} Available`);
+                if (bookedDates) breakdownParts.push(`${bookedDates} Booked for Dates`);
+                if (rented) breakdownParts.push(`${rented} Rented`);
+                if (maintenance) breakdownParts.push(`${maintenance} In Service`);
+                const breakdown = breakdownParts.length ? ` (${breakdownParts.join(', ')})` : '';
+                countEl.innerText = `${total} Vehicle${total === 1 ? '' : 's'}${breakdown}`;
+            }
             this.renderCars();
         } catch (err) {
             if (grid) grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--danger);">${err.message}</div>`;
@@ -276,7 +305,7 @@ export const Customer = {
         if (!grid) return;
         try {
             const data = await API.get('/cars/', { ordering: '-price_per_day' });
-            const cars = (data.results || data).slice(0, 4);
+            const cars = (data.results || data).slice(0, 8);
             grid.innerHTML = cars.map(car => this.generateCarCardHtml(car)).join('');
         } catch (e) {
             console.error('Featured cars error:', e);
@@ -284,13 +313,87 @@ export const Customer = {
     },
 
     generateCarCardHtml(car) {
+        let statusBadgeHtml = '';
+        let actionBtnHtml = '';
+        const isBookedForDates = car.status === 'AVAILABLE' && car.is_available_for_dates === false;
+
+        if (car.status === 'AVAILABLE' && !isBookedForDates) {
+            statusBadgeHtml = `
+                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(16,185,129,0.35); background:#10b981; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
+                    <i class="fa-solid fa-circle-check"></i> Available
+                </span>
+            `;
+            actionBtnHtml = `
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                    <i class="fa-regular fa-eye"></i> Details
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="BookingWizard.startBooking(${car.id})">
+                    <i class="fa-solid fa-key"></i> Book Now
+                </button>
+            `;
+        } else if (isBookedForDates) {
+            statusBadgeHtml = `
+                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(245,158,11,0.35); background:#f59e0b; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
+                    <i class="fa-solid fa-calendar-xmark"></i> Reserved for Dates
+                </span>
+            `;
+            actionBtnHtml = `
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                    <i class="fa-regular fa-eye"></i> Details
+                </button>
+                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="This vehicle has an active reservation for the selected date range.">
+                    <i class="fa-solid fa-calendar-xmark"></i> Booked for Dates
+                </button>
+            `;
+        } else if (car.status === 'RENTED') {
+            statusBadgeHtml = `
+                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(245,158,11,0.35); background:#f59e0b; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
+                    <i class="fa-solid fa-clock"></i> Currently Rented
+                </span>
+            `;
+            actionBtnHtml = `
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                    <i class="fa-regular fa-eye"></i> Details
+                </button>
+                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="This vehicle is currently on trip with another customer">
+                    <i class="fa-solid fa-clock"></i> Rented Out
+                </button>
+            `;
+        } else if (car.status === 'MAINTENANCE') {
+            statusBadgeHtml = `
+                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(239,68,68,0.35); background:#ef4444; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> In Maintenance
+                </span>
+            `;
+            actionBtnHtml = `
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                    <i class="fa-regular fa-eye"></i> Details
+                </button>
+                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="Undergoing routine mechanical maintenance">
+                    <i class="fa-solid fa-wrench"></i> In Service
+                </button>
+            `;
+        } else {
+            statusBadgeHtml = `
+                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; background:#64748b; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
+                    ${car.status}
+                </span>
+            `;
+            actionBtnHtml = `
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                    <i class="fa-regular fa-eye"></i> Details
+                </button>
+            `;
+        }
+
         return `
             <div class="car-card animate-slide-in">
-                <div class="car-img-wrapper">
+                <div class="car-img-wrapper" style="position:relative;">
                     <img src="${car.primary_image || car.main_image_url}" alt="${car.display_name}" loading="lazy" />
                     <span class="badge badge-primary car-category-badge">
                         <i class="fa-solid ${car.category?.icon || 'fa-car'}"></i> ${car.category?.name || 'Car'}
                     </span>
+                    ${statusBadgeHtml}
                     <div class="car-price-tag">
                         ${formatCurrency(car.price_per_day)}<span> /day</span>
                     </div>
@@ -315,12 +418,7 @@ export const Customer = {
                         <div class="car-spec-item"><i class="fa-solid fa-bolt"></i> ${car.power_hp} HP</div>
                     </div>
                     <div class="car-card-actions">
-                        <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
-                            <i class="fa-regular fa-eye"></i> Details
-                        </button>
-                        <button class="btn btn-primary btn-sm" onclick="BookingWizard.startBooking(${car.id})">
-                            <i class="fa-solid fa-key"></i> Book Now
-                        </button>
+                        ${actionBtnHtml}
                     </div>
                 </div>
             </div>
@@ -336,7 +434,7 @@ export const Customer = {
                 <div style="grid-column: 1/-1; text-align:center; padding:70px 20px; background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-color);">
                     <i class="fa-solid fa-car-side" style="font-size:3rem; color:var(--text-muted); margin-bottom:16px;"></i>
                     <h3 style="font-size:1.4rem; font-weight:700; margin-bottom:8px;">No Vehicles Match Your Search</h3>
-                    <p style="color:var(--text-secondary); max-width:460px; margin:0 auto 20px;">Try adjusting your dates, budget slider, or category filters to explore more cars.</p>
+                    <p style="color:var(--text-secondary); max-width:460px; margin:0 auto 20px;">Try adjusting your dates, budget slider, status, or category filters to explore more cars.</p>
                     <button class="btn btn-primary" onclick="Customer.resetFilters()">Reset All Filters</button>
                 </div>
             `;
@@ -349,18 +447,27 @@ export const Customer = {
     resetFilters() {
         this.filters.category = '';
         this.filters.search = '';
-        this.filters.max_price = 350;
+        this.filters.status = '';
+        this.filters.max_price = 10000;
         this.filters.transmission = '';
         this.filters.fuel_type = '';
         this.filters.seats = '';
         this.filters.ordering = '';
         
         const slider = document.getElementById('price-range-slider');
-        if (slider) slider.value = 350;
+        if (slider) slider.value = 10000;
+        const priceMaxDisplay = document.getElementById('price-max-display');
+        if (priceMaxDisplay) priceMaxDisplay.innerText = '₹10000';
         const searchInput = document.getElementById('fleet-search-input');
         if (searchInput) searchInput.value = '';
+
+        const statusSelect = document.getElementById('fleet-status-select');
+        if (statusSelect) statusSelect.value = '';
         
         document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        const allStatusChip = document.querySelector('.filter-chip[data-group="status"][data-value=""]');
+        if (allStatusChip) allStatusChip.classList.add('active');
+
         document.querySelectorAll('.category-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.slug === ''));
         this.fetchCars();
     },
@@ -373,7 +480,16 @@ export const Customer = {
             const modal = document.getElementById('car-detail-modal');
             if (!modal) return;
 
-            document.getElementById('detail-car-title').innerText = `${car.year} ${car.brand} ${car.model}`;
+            let modalStatusBadge = '';
+            if (car.status === 'AVAILABLE') {
+                modalStatusBadge = '<span class="badge" style="background:#10b981; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-circle-check"></i> Available</span>';
+            } else if (car.status === 'RENTED') {
+                modalStatusBadge = '<span class="badge" style="background:#f59e0b; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-clock"></i> Currently Rented</span>';
+            } else if (car.status === 'MAINTENANCE') {
+                modalStatusBadge = '<span class="badge" style="background:#ef4444; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-wrench"></i> In Maintenance</span>';
+            }
+
+            document.getElementById('detail-car-title').innerHTML = `${car.year} ${car.brand} ${car.model} ${modalStatusBadge}`;
             document.getElementById('detail-car-price').innerHTML = `${formatCurrency(car.price_per_day)}<span style="font-size:0.8rem; font-weight:normal; color:var(--text-secondary);"> /day</span>`;
             document.getElementById('detail-car-rating').innerHTML = `<i class="fa-solid fa-star" style="color:var(--warning);"></i> ${car.average_rating} (${car.total_reviews} reviews)`;
 
@@ -408,6 +524,7 @@ export const Customer = {
                 specsContainer.innerHTML = `
                     <tr><td>Brand & Model</td><td>${car.brand} ${car.model}</td></tr>
                     <tr><td>Model Year</td><td>${car.year}</td></tr>
+                    <tr><td>Status</td><td><strong>${car.status}</strong></td></tr>
                     <tr><td>Transmission</td><td>${car.transmission}</td></tr>
                     <tr><td>Engine / Powertrain</td><td>${car.engine_capacity || 'N/A'}</td></tr>
                     <tr><td>Horsepower</td><td>${car.power_hp} HP</td></tr>
@@ -441,8 +558,8 @@ export const Customer = {
                         <div style="padding:14px 0; border-bottom:1px solid var(--border-color);">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                                 <strong style="font-size:0.9rem;">${r.customer_name}</strong>
-                                <div style="color:var(--warning); font-size:0.8rem;">
-                                    ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
+                                <div style="font-size:0.8rem; display:flex; gap:2px;">
+                                    ${Array.from({length: 5}, (_, i) => `<i class="fa-solid fa-star" style="color:${i < r.rating ? '#f59e0b' : '#cbd5e1'};"></i>`).join('')}
                                 </div>
                             </div>
                             <div style="font-weight:600; font-size:0.85rem; margin-bottom:2px;">${r.title || ''}</div>
@@ -454,10 +571,41 @@ export const Customer = {
 
             const bookBtn = document.getElementById('detail-book-btn');
             if (bookBtn) {
-                bookBtn.onclick = () => {
-                    this.closeDetailModal();
-                    BookingWizard.startBooking(car.id);
-                };
+                const isBookedForDates = car.status === 'AVAILABLE' && car.is_available_for_dates === false;
+                if (car.status === 'AVAILABLE' && !isBookedForDates) {
+                    bookBtn.disabled = false;
+                    bookBtn.className = 'btn btn-primary';
+                    bookBtn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Book This Vehicle';
+                    bookBtn.title = 'Proceed to reserve this vehicle.';
+                    bookBtn.onclick = () => {
+                        this.closeDetailModal();
+                        BookingWizard.startBooking(car.id);
+                    };
+                } else if (isBookedForDates) {
+                    bookBtn.disabled = true;
+                    bookBtn.className = 'btn btn-secondary';
+                    bookBtn.innerHTML = '<i class="fa-solid fa-calendar-xmark"></i> Reserved for Selected Dates';
+                    bookBtn.title = 'This vehicle is booked by another customer for your selected dates. Please choose different dates or select another car.';
+                    bookBtn.onclick = null;
+                } else if (car.status === 'RENTED') {
+                    bookBtn.disabled = true;
+                    bookBtn.className = 'btn btn-secondary';
+                    bookBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Currently Rented Out';
+                    bookBtn.title = 'This vehicle is currently rented by another customer.';
+                    bookBtn.onclick = null;
+                } else if (car.status === 'MAINTENANCE') {
+                    bookBtn.disabled = true;
+                    bookBtn.className = 'btn btn-secondary';
+                    bookBtn.innerHTML = '<i class="fa-solid fa-wrench"></i> Currently In Service';
+                    bookBtn.title = 'This vehicle is undergoing routine maintenance.';
+                    bookBtn.onclick = null;
+                } else {
+                    bookBtn.disabled = true;
+                    bookBtn.className = 'btn btn-secondary';
+                    bookBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Unavailable';
+                    bookBtn.title = 'This vehicle is unavailable.';
+                    bookBtn.onclick = null;
+                }
             }
 
             modal.classList.add('active');

@@ -12,7 +12,7 @@ class Coupon(models.Model):
 
     code = models.CharField(max_length=30, unique=True, db_index=True)
     discount_type = models.CharField(max_length=15, choices=DISCOUNT_CHOICES, default='PERCENTAGE')
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2, help_text='Percentage (e.g. 20 for 20%) or Fixed dollar amount')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, help_text='Percentage (e.g. 20 for 20%) or Fixed rupee amount')
     min_booking_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     max_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     valid_from = models.DateTimeField(null=True, blank=True)

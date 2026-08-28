@@ -49,17 +49,20 @@
                         <i class="fa-solid fa-chevron-down" style="font-size:0.7rem; color:var(--text-muted);"></i>
                     </div>
                     <div class="dropdown-menu" id="nav-user-dropdown-menu">
-                        <div class="dropdown-item" onclick="CustomerPortal.openPortalModal('bookings')">
+                        <a href="/customer-portal/?tab=bookings" class="dropdown-item">
                             <i class="fa-solid fa-calendar-check" style="color:var(--primary);"></i> My Reservations
-                        </div>
-                        <div class="dropdown-item" onclick="CustomerPortal.openPortalModal('profile')">
+                        </a>
+                        <a href="/customer-portal/?tab=profile" class="dropdown-item">
                             <i class="fa-solid fa-user-gear" style="color:var(--info);"></i> Profile & License
-                        </div>
+                        </a>
+                        <a href="/customer-portal/?tab=reviews" class="dropdown-item">
+                            <i class="fa-solid fa-star" style="color:#eab308;"></i> My Reviews & Ratings
+                        </a>
                         <a href="/admin-portal/" class="dropdown-item hidden" id="nav-admin-link">
                             <i class="fa-solid fa-gauge-high" style="color:var(--warning);"></i> Admin Dashboard
                         </a>
                         <div class="dropdown-divider"></div>
-                        <div class="dropdown-item" onclick="Auth.logout()" style="color:var(--danger);">
+                        <div class="dropdown-item" onclick="Auth.logout()" style="color:var(--danger); cursor:pointer;">
                             <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
                         </div>
                     </div>
@@ -138,41 +141,84 @@
 
     {% block footer %}
     <!-- Footer -->
-    <footer style="background:#f1f5f9; border-top:1px solid var(--border-color); padding:60px 0 170px;">
+    <footer style="background:#f8fafc; color:var(--text-primary); border-top:1px solid var(--border-color); padding:64px 0 160px; font-size:0.9rem;">
         <div class="container">
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:40px; margin-bottom:40px;">
-                <div>
-                    <a href="/" class="brand-logo" style="margin-bottom:14px;">
-                        <i class="fa-solid fa-car-tunnel"></i>
-                        <span>Drive<span class="text-gradient">Luxe</span></span>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:40px; margin-bottom:48px;">
+                <!-- Col 1: Brand & Bio -->
+                <div style="max-width:320px;">
+                    <a href="/" class="brand-logo" style="margin-bottom:16px; display:inline-flex; align-items:center; gap:8px; text-decoration:none;">
+                        <i class="fa-solid fa-car-tunnel" style="color:var(--primary); font-size:1.4rem;"></i>
+                        <span style="font-size:1.3rem; font-weight:800; letter-spacing:-0.5px; color:var(--text-primary);">Drive<span class="text-gradient">Luxe</span></span>
                     </a>
-                    <p style="color:var(--text-secondary); font-size:0.85rem; line-height:1.6;">
-                        Next-generation online vahicles rental platform connecting customers with vehicles through easy booking, real-time availability, secure payments, and efficient fleet management.
+                    <p style="color:var(--text-secondary); font-size:0.85rem; line-height:1.65; margin-bottom:20px;">
+                        Premium online vehicle rental platform offering luxury sedans, electric performance cars, and SUVs with instant digital verification, zero hidden charges, and transparent pricing.
                     </p>
                 </div>
+
+                <!-- Col 2: Quick Links & Fleet -->
                 <div>
-                    <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:16px;">Quick Links</h4>
-                    <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:var(--text-secondary);">
-                        <li><a href="/fleet/">Fleet Catalog & Search</a></li>
-                        <li><a href="#features-section">Why Choose DriveLuxe</a></li>
-                        <li><a href="#how-it-works-section">How It Works</a></li>
-                        <li><a href="/admin-portal/">Admin Operational Dashboard</a></li>
+                    <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:18px; text-transform:uppercase; letter-spacing:0.8px;">Explore Fleet</h4>
+                    <ul style="list-style:none; display:flex; flex-direction:column; gap:10px; font-size:0.85rem; padding:0; margin:0;">
+                        <li><a href="/fleet/" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fa-solid fa-angle-right" style="font-size:0.7rem; color:var(--primary); margin-right:6px;"></i> All Available Vehicles</a></li>
+                        <li><a href="/fleet/?category=electric" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fa-solid fa-angle-right" style="font-size:0.7rem; color:var(--primary); margin-right:6px;"></i> Electric & Hybrid Fleet</a></li>
+                        <li><a href="/fleet/?category=luxury" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fa-solid fa-angle-right" style="font-size:0.7rem; color:var(--primary); margin-right:6px;"></i> Executive & Luxury Sedans</a></li>
+                        <li><a href="/fleet/?category=suv" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fa-solid fa-angle-right" style="font-size:0.7rem; color:var(--primary); margin-right:6px;"></i> 7-Seat & Family SUVs</a></li>
+                        <li><a href="/customer-portal/?tab=bookings" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'"><i class="fa-solid fa-angle-right" style="font-size:0.7rem; color:var(--primary); margin-right:6px;"></i> My Active Reservations</a></li>
                     </ul>
                 </div>
+
+                <!-- Col 3: Why Rent With Us / Guarantees -->
                 <div>
-                    <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:16px;">Hub Locations</h4>
-                    <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:var(--text-secondary);">
-                        <li>New York (Manhattan & JFK Airport)</li>
-                        <li>Los Angeles (LAX Airport Hub)</li>
-                        <li>San Francisco (Union Square)</li>
-                        <li>Miami (South Beach)</li>
-                        <li>Chicago (O'Hare Airport)</li>
+                    <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:18px; text-transform:uppercase; letter-spacing:0.8px;">DriveLuxe Promise</h4>
+                    <ul style="list-style:none; display:flex; flex-direction:column; gap:12px; font-size:0.85rem; color:var(--text-secondary); padding:0; margin:0;">
+                        <li style="display:flex; align-items:flex-start; gap:10px;">
+                            <i class="fa-solid fa-shield-halved" style="color:var(--success); margin-top:3px; font-size:0.9rem;"></i>
+                            <span><strong style="color:var(--text-primary);">Zero Hidden Charges</strong><br /><small style="color:var(--text-muted);">Transparent security deposits & daily rates.</small></span>
+                        </li>
+                        <li style="display:flex; align-items:flex-start; gap:10px;">
+                            <i class="fa-solid fa-bolt" style="color:#0ea5e9; margin-top:3px; font-size:0.9rem;"></i>
+                            <span><strong style="color:var(--text-primary);">Instant Digital Handover</strong><br /><small style="color:var(--text-muted);">Contactless mobile check-in & verification.</small></span>
+                        </li>
+                        <li style="display:flex; align-items:flex-start; gap:10px;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--warning); margin-top:3px; font-size:0.9rem;"></i>
+                            <span><strong style="color:var(--text-primary);">Showroom Sanitized</strong><br /><small style="color:var(--text-muted);">Thorough multi-point inspection before trips.</small></span>
+                        </li>
                     </ul>
+                </div>
+
+                <!-- Col 4: 24/7 VIP Concierge & Support -->
+                <div>
+                    <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-bottom:18px; text-transform:uppercase; letter-spacing:0.8px;">24/7 Concierge Support</h4>
+                    <p style="color:var(--text-secondary); font-size:0.85rem; line-height:1.5; margin-bottom:16px;">
+                        Need assistance with a reservation or on-road emergency? Our VIP concierge team is on standby around the clock.
+                    </p>
+                    <div style="background:#ffffff; border-radius:var(--radius-md); padding:14px 16px; margin-bottom:14px; border:1px solid var(--border-color); box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                            <i class="fa-solid fa-headset" style="color:var(--primary); font-size:1.1rem;"></i>
+                            <a href="tel:+18005555893" style="color:var(--text-primary); font-weight:700; font-size:0.95rem; text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-primary)'">+1 (800) 555-LUXE</a>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px; font-size:0.8rem; color:var(--text-secondary);">
+                            <i class="fa-regular fa-envelope" style="color:var(--primary);"></i>
+                            <a href="mailto:concierge@driveluxe.com" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'">concierge@driveluxe.com</a>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--success);">
+                        <span style="width:8px; height:8px; border-radius:50%; background:var(--success); display:inline-block; box-shadow:0 0 8px rgba(16, 185, 129, 0.5);"></span>
+                        <span>Live Roadside Support: Active & Online</span>
+                    </div>
                 </div>
             </div>
-            <div style="border-top:1px solid var(--border-color); padding-top:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:0.8rem; color:var(--text-muted);">
-                <div>&copy; 2026 DriveLuxe Technologies Inc. All rights reserved.</div>
-                <div>Demo Accounts: Customer (<code>+15551234567</code> / <code>user123</code>) • Admin (<code>admin</code> / <code>admin123</code>)</div>
+
+            <!-- Bottom Copyright & Compliance Bar -->
+            <div style="border-top:1px solid var(--border-color); padding-top:28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; font-size:0.8rem; color:var(--text-muted);">
+                <div>
+                    &copy; 2026 DriveLuxe Technologies Inc. All rights reserved. &bull; Licensed Vehicle Rental Operator.
+                </div>
+                <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+                    <a href="#features-section" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'">Terms of Service</a>
+                    <a href="#features-section" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'">Privacy Policy</a>
+                    <a href="#features-section" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'">Rental Agreement</a>
+                </div>
             </div>
         </div>
     </footer>

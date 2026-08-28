@@ -12,3 +12,6 @@ db.sqlite3
 
 # extra 
 tests/
+*.jpg
+*.png
+*webp

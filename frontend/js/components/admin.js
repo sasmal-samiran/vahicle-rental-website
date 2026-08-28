@@ -12,6 +12,7 @@ export const Admin = {
     customers: [],
     payments: [],
     reviews: [],
+    coupons: [],
     categories: [],
     locations: [],
 
@@ -49,6 +50,7 @@ export const Admin = {
                 if (view === 'customers') this.loadCustomers();
                 if (view === 'payments') this.loadPayments();
                 if (view === 'reviews') this.loadReviews();
+                if (view === 'coupons') this.loadCoupons();
             });
         });
     },
@@ -62,14 +64,23 @@ export const Admin = {
             this.categories = catData.results || catData;
             this.locations = locData.results || locData;
 
-            // Populate Category and Location dropdowns in Car modal
+            // Populate Category and Location dropdowns in Car modal & Fleet Filter toolbar
             const catSelect = document.getElementById('car-modal-category');
             const locSelect = document.getElementById('car-modal-location');
+            const filterCatSelect = document.getElementById('fleet-filter-category');
+            const filterLocSelect = document.getElementById('fleet-filter-location');
+
             if (catSelect) {
                 catSelect.innerHTML = this.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             }
             if (locSelect) {
                 locSelect.innerHTML = this.locations.map(l => `<option value="${l.id}">${l.name} (${l.city})</option>`).join('');
+            }
+            if (filterCatSelect) {
+                filterCatSelect.innerHTML = '<option value="">All Categories</option>' + this.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+            if (filterLocSelect) {
+                filterLocSelect.innerHTML = '<option value="">All Locations</option>' + this.locations.map(l => `<option value="${l.id}">${l.name} (${l.city})</option>`).join('');
             }
         } catch (e) {
             console.error('Metadata error:', e);
@@ -233,28 +244,98 @@ export const Admin = {
         try {
             const data = await API.get('/admin/cars/');
             this.fleet = data.results || data;
-            this.renderFleetTable();
+            this.applyFleetFilters();
         } catch (e) {
             Toast.error('Could not load fleet.');
         }
     },
 
-    renderFleetTable() {
+    applyFleetFilters() {
+        const searchQuery = (document.getElementById('fleet-filter-search')?.value || '').trim().toLowerCase();
+        const categoryId = document.getElementById('fleet-filter-category')?.value || '';
+        const locationId = document.getElementById('fleet-filter-location')?.value || '';
+        const status = document.getElementById('fleet-filter-status')?.value || '';
+        const fuel = document.getElementById('fleet-filter-fuel')?.value || '';
+        const transmission = document.getElementById('fleet-filter-transmission')?.value || '';
+        const sortBy = document.getElementById('fleet-filter-sort')?.value || 'newest';
+
+        let filtered = this.fleet.filter(car => {
+            if (searchQuery) {
+                const combined = `${car.brand} ${car.model} ${car.license_plate} ${car.category?.name || ''} ${car.location?.name || ''} ${car.location?.city || ''}`.toLowerCase();
+                if (!combined.includes(searchQuery)) return false;
+            }
+            if (categoryId && String(car.category?.id) !== String(categoryId)) return false;
+            if (locationId && String(car.location?.id) !== String(locationId)) return false;
+            if (status && car.status !== status) return false;
+            if (fuel && car.fuel_type !== fuel) return false;
+            if (transmission && car.transmission !== transmission) return false;
+            return true;
+        });
+
+        // Sorting
+        if (sortBy === 'price_asc') {
+            filtered.sort((a, b) => parseFloat(a.price_per_day) - parseFloat(b.price_per_day));
+        } else if (sortBy === 'price_desc') {
+            filtered.sort((a, b) => parseFloat(b.price_per_day) - parseFloat(a.price_per_day));
+        } else if (sortBy === 'brand_asc') {
+            filtered.sort((a, b) => a.brand.localeCompare(b.brand));
+        } else if (sortBy === 'year_desc') {
+            filtered.sort((a, b) => b.year - a.year);
+        } else {
+            // newest (by id desc)
+            filtered.sort((a, b) => b.id - a.id);
+        }
+
+        const countEl = document.getElementById('fleet-filter-count');
+        if (countEl) {
+            countEl.innerText = `Showing ${filtered.length} of ${this.fleet.length} vehicles`;
+        }
+
+        this.renderFleetTable(filtered);
+    },
+
+    resetFleetFilters() {
+        const search = document.getElementById('fleet-filter-search');
+        const cat = document.getElementById('fleet-filter-category');
+        const loc = document.getElementById('fleet-filter-location');
+        const stat = document.getElementById('fleet-filter-status');
+        const fuel = document.getElementById('fleet-filter-fuel');
+        const trans = document.getElementById('fleet-filter-transmission');
+        const sort = document.getElementById('fleet-filter-sort');
+
+        if (search) search.value = '';
+        if (cat) cat.value = '';
+        if (loc) loc.value = '';
+        if (stat) stat.value = '';
+        if (fuel) fuel.value = '';
+        if (trans) trans.value = '';
+        if (sort) sort.value = 'newest';
+
+        this.applyFleetFilters();
+    },
+
+    renderFleetTable(list = null) {
         const tbody = document.getElementById('admin-fleet-tbody');
         if (!tbody) return;
 
-        tbody.innerHTML = this.fleet.map(car => `
+        const displayList = list !== null ? list : this.fleet;
+        if (!displayList.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:32px 16px; color:var(--text-muted);"><i class="fa-solid fa-car-side" style="font-size:2rem; margin-bottom:8px; display:block; opacity:0.5;"></i>No vehicles match your active filter criteria. <button type="button" class="btn btn-outline btn-sm" style="margin-left:8px;" onclick="Admin.resetFleetFilters()">Reset Filters</button></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = displayList.map(car => `
             <tr>
                 <td>
                     <img src="${car.primary_image || car.main_image_url}" class="table-thumb" alt="${car.display_name}" />
                 </td>
                 <td>
                     <strong>${car.brand} ${car.model}</strong>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">${car.year} • ${car.transmission}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${car.year} • ${car.transmission} • ${car.fuel_type}</div>
                 </td>
                 <td><span class="badge badge-primary">${car.category?.name || 'Standard'}</span></td>
                 <td><span style="font-family:monospace; font-weight:700;">${car.license_plate}</span></td>
-                <td>${car.location?.city || 'Hub'}</td>
+                <td>${car.location?.name || car.location?.city || 'Hub'}</td>
                 <td><strong>${formatCurrency(car.price_per_day)}</strong></td>
                 <td>
                     <select class="form-control" style="padding:4px 8px; font-size:0.8rem;" onchange="Admin.updateCarStatus(${car.id}, this.value)">
@@ -266,8 +347,8 @@ export const Admin = {
                 </td>
                 <td>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn btn-outline btn-sm" onclick="Admin.openEditCarModal(${car.id})"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-danger btn-sm" onclick="Admin.deleteCar(${car.id})"><i class="fa-solid fa-trash"></i></button>
+                        <button class="btn btn-outline btn-sm" title="Edit Vehicle" onclick="Admin.openEditCarModal(${car.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-danger btn-sm" title="Delete Vehicle" onclick="Admin.deleteCar(${car.id})"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -665,7 +746,7 @@ export const Admin = {
             <tr>
                 <td><strong>${r.customer_name}</strong></td>
                 <td>${r.car_name}</td>
-                <td><span style="color:var(--warning);">${'★'.repeat(r.rating)}</span> (${r.rating}/5)</td>
+                <td><span style="display:inline-flex; gap:2px; align-items:center;">${Array.from({length: 5}, (_, i) => `<i class="fa-solid fa-star" style="color:${i < r.rating ? '#f59e0b' : '#cbd5e1'}; font-size:0.75rem;"></i>`).join('')}</span> <span style="font-size:0.8rem; color:var(--text-muted); margin-left:4px;">(${r.rating}/5)</span></td>
                 <td>
                     <strong>${r.title || ''}</strong>
                     <div style="font-size:0.8rem; color:var(--text-secondary); max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.comment}</div>
@@ -688,6 +769,267 @@ export const Admin = {
             this.loadReviews();
         } catch (e) {
             Toast.error(e.message);
+        }
+    },
+
+    // Coupons & Promos Management
+    async loadCoupons() {
+        const tbody = document.getElementById('admin-coupons-tbody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px;"><i class="fa-solid fa-spinner fa-spin text-gradient" style="font-size:2rem;"></i></td></tr>';
+
+        try {
+            const search = document.getElementById('coupon-search-input')?.value.trim() || '';
+            const status = document.getElementById('coupon-status-filter')?.value || '';
+            
+            const params = {};
+            if (search) params.search = search;
+            if (status !== '') params.is_active = status;
+
+            const data = await API.get('/admin/coupons/', params);
+            this.coupons = data.results || data;
+            this.renderCouponsTable();
+        } catch (e) {
+            Toast.error('Could not load coupons.');
+        }
+    },
+
+    filterCoupons() {
+        this.loadCoupons();
+    },
+
+    resetCouponFilters() {
+        const searchInput = document.getElementById('coupon-search-input');
+        if (searchInput) searchInput.value = '';
+        const statusFilter = document.getElementById('coupon-status-filter');
+        if (statusFilter) statusFilter.value = '';
+        this.loadCoupons();
+    },
+
+    renderCouponsTable() {
+        const tbody = document.getElementById('admin-coupons-tbody');
+        if (!tbody) return;
+
+        if (!this.coupons.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:40px 20px; color:var(--text-muted);">
+                        <i class="fa-solid fa-tags" style="font-size:2rem; margin-bottom:8px; display:block; opacity:0.5;"></i>
+                        No coupons found matching your search.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = this.coupons.map(c => {
+            const isPercentage = c.discount_type === 'PERCENTAGE';
+            const discountLabel = isPercentage
+                ? `<span class="badge badge-primary" style="font-weight:700;"><i class="fa-solid fa-percent"></i> ${parseFloat(c.discount_value)}% OFF</span>`
+                : `<span class="badge badge-info" style="font-weight:700;"><i class="fa-solid fa-tag"></i> ${formatCurrency(c.discount_value)} OFF</span>`;
+
+            const minSpend = parseFloat(c.min_booking_amount) > 0 ? formatCurrency(c.min_booking_amount) : 'None';
+            const maxCap = c.max_discount_amount && parseFloat(c.max_discount_amount) > 0 ? formatCurrency(c.max_discount_amount) : 'Unlimited';
+
+            let validityText = 'No Expiry (Always Valid)';
+            if (c.valid_from && c.valid_until) {
+                validityText = `${formatDate(c.valid_from)} – ${formatDate(c.valid_until)}`;
+            } else if (c.valid_until) {
+                validityText = `Expires: ${formatDate(c.valid_until)}`;
+            } else if (c.valid_from) {
+                validityText = `From: ${formatDate(c.valid_from)}`;
+            }
+
+            const now = new Date();
+            const isExpired = c.valid_until && new Date(c.valid_until) < now;
+            let statusBadge = c.is_active
+                ? `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Active</span>`
+                : `<span class="badge badge-danger"><i class="fa-solid fa-circle-xmark"></i> Inactive</span>`;
+            if (isExpired) {
+                statusBadge = `<span class="badge" style="background:#64748b; color:#fff;"><i class="fa-solid fa-clock"></i> Expired</span>`;
+            }
+
+            return `
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-family:monospace; font-weight:800; font-size:1rem; letter-spacing:0.5px; background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:var(--radius-sm);">${c.code}</span>
+                            <button type="button" class="btn btn-outline btn-sm" style="padding:2px 6px; font-size:0.7rem;" onclick="navigator.clipboard.writeText('${c.code}'); Toast.success('Copied coupon code ${c.code}!');" title="Copy code">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td>${discountLabel}</td>
+                    <td>
+                        <div style="font-size:0.85rem;"><strong>Min:</strong> ${minSpend}</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);"><strong>Cap:</strong> ${maxCap}</div>
+                    </td>
+                    <td>
+                        <span style="font-size:0.85rem; color:${isExpired ? 'var(--danger)' : 'var(--text-primary)'};">${validityText}</span>
+                    </td>
+                    <td>
+                        <span class="badge" style="background:#f1f5f9; color:var(--text-primary); font-weight:700; border:1px solid var(--border-color);">${c.usage_count || 0} Uses</span>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <button class="btn btn-outline btn-sm" onclick="Admin.openCouponModal(${c.id})" title="Edit coupon settings">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn btn-sm ${c.is_active ? 'btn-outline' : 'btn-primary'}" onclick="Admin.toggleCouponStatus(${c.id}, ${!c.is_active})" title="${c.is_active ? 'Deactivate coupon' : 'Activate coupon'}">
+                                <i class="fa-solid ${c.is_active ? 'fa-pause' : 'fa-play'}"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="Admin.deleteCoupon(${c.id}, '${c.code}')" title="Delete coupon">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    },
+
+    onCouponTypeChange() {
+        const type = document.getElementById('coupon-modal-type')?.value;
+        const valLabel = document.getElementById('coupon-val-label');
+        const capGroup = document.getElementById('coupon-cap-group');
+        const valInput = document.getElementById('coupon-modal-value');
+
+        if (type === 'PERCENTAGE') {
+            if (valLabel) valLabel.innerText = 'Discount Percentage (%) *';
+            if (valInput) {
+                valInput.placeholder = '20';
+                valInput.max = '100';
+            }
+            if (capGroup) capGroup.style.display = 'block';
+        } else {
+            if (valLabel) valLabel.innerText = 'Flat Discount Amount (₹) *';
+            if (valInput) {
+                valInput.placeholder = '500.00';
+                valInput.removeAttribute('max');
+            }
+            if (capGroup) capGroup.style.display = 'none';
+        }
+    },
+
+    openCouponModal(couponId = null) {
+        const modal = document.getElementById('admin-coupon-modal');
+        if (!modal) return;
+
+        const form = document.getElementById('coupon-form');
+        if (form) form.reset();
+
+        document.getElementById('coupon-modal-id').value = '';
+        document.getElementById('coupon-modal-title').innerText = 'Create Promo Coupon';
+        document.getElementById('coupon-modal-code').disabled = false;
+        document.getElementById('coupon-modal-active').checked = true;
+        this.onCouponTypeChange();
+
+        if (couponId) {
+            const coupon = this.coupons.find(c => c.id === couponId);
+            if (coupon) {
+                document.getElementById('coupon-modal-id').value = coupon.id;
+                document.getElementById('coupon-modal-title').innerText = `Edit Coupon: ${coupon.code}`;
+                document.getElementById('coupon-modal-code').value = coupon.code;
+                document.getElementById('coupon-modal-type').value = coupon.discount_type;
+                this.onCouponTypeChange();
+
+                document.getElementById('coupon-modal-value').value = coupon.discount_value;
+                document.getElementById('coupon-modal-min').value = coupon.min_booking_amount || '0.00';
+                document.getElementById('coupon-modal-cap').value = coupon.max_discount_amount || '';
+                
+                if (coupon.valid_from) {
+                    const fromDate = new Date(coupon.valid_from);
+                    document.getElementById('coupon-modal-from').value = fromDate.toISOString().slice(0, 16);
+                }
+                if (coupon.valid_until) {
+                    const untilDate = new Date(coupon.valid_until);
+                    document.getElementById('coupon-modal-until').value = untilDate.toISOString().slice(0, 16);
+                }
+
+                document.getElementById('coupon-modal-active').checked = Boolean(coupon.is_active);
+            }
+        }
+
+        modal.classList.add('active');
+    },
+
+    closeCouponModal() {
+        const modal = document.getElementById('admin-coupon-modal');
+        if (modal) modal.classList.remove('active');
+    },
+
+    async saveCoupon() {
+        const id = document.getElementById('coupon-modal-id')?.value;
+        const code = document.getElementById('coupon-modal-code')?.value.trim().toUpperCase();
+        const discount_type = document.getElementById('coupon-modal-type')?.value;
+        const discount_value = document.getElementById('coupon-modal-value')?.value;
+        const min_booking_amount = document.getElementById('coupon-modal-min')?.value || '0.00';
+        const max_discount_amount = document.getElementById('coupon-modal-cap')?.value || null;
+        const valid_from_val = document.getElementById('coupon-modal-from')?.value;
+        const valid_until_val = document.getElementById('coupon-modal-until')?.value;
+        const is_active = document.getElementById('coupon-modal-active')?.checked;
+
+        if (!code || !discount_value) {
+            Toast.error('Please enter coupon code and discount value.');
+            return;
+        }
+
+        const payload = {
+            code,
+            discount_type,
+            discount_value: parseFloat(discount_value),
+            min_booking_amount: parseFloat(min_booking_amount) || 0.0,
+            max_discount_amount: max_discount_amount ? parseFloat(max_discount_amount) : null,
+            valid_from: valid_from_val ? new Date(valid_from_val).toISOString() : null,
+            valid_until: valid_until_val ? new Date(valid_until_val).toISOString() : null,
+            is_active: Boolean(is_active)
+        };
+
+        const saveBtn = document.getElementById('coupon-save-btn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        }
+
+        try {
+            if (id) {
+                await API.put(`/admin/coupons/${id}/`, payload);
+                Toast.success(`Coupon ${code} updated successfully.`);
+            } else {
+                await API.post('/admin/coupons/', payload);
+                Toast.success(`Coupon ${code} created successfully.`);
+            }
+            this.closeCouponModal();
+            this.loadCoupons();
+        } catch (err) {
+            Toast.error(err.message || 'Failed to save coupon.');
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Save Coupon';
+            }
+        }
+    },
+
+    async toggleCouponStatus(id, isActive) {
+        try {
+            await API.patch(`/admin/coupons/${id}/`, { is_active: isActive });
+            Toast.success(`Coupon ${isActive ? 'activated' : 'deactivated'}.`);
+            this.loadCoupons();
+        } catch (e) {
+            Toast.error(e.message || 'Could not update coupon status.');
+        }
+    },
+
+    async deleteCoupon(id, code) {
+        if (!confirm(`Are you sure you want to permanently delete coupon "${code}"?`)) return;
+
+        try {
+            await API.delete(`/admin/coupons/${id}/`);
+            Toast.success(`Coupon ${code} deleted.`);
+            this.loadCoupons();
+        } catch (e) {
+            Toast.error(e.message || 'Could not delete coupon.');
         }
     }
 };

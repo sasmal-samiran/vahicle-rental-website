@@ -8,6 +8,8 @@ import { formatCurrency, formatDate, formatDateTime } from './config.js';
 export const BookingWizard = {
     currentStep: 1,
     car: null,
+    locations: [],
+    isScheduleValid: true,
     bookingData: {
         car_id: null,
         pickup_location_id: 1,
@@ -27,6 +29,37 @@ export const BookingWizard = {
     quote: null,
     activeBooking: null,
 
+    populateTimeSelects() {
+        const pTimeSelect = document.getElementById('b-pickup-time');
+        const rTimeSelect = document.getElementById('b-return-time');
+        if (!pTimeSelect || !rTimeSelect) return;
+
+        let options = '';
+        for (let h = 6; h <= 23; h++) {
+            for (let m of [0, 30]) {
+                const hh = String(h).padStart(2, '0');
+                const mm = String(m).padStart(2, '0');
+                const timeVal = `${hh}:${mm}`;
+                const period = h >= 12 ? 'PM' : 'AM';
+                const displayH = h % 12 === 0 ? 12 : h % 12;
+                const label = `${String(displayH).padStart(2, '0')}:${mm} ${period}`;
+                options += `<option value="${timeVal}">${label}</option>`;
+            }
+        }
+        pTimeSelect.innerHTML = options;
+        rTimeSelect.innerHTML = options;
+    },
+
+    populateLocationSelects() {
+        const pLocSelect = document.getElementById('b-pickup-loc');
+        const rLocSelect = document.getElementById('b-return-loc');
+        if (!pLocSelect || !rLocSelect) return;
+
+        const options = (this.locations || []).map(loc => `<option value="${loc.id}">${loc.name} (${loc.city})</option>`).join('');
+        pLocSelect.innerHTML = options;
+        rLocSelect.innerHTML = options;
+    },
+
     async startBooking(carId) {
         if (!API.isAuthenticated()) {
             Toast.info('Please log in or enter your phone/email to continue booking.');
@@ -38,15 +71,93 @@ export const BookingWizard = {
             this.car = await API.get(`/cars/${carId}/`);
             this.bookingData.car_id = carId;
 
-            const pickupDate = document.getElementById('search-pickup-date')?.value;
-            const returnDate = document.getElementById('search-return-date')?.value;
-            const pickupLoc = document.getElementById('search-pickup-location')?.value || this.car.location?.id || 1;
-            const dropoffLoc = document.getElementById('search-dropoff-location')?.value || pickupLoc;
+            if (!this.locations || !this.locations.length) {
+                const locData = await API.get('/locations/');
+                this.locations = locData.results || locData;
+            }
 
-            this.bookingData.pickup_location_id = parseInt(pickupLoc);
-            this.bookingData.return_location_id = parseInt(dropoffLoc);
-            this.bookingData.start_date = new Date(pickupDate).toISOString();
-            this.bookingData.end_date = new Date(returnDate).toISOString();
+            this.populateTimeSelects();
+            this.populateLocationSelects();
+
+            // 1. Extract values from Hero Search Widget (#search-pickup-date, #search-return-date, #search-pickup-location, #search-dropoff-location)
+            const searchPDate = document.getElementById('search-pickup-date')?.value;
+            const searchRDate = document.getElementById('search-return-date')?.value;
+            const searchPLoc = document.getElementById('search-pickup-location')?.value;
+            const searchRLoc = document.getElementById('search-dropoff-location')?.value;
+            const sameLocChecked = document.getElementById('same-location-checkbox')?.checked;
+
+            const now = new Date();
+            const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            const inFourDays = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 4);
+
+            let pDateVal = '';
+            let pTimeVal = '10:00';
+            let rDateVal = '';
+            let rTimeVal = '10:00';
+            let pLocVal = searchPLoc || (this.car.location ? String(this.car.location.id) : (this.locations[0]?.id ? String(this.locations[0].id) : '1'));
+            let rLocVal = (searchRLoc && searchRLoc !== '') ? searchRLoc : (sameLocChecked ? pLocVal : pLocVal);
+
+            if (searchPDate) {
+                if (searchPDate.includes('T')) {
+                    const pParts = searchPDate.split('T');
+                    pDateVal = pParts[0];
+                    if (pParts[1]) pTimeVal = pParts[1].substring(0, 5);
+                } else {
+                    pDateVal = searchPDate;
+                }
+            } else {
+                pDateVal = tomorrow.toISOString().split('T')[0];
+            }
+
+            if (searchRDate) {
+                if (searchRDate.includes('T')) {
+                    const rParts = searchRDate.split('T');
+                    rDateVal = rParts[0];
+                    if (rParts[1]) rTimeVal = rParts[1].substring(0, 5);
+                } else {
+                    rDateVal = searchRDate;
+                }
+            } else {
+                rDateVal = inFourDays.toISOString().split('T')[0];
+            }
+
+            // Normalise time strings to HH:MM format (e.g. "09:00", "14:30")
+            const findClosestTime = (timeStr) => {
+                if (!timeStr) return '10:00';
+                const [hStr, mStr] = timeStr.split(':');
+                const h = Math.min(23, Math.max(6, parseInt(hStr || '10')));
+                const m = parseInt(mStr || '0');
+                const roundedM = m >= 45 ? '00' : (m >= 15 ? '30' : '00');
+                const finalH = (m >= 45 && h < 23) ? h + 1 : h;
+                return `${String(finalH).padStart(2, '0')}:${roundedM}`;
+            };
+
+            pTimeVal = findClosestTime(pTimeVal);
+            rTimeVal = findClosestTime(rTimeVal);
+
+            const pDateEl = document.getElementById('b-pickup-date');
+            const rDateEl = document.getElementById('b-return-date');
+            const pTimeEl = document.getElementById('b-pickup-time');
+            const rTimeEl = document.getElementById('b-return-time');
+            const pLocEl = document.getElementById('b-pickup-loc');
+            const rLocEl = document.getElementById('b-return-loc');
+
+            if (pDateEl) {
+                pDateEl.value = pDateVal;
+                pDateEl.min = tomorrow.toISOString().split('T')[0];
+            }
+            if (rDateEl) {
+                rDateEl.value = rDateVal;
+                rDateEl.min = tomorrow.toISOString().split('T')[0];
+            }
+            if (pTimeEl) {
+                pTimeEl.value = pTimeVal;
+            }
+            if (rTimeEl) {
+                rTimeEl.value = rTimeVal;
+            }
+            if (pLocEl) pLocEl.value = pLocVal;
+            if (rLocEl) rLocEl.value = rLocVal;
 
             const user = API.getUser();
             if (user) {
@@ -59,7 +170,7 @@ export const BookingWizard = {
             this.currentStep = 1;
             this.openWizardModal();
             this.updateStepView();
-            await this.refreshQuote();
+            await this.onScheduleChange();
         } catch (e) {
             Toast.error('Could not initiate booking.');
         }
@@ -73,6 +184,92 @@ export const BookingWizard = {
     closeWizardModal() {
         const modal = document.getElementById('booking-wizard-modal');
         if (modal) modal.classList.remove('active');
+    },
+
+    async onScheduleChange() {
+        const pDate = document.getElementById('b-pickup-date')?.value;
+        const pTime = document.getElementById('b-pickup-time')?.value || '10:00';
+        const rDate = document.getElementById('b-return-date')?.value;
+        const rTime = document.getElementById('b-return-time')?.value || '10:00';
+        const pLoc = document.getElementById('b-pickup-loc')?.value;
+        const rLoc = document.getElementById('b-return-loc')?.value || pLoc;
+
+        const banner = document.getElementById('b-availability-banner');
+        const bannerText = document.getElementById('b-availability-text');
+        const bannerIcon = document.getElementById('b-availability-icon');
+        const badgeEl = document.getElementById('b-trip-duration-badge');
+
+        if (!pDate || !rDate) {
+            this.isScheduleValid = false;
+            return;
+        }
+
+        const startDt = new Date(`${pDate}T${pTime}:00`);
+        const endDt = new Date(`${rDate}T${rTime}:00`);
+
+        if (isNaN(startDt.getTime()) || isNaN(endDt.getTime())) {
+            this.isScheduleValid = false;
+            return;
+        }
+
+        if (endDt <= startDt) {
+            this.isScheduleValid = false;
+            if (banner) {
+                banner.style.background = 'rgba(239, 68, 68, 0.1)';
+                banner.style.color = '#dc2626';
+                banner.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            }
+            if (bannerIcon) bannerIcon.className = 'fa-solid fa-triangle-exclamation';
+            if (bannerText) bannerText.innerText = 'Return date and time must be after pickup date and time.';
+            if (badgeEl) badgeEl.innerText = 'Invalid Duration';
+            return;
+        }
+
+        const diffMs = endDt - startDt;
+        const diffHours = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)));
+        const diffDays = Math.max(1, Math.ceil(diffHours / 24));
+
+        if (badgeEl) {
+            badgeEl.innerText = `${diffDays} Day${diffDays > 1 ? 's' : ''} Rental (${diffHours} Hours)`;
+        }
+
+        this.bookingData.pickup_location_id = parseInt(pLoc || 1);
+        this.bookingData.return_location_id = parseInt(rLoc || pLoc || 1);
+        this.bookingData.start_date = startDt.toISOString();
+        this.bookingData.end_date = endDt.toISOString();
+
+        // Check availability with backend
+        try {
+            if (bannerText) bannerText.innerText = 'Checking real-time vehicle availability...';
+            const checkRes = await API.post('/cars/check-availability/', {
+                car_id: this.bookingData.car_id,
+                pickup_date: this.bookingData.start_date,
+                return_date: this.bookingData.end_date
+            });
+
+            if (checkRes.is_available) {
+                this.isScheduleValid = true;
+                if (banner) {
+                    banner.style.background = 'rgba(16, 185, 129, 0.1)';
+                    banner.style.color = '#059669';
+                    banner.style.borderColor = 'rgba(16, 185, 129, 0.25)';
+                }
+                if (bannerIcon) bannerIcon.className = 'fa-solid fa-circle-check';
+                if (bannerText) bannerText.innerText = `Vehicle is Available for ${diffDays} day${diffDays > 1 ? 's' : ''} (${diffHours} hrs) handover at selected hub.`;
+                await this.refreshQuote();
+            } else {
+                this.isScheduleValid = false;
+                if (banner) {
+                    banner.style.background = 'rgba(239, 68, 68, 0.1)';
+                    banner.style.color = '#dc2626';
+                    banner.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                }
+                if (bannerIcon) bannerIcon.className = 'fa-solid fa-calendar-xmark';
+                if (bannerText) bannerText.innerText = checkRes.reason || 'This vehicle is reserved for the selected schedule. Please choose different dates/times.';
+            }
+        } catch (e) {
+            console.error('Availability check error:', e);
+        }
     },
 
     updateStepView() {
@@ -91,25 +288,74 @@ export const BookingWizard = {
             headerTitle.innerHTML = `<strong>${this.car.year} ${this.car.brand} ${this.car.model}</strong> • ${formatCurrency(this.car.price_per_day)}/day`;
         }
 
-        if (this.currentStep === 2) {
+        if (this.currentStep === 3) {
             document.getElementById('b-driver-name').value = this.bookingData.driver_name;
             document.getElementById('b-driver-phone').value = this.bookingData.driver_phone;
             document.getElementById('b-driver-email').value = this.bookingData.driver_email;
             document.getElementById('b-driver-license').value = this.bookingData.driver_license;
             document.getElementById('b-special-requests').value = this.bookingData.special_requests;
         }
+
+        // Manage Wizard Modal Footer Buttons
+        const footer = document.getElementById('wizard-modal-footer');
+        const prevBtn = document.getElementById('wizard-prev-btn');
+        const nextBtn = document.getElementById('wizard-next-btn');
+        const payBtn = document.getElementById('pay-now-btn');
+
+        if (footer) {
+            if (this.currentStep === 5) {
+                // Voucher confirmation step - hide bottom navigation footer
+                footer.classList.add('hidden');
+            } else {
+                footer.classList.remove('hidden');
+
+                // Prev/Back Button
+                if (prevBtn) {
+                    prevBtn.classList.toggle('hidden', this.currentStep === 1);
+                }
+
+                // Next vs Pay Now Button
+                if (this.currentStep === 4) {
+                    // Payment step
+                    if (nextBtn) nextBtn.classList.add('hidden');
+                    if (payBtn) {
+                        payBtn.classList.remove('hidden');
+                        payBtn.disabled = false;
+                        const totalStr = this.quote ? ` (${formatCurrency(this.quote.total_amount)})` : '';
+                        payBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Pay & Confirm Reservation${totalStr}`;
+                    }
+                } else {
+                    // Steps 1, 2, 3
+                    if (nextBtn) {
+                        nextBtn.classList.remove('hidden');
+                        if (this.currentStep === 1) nextBtn.innerText = 'Continue to Protection';
+                        else if (this.currentStep === 2) nextBtn.innerText = 'Continue to Driver Info';
+                        else if (this.currentStep === 3) nextBtn.innerText = 'Proceed to Payment';
+                        else nextBtn.innerText = 'Continue';
+                    }
+                    if (payBtn) payBtn.classList.add('hidden');
+                }
+            }
+        }
     },
 
     async nextStep() {
         if (this.currentStep === 1) {
+            if (!this.isScheduleValid) {
+                Toast.error('Please select an available pickup and return schedule.');
+                return;
+            }
             this.currentStep = 2;
             this.updateStepView();
             await this.refreshQuote();
         } else if (this.currentStep === 2) {
+            this.currentStep = 3;
+            this.updateStepView();
+        } else if (this.currentStep === 3) {
             const name = document.getElementById('b-driver-name')?.value.trim();
             const phone = document.getElementById('b-driver-phone')?.value.trim();
             if (!name || !phone) {
-                Toast.error('Please enter the primary driver name and phone number.');
+                Toast.error('Please enter the primary driver full name and phone number.');
                 return;
             }
             this.bookingData.driver_name = name;
@@ -118,19 +364,17 @@ export const BookingWizard = {
             this.bookingData.driver_license = document.getElementById('b-driver-license')?.value.trim();
             this.bookingData.special_requests = document.getElementById('b-special-requests')?.value.trim();
 
-            this.currentStep = 3;
-            this.updateStepView();
-            await this.refreshQuote();
-        } else if (this.currentStep === 3) {
             this.currentStep = 4;
             this.updateStepView();
+            await this.refreshQuote();
         }
     },
 
     prevStep() {
-        if (this.currentStep > 1) {
+        if (this.currentStep > 1 && this.currentStep < 5) {
             this.currentStep--;
             this.updateStepView();
+            this.refreshQuote();
         }
     },
 
@@ -187,9 +431,47 @@ export const BookingWizard = {
                 coupon_code: this.bookingData.coupon_code
             });
             this.quote = quote;
+            this.renderCatalogFromBackend();
             this.renderQuoteSummary();
         } catch (e) {
             console.error('Quote error:', e);
+        }
+    },
+
+    renderCatalogFromBackend() {
+        if (!this.quote) return;
+
+        // Populate protection plans directly from backend API
+        if (this.quote.insurance_catalog) {
+            const plans = this.quote.insurance_catalog;
+            if (plans.NONE) {
+                const descEl = document.getElementById('plan-desc-none');
+                if (descEl) descEl.innerText = plans.NONE.description;
+                const priceEl = document.getElementById('plan-price-none');
+                if (priceEl) priceEl.innerText = formatCurrency(plans.NONE.daily_rate);
+            }
+            if (plans.STANDARD) {
+                const descEl = document.getElementById('plan-desc-standard');
+                if (descEl) descEl.innerText = plans.STANDARD.description;
+                const priceEl = document.getElementById('plan-price-standard');
+                if (priceEl) priceEl.innerText = `+${formatCurrency(plans.STANDARD.daily_rate)}/day`;
+            }
+            if (plans.PREMIUM) {
+                const descEl = document.getElementById('plan-desc-premium');
+                if (descEl) descEl.innerText = plans.PREMIUM.description;
+                const priceEl = document.getElementById('plan-price-premium');
+                if (priceEl) priceEl.innerText = `+${formatCurrency(plans.PREMIUM.daily_rate)}/day`;
+            }
+        }
+
+        // Populate add-ons directly from backend API
+        if (this.quote.addons_catalog) {
+            this.quote.addons_catalog.forEach(addon => {
+                const priceEl = document.getElementById(`addon-price-${addon.key}`);
+                if (priceEl) priceEl.innerText = `+${formatCurrency(addon.daily_rate)}/day`;
+                const descEl = document.getElementById(`addon-desc-${addon.key}`);
+                if (descEl && addon.description) descEl.innerText = addon.description;
+            });
         }
     },
 
@@ -270,15 +552,16 @@ export const BookingWizard = {
             if (this.bookingData.payment_method === 'RAZORPAY') {
                 const initRes = await API.post('/payments/initiate/', {
                     booking_code: booking.booking_code,
-                    provider: 'RAZORPAY'
+                    provider: 'RAZORPAY',
+                    currency: 'INR'
                 });
                 
                 if (window.Razorpay && initRes.gateway_order_id && !initRes.gateway_order_id.includes('mock')) {
                     const options = {
                         key: initRes.razorpay_key,
-                        amount: initRes.amount * 100,
-                        currency: 'USD',
-                        name: 'Premium Car Rental',
+                        amount: Math.round(initRes.amount * 100),
+                        currency: 'INR',
+                        name: 'DriveLuxe Rentals',
                         description: `Rental for ${this.car.display_name}`,
                         order_id: initRes.gateway_order_id,
                         handler: async (response) => {

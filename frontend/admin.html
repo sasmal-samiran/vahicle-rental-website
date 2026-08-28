@@ -50,6 +50,10 @@
                     <i class="fa-solid fa-star"></i>
                     <span>Reviews Moderation</span>
                 </li>
+                <li class="sidebar-link" data-view="coupons">
+                    <i class="fa-solid fa-tags"></i>
+                    <span>Coupons & Promos</span>
+                </li>
             </ul>
 
             <div class="sidebar-footer">
@@ -189,12 +193,103 @@
                 </div>
                 <!-- VIEW 2: Fleet Management -->
                 <div class="admin-view-panel hidden" data-view="fleet">
+                    <!-- Fleet Filter & Search Toolbar -->
+                    <div class="table-card" style="margin-bottom: 20px; padding: 18px 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background: rgba(14, 77, 92, 0.15); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <i class="fa-solid fa-filter"></i>
+                                </div>
+                                <h4 style="font-size: 1rem; font-weight: 700; margin: 0;">Fleet Filter & Search</h4>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span id="fleet-filter-count" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;"></span>
+                                <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 0.8rem;" onclick="Admin.resetFleetFilters()">
+                                    <i class="fa-solid fa-rotate-left"></i> Reset
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="Admin.openAddCarModal()">
+                                    <i class="fa-solid fa-plus"></i> Add New Vehicle
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="fleet-filter-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+                            <!-- Search Bar -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Search Vehicle</label>
+                                <div style="position: relative;">
+                                    <input type="text" id="fleet-filter-search" class="form-control" placeholder="Brand, model, plate..." style="padding-left: 32px; font-size: 0.85rem;" oninput="Admin.applyFleetFilters()" />
+                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
+                                </div>
+                            </div>
+
+                            <!-- Category Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Category</label>
+                                <select id="fleet-filter-category" class="form-control" style="font-size: 0.85rem;" onchange="Admin.applyFleetFilters()">
+                                    <option value="">All Categories</option>
+                                </select>
+                            </div>
+
+                            <!-- Location Hub Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Location Hub</label>
+                                <select id="fleet-filter-location" class="form-control" style="font-size: 0.85rem;" onchange="Admin.applyFleetFilters()">
+                                    <option value="">All Locations</option>
+                                </select>
+                            </div>
+
+                            <!-- Status Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Live Status</label>
+                                <select id="fleet-filter-status" class="form-control" style="font-size: 0.85rem;" onchange="Admin.applyFleetFilters()">
+                                    <option value="">All Statuses</option>
+                                    <option value="AVAILABLE">Available</option>
+                                    <option value="RENTED">Rented</option>
+                                    <option value="MAINTENANCE">Maintenance</option>
+                                    <option value="INACTIVE">Inactive</option>
+                                </select>
+                            </div>
+
+                            <!-- Fuel Type Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Fuel / Powertrain</label>
+                                <select id="fleet-filter-fuel" class="form-control" style="font-size: 0.85rem;" onchange="Admin.applyFleetFilters()">
+                                    <option value="">All Fuel Types</option>
+                                    <option value="PETROL">Petrol / Gasoline</option>
+                                    <option value="DIESEL">Diesel</option>
+                                    <option value="ELECTRIC">Electric (EV)</option>
+                                    <option value="HYBRID">Hybrid</option>
+                                </select>
+                            </div>
+
+                            <!-- Transmission Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Transmission</label>
+                                <select id="fleet-filter-transmission" class="form-control" style="font-size: 0.85rem;" onchange="Admin.applyFleetFilters()">
+                                    <option value="">All Transmissions</option>
+                                    <option value="AUTOMATIC">Automatic</option>
+                                    <option value="MANUAL">Manual</option>
+                                </select>
+                            </div>
+
+                            <!-- Sort By Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 4px;">Sort Fleet By</label>
+                                <select id="fleet-filter-sort" class="form-control" style="font-size: 0.85rem;" onchange="Admin.applyFleetFilters()">
+                                    <option value="newest">Newest Added</option>
+                                    <option value="price_asc">Price: Low to High</option>
+                                    <option value="price_desc">Price: High to Low</option>
+                                    <option value="brand_asc">Brand Name (A-Z)</option>
+                                    <option value="year_desc">Model Year (Newest)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="table-card">
                         <div class="table-header-bar">
                             <h3 style="font-size:1.1rem; font-weight:700;">Vehicle Fleet Directory</h3>
-                            <button class="btn btn-primary btn-sm" onclick="Admin.openAddCarModal()">
-                                <i class="fa-solid fa-plus"></i> Add New Vehicle
-                            </button>
                         </div>
                         <div class="table-responsive">
                             <table class="admin-table">
@@ -321,6 +416,54 @@
                                     </tr>
                                 </thead>
                                 <tbody id="admin-reviews-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 7: Coupons & Promo Management -->
+                <div class="admin-view-panel hidden" data-view="coupons">
+                    <div class="table-card">
+                        <div class="table-header-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                            <div>
+                                <h3 style="font-size:1.1rem; font-weight:700;">Promotional Coupons & Discounts</h3>
+                                <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">Create, configure, and manage customer discount voucher codes.</p>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="Admin.openCouponModal()">
+                                <i class="fa-solid fa-plus"></i> Create New Coupon
+                            </button>
+                        </div>
+
+                        <!-- Filter & Search Toolbar -->
+                        <div style="padding:16px 24px; border-bottom:1px solid var(--border-color); display:flex; gap:16px; align-items:center; flex-wrap:wrap; background:var(--bg-card);">
+                            <div class="search-input-group" style="flex:1; min-width:240px; margin:0;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="coupon-search-input" class="form-control form-control-sm" placeholder="Search by coupon code (e.g. DRIVE20)..." oninput="Admin.filterCoupons()" />
+                            </div>
+                            <select id="coupon-status-filter" class="form-control form-control-sm" style="width:160px;" onchange="Admin.filterCoupons()">
+                                <option value="">All Statuses</option>
+                                <option value="true">Active Only</option>
+                                <option value="false">Inactive / Expired</option>
+                            </select>
+                            <button class="btn btn-outline btn-sm" onclick="Admin.resetCouponFilters()">
+                                <i class="fa-solid fa-rotate-right"></i> Reset
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Coupon Code</th>
+                                        <th>Discount Benefit</th>
+                                        <th>Min Spend / Max Cap</th>
+                                        <th>Validity Range</th>
+                                        <th>Usage Count</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-coupons-tbody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -457,6 +600,76 @@
                     <div class="modal-footer" style="padding:16px 0 0; margin-top:16px;">
                         <button type="button" class="btn btn-secondary" onclick="Admin.closeCarModal()">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Vehicle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Add/Edit Coupon Modal -->
+    <div class="modal-backdrop" id="admin-coupon-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="coupon-modal-title">Create Promo Coupon</h3>
+                <button class="modal-close" onclick="Admin.closeCouponModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="coupon-form" onsubmit="event.preventDefault(); Admin.saveCoupon();">
+                    <input type="hidden" id="coupon-modal-id" />
+                    
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="form-group">
+                            <label class="form-label">Coupon Code *</label>
+                            <input type="text" id="coupon-modal-code" class="form-control" placeholder="e.g. FESTIVE25" style="text-transform:uppercase; font-weight:700; letter-spacing:0.5px;" required />
+                            <small style="font-size:0.75rem; color:var(--text-muted);">Auto-converts to uppercase</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Discount Type *</label>
+                            <select id="coupon-modal-type" class="form-control" onchange="Admin.onCouponTypeChange()" required>
+                                <option value="PERCENTAGE">Percentage (%) Discount</option>
+                                <option value="FIXED">Flat Fixed (₹) Discount</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="form-group">
+                            <label class="form-label" id="coupon-val-label">Discount Percentage (%) *</label>
+                            <input type="number" step="0.01" min="0.01" id="coupon-modal-value" class="form-control" placeholder="20" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Min Booking Spend (₹)</label>
+                            <input type="number" step="0.01" min="0" id="coupon-modal-min" class="form-control" placeholder="0.00" value="0.00" />
+                        </div>
+                        <div class="form-group" id="coupon-cap-group">
+                            <label class="form-label">Max Discount Cap (₹)</label>
+                            <input type="number" step="0.01" min="0" id="coupon-modal-cap" class="form-control" placeholder="e.g. 1500.00 (Optional)" />
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="form-group">
+                            <label class="form-label">Valid From (Optional)</label>
+                            <input type="datetime-local" id="coupon-modal-from" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Valid Until / Expiry (Optional)</label>
+                            <input type="datetime-local" id="coupon-modal-until" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:20px;">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600; font-size:0.9rem;">
+                            <input type="checkbox" id="coupon-modal-active" style="width:18px; height:18px; accent-color:var(--primary);" checked />
+                            <span>Coupon Active & Eligible for Customer Checkout</span>
+                        </label>
+                    </div>
+
+                    <div class="modal-footer" style="padding:16px 0 0; margin-top:16px;">
+                        <button type="button" class="btn btn-secondary" onclick="Admin.closeCouponModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="coupon-save-btn">
+                            <i class="fa-solid fa-check"></i> Save Coupon
+                        </button>
                     </div>
                 </form>
             </div>

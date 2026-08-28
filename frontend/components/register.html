@@ -99,69 +99,114 @@
         </div>
 
         <div class="modal-body">
-            <form id="register-form" onsubmit="event.preventDefault(); Auth.handleRegister();">
-                <!-- Name Row -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                    <div class="form-group">
-                        <label class="form-label">First Name *</label>
-                        <input type="text" id="reg-first-name" class="form-control" placeholder="Enter here" required />
+            <!-- STEP 1: Registration Form -->
+            <div id="reg-step-1">
+                <form id="register-form" onsubmit="event.preventDefault(); Auth.handleRegister();">
+                    <!-- Name Row -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div class="form-group">
+                            <label class="form-label">First Name *</label>
+                            <input type="text" id="reg-first-name" class="form-control" placeholder="Enter here" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name *</label>
+                            <input type="text" id="reg-last-name" class="form-control" placeholder="Enter here" required />
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Last Name *</label>
-                        <input type="text" id="reg-last-name" class="form-control" placeholder="Enter here" required />
+
+                    <!-- Contact Info -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div class="form-group">
+                            <label class="form-label">Phone Number *</label>
+                            <input type="tel" id="reg-phone" class="form-control" placeholder="+91 ----------" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address *</label>
+                            <input type="email" id="reg-email" class="form-control" placeholder="user@example.com"
+                                required />
+                        </div>
                     </div>
+
+                    <!-- Driver's License & Password -->
+                    <div class="form-group">
+                        <label class="form-label">Driver's License Number *</label>
+                        <input type="text" id="reg-license" class="form-control" placeholder="DL-NY-9847291" required />
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div class="form-group">
+                            <label class="form-label">Password *</label>
+                            <input type="password" id="reg-password" class="form-control" placeholder="••••••••"
+                                minlength="8" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm Password *</label>
+                            <input type="password" id="reg-confirm-password" class="form-control" placeholder="••••••••"
+                                minlength="8" required />
+                        </div>
+                    </div>
+
+                    <!-- Terms & Conditions -->
+                    <div class="form-group" style="margin-top: 4px;">
+                        <label
+                            style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;">
+                            <input type="checkbox" id="reg-terms" required
+                                style="margin-top: 3px; accent-color: var(--primary);" />
+                            <span>I agree to the <a href="#"
+                                    style="color: var(--primary); text-decoration: underline;">Terms of Service</a> & <a
+                                    href="#" style="color: var(--primary); text-decoration: underline;">Privacy
+                                    Policy</a>.</span>
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary" id="reg-submit-btn" style="width: 100%; height: 46px; margin-top: 12px;">
+                        <i class="fa-solid fa-arrow-right"></i> Continue to Verification
+                    </button>
+                </form>
+            </div>
+
+            <!-- STEP 2: Registration OTP Verification Section -->
+            <div id="reg-step-2" class="hidden">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <div style="width:54px; height:54px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:inline-flex; align-items:center; justify-content:center; font-size:1.5rem; margin-bottom:10px;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h4 style="font-size:1.1rem; font-weight:700; margin-bottom:4px;">Verify Phone Number</h4>
+                    <p style="font-size:0.85rem; color:var(--text-secondary);">
+                        Enter the 6-digit verification code sent to <strong id="reg-otp-display-identifier" style="color:var(--text-primary);"></strong>
+                    </p>
                 </div>
 
-                <!-- Contact Info -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                    <div class="form-group">
-                        <label class="form-label">Phone Number *</label>
-                        <input type="tel" id="reg-phone" class="form-control" placeholder="+91 ----------" required />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Email Address *</label>
-                        <input type="email" id="reg-email" class="form-control" placeholder="user@example.com"
-                            required />
-                    </div>
+                <div id="reg-dev-otp-preview" class="hidden"
+                    style="background:var(--primary-light); border:1px dashed var(--border-highlight); padding:8px 12px; border-radius:var(--radius-sm); text-align:center; font-size:0.85rem; margin:12px 0; color:var(--primary);">
                 </div>
 
-                <!-- Driver's License & Password -->
-                <div class="form-group">
-                    <label class="form-label">Driver's License Number *</label>
-                    <input type="text" id="reg-license" class="form-control" placeholder="DL-NY-9847291" required />
+                <div class="otp-input-container">
+                    <input type="text" class="otp-box reg-otp-box" maxlength="1" />
+                    <input type="text" class="otp-box reg-otp-box" maxlength="1" />
+                    <input type="text" class="otp-box reg-otp-box" maxlength="1" />
+                    <input type="text" class="otp-box reg-otp-box" maxlength="1" />
+                    <input type="text" class="otp-box reg-otp-box" maxlength="1" />
+                    <input type="text" class="otp-box reg-otp-box" maxlength="1" />
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                    <div class="form-group">
-                        <label class="form-label">Password *</label>
-                        <input type="password" id="reg-password" class="form-control" placeholder="••••••••"
-                            minlength="8" required />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Confirm Password *</label>
-                        <input type="password" id="reg-confirm-password" class="form-control" placeholder="••••••••"
-                            minlength="8" required />
-                    </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; margin-bottom:16px;">
+                    <span id="reg-otp-timer" style="color:var(--text-muted);"></span>
+                    <button id="reg-resend-otp-btn" type="button" class="btn btn-outline btn-sm" style="padding:3px 10px; font-size:0.75rem;"
+                        onclick="Auth.handleRequestRegisterOTP()" disabled>Resend Code</button>
                 </div>
 
-                <!-- Terms & Conditions -->
-                <div class="form-group" style="margin-top: 4px;">
-                    <label
-                        style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;">
-                        <input type="checkbox" id="reg-terms" required
-                            style="margin-top: 3px; accent-color: var(--primary);" />
-                        <span>I agree to the <a href="#"
-                                style="color: var(--primary); text-decoration: underline;">Terms of Service</a> & <a
-                                href="#" style="color: var(--primary); text-decoration: underline;">Privacy
-                                Policy</a>.</span>
-                    </label>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary" id="reg-submit-btn" style="width: 100%; height: 46px; margin-top: 12px;">
-                    <i class="fa-solid fa-user-plus"></i> Create Account
+                <button type="button" class="btn btn-primary" id="reg-verify-otp-btn" style="width:100%; height:46px;"
+                    onclick="Auth.handleVerifyRegisterOTP()">
+                    <i class="fa-solid fa-circle-check"></i> Verify & Complete Registration
                 </button>
-            </form>
+
+                <button type="button" class="btn btn-secondary btn-sm" style="width:100%; margin-top:10px;"
+                    onclick="Auth.backToRegisterForm()">
+                    <i class="fa-solid fa-arrow-left"></i> Edit Registration Details
+                </button>
+            </div>
 
             <!-- Switch to Login -->
             <div style="text-align: center; margin-top: 18px; font-size: 0.85rem; color: var(--text-secondary); border-top: 1px solid var(--border-color); padding-top: 14px;">

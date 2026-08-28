@@ -185,3 +185,18 @@ class AdminBookingViewSet(viewsets.ModelViewSet):
                 booking.car.save(update_fields=['status'])
             booking.save()
         return Response(BookingDetailSerializer(booking).data)
+
+class AdminCouponViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Coupon.objects.all().order_by('-id')
+    serializer_class = CouponSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(code__icontains=search.strip())
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None and is_active != '':
+            qs = qs.filter(is_active=is_active.lower() in ['true', '1'])
+        return qs

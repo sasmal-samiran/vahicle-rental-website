@@ -6,11 +6,13 @@ from .views import (
     CustomerBookingListCreateView,
     BookingDetailView,
     CancelBookingView,
-    AdminBookingViewSet
+    AdminBookingViewSet,
+    AdminCouponViewSet
 )
 
 router = DefaultRouter()
 router.register(r'admin/bookings', AdminBookingViewSet, basename='admin-bookings')
+router.register(r'admin/coupons', AdminCouponViewSet, basename='admin-coupons')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -56,3 +56,8 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('booking_code')
         return Review.objects.create(**validated_data)
+
+class ReviewUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['rating', 'title', 'comment']

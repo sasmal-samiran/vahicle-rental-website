@@ -32,16 +32,27 @@
                 <div class="filter-group">
                     <label class="filter-group-title">Search Model or Brand</label>
                     <input type="text" id="fleet-search-input" class="form-control"
-                        placeholder="e.g. Tesla, BMW, Porsche..." />
+                        placeholder="e.g. Audi, BMW, Porsche..." />
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-group-title">Vehicle Status & Availability</label>
+                    <select id="fleet-status-select" class="form-control" style="cursor:pointer; font-size:0.85rem; padding:8px 12px;">
+                        <option value="">All Statuses (Full Fleet)</option>
+                        <option value="AVAILABLE">Available for Dates</option>
+                        <option value="RESERVED_FOR_DATES">Reserved for Dates</option>
+                        <option value="RENTED">Currently Rented</option>
+                        <option value="MAINTENANCE">In Service / Maintenance</option>
+                    </select>
                 </div>
 
                 <div class="filter-group">
                     <label class="filter-group-title">Max Daily Rate (₹)</label>
-                    <input type="range" id="price-range-slider" min="40" max="350" step="10" value="350"
+                    <input type="range" id="price-range-slider" min="1000" max="10000" step="100" value="10000"
                         style="width:100%; accent-color:var(--primary);" />
                     <div class="price-slider-values">
-                        <span>₹40</span>
-                        <strong id="price-max-display" style="color:var(--primary);">₹350</strong>
+                        <span>₹1000</span>
+                        <strong id="price-max-display" style="color:var(--primary);">₹10000</strong>
                     </div>
                 </div>
 

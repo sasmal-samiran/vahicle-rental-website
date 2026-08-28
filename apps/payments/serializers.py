@@ -17,7 +17,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 class InitiatePaymentSerializer(serializers.Serializer):
     booking_code = serializers.CharField(required=True)
     provider = serializers.ChoiceField(choices=['RAZORPAY', 'STRIPE', 'SANDBOX'], default='SANDBOX')
-    currency = serializers.CharField(default='USD')
+    currency = serializers.CharField(default='INR')
 
 class VerifyRazorpaySerializer(serializers.Serializer):
     payment_id = serializers.IntegerField(required=True)
