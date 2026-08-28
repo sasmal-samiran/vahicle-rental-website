@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from datetime import timedelta, timezone
 
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -9,9 +10,13 @@ class Category(models.Model):
     image_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Added 13 , Updated 18
+    popularity_score = models.FloatField(default=0.0, help_text='Auto-calculated popularity score')
+
+
     class Meta:
         verbose_name_plural = 'Categories'
-        ordering = ['name']
+        ordering = ['-popularity_score', 'name']
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -88,8 +93,47 @@ class Car(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # added 95-137
+    tags = models.JSONField(default=list, blank=True, help_text='Searchable tags')
+    search_keywords = models.TextField(blank=True, null=True, help_text='Comma-separated keywords for search')
+
+    # Recommendation-specific fields
+    popularity_score = models.FloatField(default=0.0, db_index=True)
+    recommendation_weight = models.FloatField(default=1.0)
+    times_rented = models.PositiveIntegerField(default=0)
+    average_rating = models.FloatField(default=0.0)
+
+    # Add indexes for better search performance
     class Meta:
         ordering = ['-id']
+        indexes = [
+            models.Index(fields=['brand', 'model']),
+            models.Index(fields=['price_per_day']),
+            models.Index(fields=['status', 'category']),
+            models.Index(fields=['year']),
+        ]
+
+    def update_popularity_score(self):
+        """Calculate popularity based on various factors"""
+        from django.db.models import Q
+        recent_bookings = self.bookings.filter(
+            created_at__gte=timezone.now() - timedelta(days=30)
+        ).count()
+        total_reviews = self.reviews.filter(is_approved=True).count()
+        avg_rating = self.reviews.filter(is_approved=True).aggregate(
+            avg=models.Avg('rating')
+        )['avg'] or 0
+        
+        # Weighted scoring
+        self.popularity_score = (
+            (recent_bookings * 0.4) +
+            (total_reviews * 0.3) +
+            (avg_rating * 0.3)
+        )
+        self.times_rented = self.bookings.filter(
+            status='COMPLETED'
+        ).count()
+        self.save(update_fields=['popularity_score', 'times_rented'])
 
     def __str__(self):
         return f'{self.year} {self.brand} {self.model} ({self.license_plate})'

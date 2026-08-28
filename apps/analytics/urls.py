@@ -1,6 +1,8 @@
 from django.urls import path
-from .views import AdminDashboardStatsView
+from . import views
 
 urlpatterns = [
-    path('admin/analytics/dashboard/', AdminDashboardStatsView.as_view(), name='admin-analytics-dashboard'),
+    path('search/', views.SearchCarsView.as_view(), name='search-cars'),
+    path('recommendations/', views.GetRecommendationsView.as_view(), name='get-recommendations'),
+    path('recommendations/context/', views.ContextRecommendationsView.as_view(), name='context-recommendations'),
 ]

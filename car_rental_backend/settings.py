@@ -41,7 +41,13 @@ INSTALLED_APPS = [
     'apps.notifications',
     'apps.analytics',
 ]
-
+# Add caching for better performance
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
