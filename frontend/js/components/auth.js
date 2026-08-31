@@ -22,13 +22,40 @@ export const Auth = {
                 if (e.target.value.length === 1 && index < boxes.length - 1) {
                     boxes[index + 1].focus();
                 }
+                // Auto submit when all 6 digits entered
+                const allFilled = Array.from(boxes).every(b => b.value.length === 1);
+                if (allFilled) {
+                    if (containerSelector === '#auth-modal') {
+                        Auth.handleVerifyOTP();
+                    } else if (containerSelector === '#register-modal') {
+                        Auth.handleVerifyRegisterOTP();
+                    }
+                }
             });
             box.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace' && !e.target.value && index > 0) {
                     boxes[index - 1].focus();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (containerSelector === '#auth-modal') {
+                        Auth.handleVerifyOTP();
+                    } else if (containerSelector === '#register-modal') {
+                        Auth.handleVerifyRegisterOTP();
+                    }
                 }
             });
         });
+    },
+
+    togglePasswordVisibility(inputId, btnEl) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        const icon = btnEl?.querySelector('i');
+        if (icon) {
+            icon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        }
     },
 
     bindEvents() {
@@ -37,12 +64,100 @@ export const Auth = {
         // OTP box auto focus jumping for login and register
         this.setupOtpBoxJumping('#auth-modal', '#auth-modal .otp-box');
         this.setupOtpBoxJumping('#register-modal', '.reg-otp-box');
+
+        // Enter key to submit on inputs
+        document.getElementById('otp-identifier')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.handleRequestOTP();
+            }
+        });
+
+        document.getElementById('login-username')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const pwd = document.getElementById('login-password');
+                if (pwd && !pwd.value) {
+                    pwd.focus();
+                } else {
+                    this.handlePasswordLogin();
+                }
+            }
+        });
+
+        document.getElementById('login-password')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.handlePasswordLogin();
+            }
+        });
+
+        // Clear inline errors on input
+        document.getElementById('login-password')?.addEventListener('input', () => {
+            this.clearFieldError('login-password', 'login-password-error');
+        });
+        document.getElementById('login-username')?.addEventListener('input', () => {
+            this.clearFieldError('login-password', 'login-password-error');
+        });
+        document.getElementById('otp-identifier')?.addEventListener('input', () => {
+            this.clearFieldError('otp-identifier', 'otp-identifier-error');
+        });
+        document.querySelectorAll('#auth-modal .otp-box').forEach(box => {
+            box.addEventListener('input', () => {
+                const errEl = document.getElementById('login-otp-error');
+                if (errEl) errEl.classList.add('hidden');
+                document.querySelectorAll('#auth-modal .otp-box').forEach(b => b.style.borderColor = '');
+            });
+        });
+        document.getElementById('reg-password')?.addEventListener('input', () => {
+            this.clearFieldError('reg-password', 'reg-password-error');
+            this.clearFieldError('reg-confirm-password', 'reg-password-error');
+        });
+        document.getElementById('reg-confirm-password')?.addEventListener('input', () => {
+            this.clearFieldError('reg-password', 'reg-password-error');
+            this.clearFieldError('reg-confirm-password', 'reg-password-error');
+        });
+        document.querySelectorAll('.reg-otp-box').forEach(box => {
+            box.addEventListener('input', () => {
+                const errEl = document.getElementById('reg-otp-error');
+                if (errEl) errEl.classList.add('hidden');
+                document.querySelectorAll('.reg-otp-box').forEach(b => b.style.borderColor = '');
+            });
+        });
+    },
+
+    showFieldError(fieldId, errorElId, message) {
+        const errorEl = document.getElementById(errorElId);
+        if (errorEl) {
+            errorEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${message}`;
+            errorEl.classList.remove('hidden');
+        }
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.style.borderColor = 'var(--danger, #ef4444)';
+        }
+    },
+
+    clearFieldError(fieldId, errorElId) {
+        const errorEl = document.getElementById(errorElId);
+        if (errorEl) {
+            errorEl.classList.add('hidden');
+            errorEl.innerHTML = '';
+        }
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.style.borderColor = '';
+        }
     },
 
     openAuthModal(tab = 'otp') {
         const modal = document.getElementById('auth-modal');
         if (modal) {
             modal.classList.add('active');
+            this.clearFieldError('login-password', 'login-password-error');
+            this.clearFieldError('otp-identifier', 'otp-identifier-error');
+            const otpErr = document.getElementById('login-otp-error');
+            if (otpErr) otpErr.classList.add('hidden');
             this.switchTab(tab);
         }
     },
@@ -50,6 +165,10 @@ export const Auth = {
     closeAuthModal() {
         const modal = document.getElementById('auth-modal');
         if (modal) modal.classList.remove('active');
+        this.clearFieldError('login-password', 'login-password-error');
+        this.clearFieldError('otp-identifier', 'otp-identifier-error');
+        const otpErr = document.getElementById('login-otp-error');
+        if (otpErr) otpErr.classList.add('hidden');
     },
 
     openRegisterModal() {
@@ -69,10 +188,18 @@ export const Auth = {
         document.getElementById('reg-step-1')?.classList.remove('hidden');
         document.getElementById('reg-step-2')?.classList.add('hidden');
         clearInterval(this.regTimerInterval);
-        document.querySelectorAll('.reg-otp-box').forEach(b => b.value = '');
+        document.querySelectorAll('.reg-otp-box').forEach(b => {
+            b.value = '';
+            b.style.borderColor = '';
+        });
+        this.clearFieldError('reg-password', 'reg-password-error');
+        const regOtpErr = document.getElementById('reg-otp-error');
+        if (regOtpErr) regOtpErr.classList.add('hidden');
     },
 
     async handleRegister() {
+        this.clearFieldError('reg-password', 'reg-password-error');
+
         const firstName = document.getElementById('reg-first-name')?.value.trim();
         const lastName = document.getElementById('reg-last-name')?.value.trim();
         const phone = document.getElementById('reg-phone')?.value.trim();
@@ -82,17 +209,17 @@ export const Auth = {
         const confirmPassword = document.getElementById('reg-confirm-password')?.value;
 
         if (!firstName || !lastName || !phone || !email || !password) {
-            Toast.error('Please fill in all required fields.');
+            this.showFieldError('reg-password', 'reg-password-error', 'Please fill in all required fields.');
             return;
         }
 
         if (password !== confirmPassword) {
-            Toast.error('Passwords do not match.');
+            this.showFieldError('reg-confirm-password', 'reg-password-error', 'Passwords do not match.');
             return;
         }
 
         if (password.length < 8) {
-            Toast.error('Password must be at least 8 characters.');
+            this.showFieldError('reg-password', 'reg-password-error', 'Password must be at least 8 characters long.');
             return;
         }
 
@@ -110,7 +237,7 @@ export const Auth = {
 
     async handleRequestRegisterOTP() {
         if (!this.pendingRegistrationData || !this.pendingRegistrationData.phone_number) {
-            Toast.error('Registration details missing. Please try again.');
+            this.showFieldError('reg-password', 'reg-password-error', 'Registration details missing. Please try again.');
             return;
         }
 
@@ -144,10 +271,13 @@ export const Auth = {
             }
 
             this.startRegisterCountdown();
-            document.querySelectorAll('.reg-otp-box').forEach(b => b.value = '');
+            document.querySelectorAll('.reg-otp-box').forEach(b => {
+                b.value = '';
+                b.style.borderColor = '';
+            });
             document.querySelector('.reg-otp-box')?.focus();
         } catch (err) {
-            Toast.error(err.message);
+            this.showFieldError('reg-password', 'reg-password-error', err.message);
         } finally {
             if (btn) {
                 btn.disabled = false;
@@ -179,8 +309,15 @@ export const Auth = {
     },
 
     async handleVerifyRegisterOTP() {
+        const regOtpErr = document.getElementById('reg-otp-error');
+        if (regOtpErr) regOtpErr.classList.add('hidden');
+        document.querySelectorAll('.reg-otp-box').forEach(b => b.style.borderColor = '');
+
         if (!this.pendingRegistrationData) {
-            Toast.error('Registration session expired. Please fill the form again.');
+            if (regOtpErr) {
+                regOtpErr.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Registration session expired. Please fill the form again.';
+                regOtpErr.classList.remove('hidden');
+            }
             this.backToRegisterForm();
             return;
         }
@@ -190,7 +327,11 @@ export const Auth = {
         otpBoxes.forEach(box => code += box.value);
 
         if (code.length < 6) {
-            Toast.error('Please enter all 6 digits of your verification code.');
+            if (regOtpErr) {
+                regOtpErr.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Please enter all 6 digits.';
+                regOtpErr.classList.remove('hidden');
+            }
+            otpBoxes.forEach(b => b.style.borderColor = 'var(--danger, #ef4444)');
             return;
         }
 
@@ -218,7 +359,11 @@ export const Auth = {
             this.updateNavUser();
             document.dispatchEvent(new CustomEvent('auth:change', { detail: { user: res.user } }));
         } catch (err) {
-            Toast.error(err.message);
+            if (regOtpErr) {
+                regOtpErr.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${err.message || 'Invalid verification code.'}`;
+                regOtpErr.classList.remove('hidden');
+            }
+            otpBoxes.forEach(b => b.style.borderColor = 'var(--danger, #ef4444)');
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verify & Complete Registration';
@@ -231,12 +376,17 @@ export const Auth = {
         });
         document.getElementById('otp-login-form')?.classList.toggle('hidden', tabName !== 'otp');
         document.getElementById('password-login-form')?.classList.toggle('hidden', tabName !== 'password');
+        this.clearFieldError('login-password', 'login-password-error');
+        this.clearFieldError('otp-identifier', 'otp-identifier-error');
+        const otpErr = document.getElementById('login-otp-error');
+        if (otpErr) otpErr.classList.add('hidden');
     },
 
     async handleRequestOTP() {
+        this.clearFieldError('otp-identifier', 'otp-identifier-error');
         const identifier = document.getElementById('otp-identifier')?.value.trim();
         if (!identifier) {
-            Toast.error('Please enter your phone number or email.');
+            this.showFieldError('otp-identifier', 'otp-identifier-error', 'Please enter your phone number or email.');
             return;
         }
 
@@ -261,9 +411,13 @@ export const Auth = {
             }
 
             this.startCountdown();
+            document.querySelectorAll('#auth-modal .otp-box').forEach(b => {
+                b.value = '';
+                b.style.borderColor = '';
+            });
             document.querySelector('.otp-box')?.focus();
         } catch (err) {
-            Toast.error(err.message);
+            this.showFieldError('otp-identifier', 'otp-identifier-error', err.message);
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Send Verification Code';
@@ -293,13 +447,21 @@ export const Auth = {
     },
 
     async handleVerifyOTP() {
+        const otpErrorEl = document.getElementById('login-otp-error');
+        if (otpErrorEl) otpErrorEl.classList.add('hidden');
+        const otpBoxes = document.querySelectorAll('#auth-modal .otp-box');
+        otpBoxes.forEach(b => b.style.borderColor = '');
+
         const identifier = document.getElementById('otp-identifier')?.value.trim();
-        const otpBoxes = document.querySelectorAll('.otp-box');
         let code = '';
         otpBoxes.forEach(box => code += box.value);
 
         if (code.length < 6) {
-            Toast.error('Please enter all 6 digits.');
+            if (otpErrorEl) {
+                otpErrorEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Please enter all 6 digits of the code.';
+                otpErrorEl.classList.remove('hidden');
+            }
+            otpBoxes.forEach(b => b.style.borderColor = 'var(--danger, #ef4444)');
             return;
         }
 
@@ -326,7 +488,11 @@ export const Auth = {
                 window.location.reload();
             }
         } catch (err) {
-            Toast.error(err.message);
+            if (otpErrorEl) {
+                otpErrorEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${err.message || 'Invalid or expired verification code.'}`;
+                otpErrorEl.classList.remove('hidden');
+            }
+            otpBoxes.forEach(b => b.style.borderColor = 'var(--danger, #ef4444)');
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Verify & Continue';
@@ -334,6 +500,7 @@ export const Auth = {
     },
 
     async handlePasswordLogin() {
+        this.clearFieldError('login-password', 'login-password-error');
         const usernameInput = document.getElementById('login-username');
         const passwordInput = document.getElementById('login-password');
 
@@ -341,7 +508,7 @@ export const Auth = {
         const password = passwordInput?.value;
 
         if (!username_or_phone || !password) {
-            Toast.error('Please fill in username and password.');
+            this.showFieldError('login-password', 'login-password-error', 'Please fill in both username and password.');
             return;
         }
 
@@ -366,7 +533,8 @@ export const Auth = {
                 window.location.reload();
             }
         } catch (err) {
-            Toast.error(err.message);
+            this.showFieldError('login-password', 'login-password-error', err.message || 'Invalid username/phone or password.');
+            if (passwordInput) passwordInput.focus();
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Sign In';
@@ -397,10 +565,11 @@ export const Auth = {
             }
             if (userNameEl) userNameEl.innerText = user.first_name || user.username;
             if (userAvatarEl) {
+                const initial = (user.first_name ? user.first_name[0] : (user.username ? user.username[0] : 'U')).toUpperCase();
                 if (user.profile_picture) {
-                    userAvatarEl.innerHTML = `<img src="${user.profile_picture}" alt="${user.username}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
+                    userAvatarEl.innerHTML = `<img src="${user.profile_picture}" alt="${user.username}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;" onerror="this.outerHTML='<span style=\\'font-weight:800;\\'>${initial}</span>';" />`;
                 } else {
-                    userAvatarEl.innerText = (user.first_name ? user.first_name[0] : user.username[0]).toUpperCase();
+                    userAvatarEl.innerHTML = `<span style="font-weight:800;">${initial}</span>`;
                 }
             }
             if (adminPortalLink) {
@@ -432,7 +601,14 @@ export const Auth = {
         API.clearAuth();
         Toast.info('You have been signed out.');
         this.updateNavUser();
-        if (window.location.pathname.includes('admin-portal')) {
+        document.dispatchEvent(new CustomEvent('auth:change', { detail: { user: null } }));
+
+        const isCustomerPortal = window.location.pathname.includes('customer-portal') || !!document.getElementById('customer-portal-container');
+        const isAdminPortal = window.location.pathname.includes('admin-portal');
+
+        if (isCustomerPortal || isAdminPortal) {
+            const portalContainer = document.getElementById('customer-portal-container');
+            if (portalContainer) portalContainer.style.display = 'none';
             window.location.href = '/';
         }
     }

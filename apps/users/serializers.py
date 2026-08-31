@@ -1,8 +1,11 @@
 from rest_framework import serializers
 from .models import User, OTPVerification
+from utils.supabase_storage import SupabaseStorageService
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
+    profile_picture = serializers.SerializerMethodField()
+    profile_image_url = serializers.SerializerMethodField()
     total_bookings = serializers.SerializerMethodField()
     total_spent = serializers.SerializerMethodField()
 
@@ -11,13 +14,19 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'phone_number', 'first_name', 'last_name',
             'full_name', 'role', 'driver_license_number', 'address', 'city',
-            'profile_picture', 'is_phone_verified', 'is_active', 'total_bookings',
-            'total_spent', 'created_at'
+            'profile_image_path', 'profile_picture', 'profile_image_url',
+            'is_phone_verified', 'is_active', 'total_bookings', 'total_spent', 'created_at'
         ]
-        read_only_fields = ['id', 'role', 'is_phone_verified', 'created_at']
+        read_only_fields = ['id', 'role', 'profile_image_path', 'is_phone_verified', 'created_at']
 
     def get_full_name(self, obj):
         return f'{obj.first_name} {obj.last_name}'.strip() or obj.username
+
+    def get_profile_picture(self, obj):
+        return SupabaseStorageService.get_profile_image_url(obj.profile_image_path)
+
+    def get_profile_image_url(self, obj):
+        return self.get_profile_picture(obj)
 
     def get_total_bookings(self, obj):
         if hasattr(obj, 'bookings'):

@@ -23,6 +23,7 @@
                     <div class="form-group">
                         <label class="form-label">Phone Number or Email</label>
                         <input type="text" id="otp-identifier" class="form-control" placeholder="Enter here"/>
+                        <div id="otp-identifier-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.82rem; margin-top:6px; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
                     </div>
                     <button type="button" class="btn btn-primary" id="send-otp-btn" style="width:100%; margin-top:10px;"
                         onclick="Auth.handleRequestOTP()">
@@ -45,6 +46,7 @@
                         <input type="text" class="otp-box" maxlength="1" />
                         <input type="text" class="otp-box" maxlength="1" />
                     </div>
+                    <div id="login-otp-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.82rem; margin-top:8px; margin-bottom:8px; text-align:center; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px;"></div>
                     <div
                         style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; margin-bottom:16px;">
                         <span id="otp-timer" style="color:var(--text-muted);"></span>
@@ -65,7 +67,13 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" id="login-password" class="form-control" placeholder="Enter Password"/>
+                    <div class="password-input-wrap">
+                        <input type="password" id="login-password" class="form-control" placeholder="Enter Password"/>
+                        <button type="button" class="password-toggle-btn" onclick="Auth.togglePasswordVisibility('login-password', this)" title="Show/Hide Password" tabindex="-1">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="login-password-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.82rem; margin-top:6px; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
                 </div>
                 <button type="button" class="btn btn-primary" id="password-login-btn"
                     style="width:100%; margin-top:10px;" onclick="Auth.handlePasswordLogin()">
@@ -136,15 +144,26 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                         <div class="form-group">
                             <label class="form-label">Password *</label>
-                            <input type="password" id="reg-password" class="form-control" placeholder="••••••••"
-                                minlength="8" required />
+                            <div class="password-input-wrap">
+                                <input type="password" id="reg-password" class="form-control" placeholder="••••••••"
+                                    minlength="8" required />
+                                <button type="button" class="password-toggle-btn" onclick="Auth.togglePasswordVisibility('reg-password', this)" title="Show/Hide Password" tabindex="-1">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Confirm Password *</label>
-                            <input type="password" id="reg-confirm-password" class="form-control" placeholder="••••••••"
-                                minlength="8" required />
+                            <div class="password-input-wrap">
+                                <input type="password" id="reg-confirm-password" class="form-control" placeholder="••••••••"
+                                    minlength="8" required />
+                                <button type="button" class="password-toggle-btn" onclick="Auth.togglePasswordVisibility('reg-confirm-password', this)" title="Show/Hide Password" tabindex="-1">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
+                    <div id="reg-password-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.82rem; margin-top:-8px; margin-bottom:10px; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
 
                     <!-- Terms & Conditions -->
                     <div class="form-group" style="margin-top: 4px;">
@@ -152,9 +171,9 @@
                             style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;">
                             <input type="checkbox" id="reg-terms" required
                                 style="margin-top: 3px; accent-color: var(--primary);" />
-                            <span>I agree to the <a href="#"
+                            <span>I agree to the <a href="/terms/" target="_blank"
                                     style="color: var(--primary); text-decoration: underline;">Terms of Service</a> & <a
-                                    href="#" style="color: var(--primary); text-decoration: underline;">Privacy
+                                    href="/privacy/" target="_blank" style="color: var(--primary); text-decoration: underline;">Privacy
                                     Policy</a>.</span>
                         </label>
                     </div>
@@ -190,6 +209,7 @@
                     <input type="text" class="otp-box reg-otp-box" maxlength="1" />
                     <input type="text" class="otp-box reg-otp-box" maxlength="1" />
                 </div>
+                <div id="reg-otp-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.82rem; margin-top:8px; margin-bottom:8px; text-align:center; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px;"></div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; margin-bottom:16px;">
                     <span id="reg-otp-timer" style="color:var(--text-muted);"></span>

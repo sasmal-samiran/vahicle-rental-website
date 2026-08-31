@@ -8,6 +8,9 @@ from apps.vehicles.models import Car, Category
 from apps.bookings.models import Booking
 from apps.users.models import User
 from apps.payments.models import Payment
+from apps.vehicles.serializers import CarListSerializer
+from .services import RecommendationService, AnalyticsService
+from .models import SearchLog, RecommendationClick, CarPopularityMetrics
 
 class AdminDashboardStatsView(APIView):
     permission_classes = [permissions.IsAdminUser]
@@ -121,3 +124,292 @@ class AdminDashboardStatsView(APIView):
             },
             'recent_bookings': recent_list
         })
+
+
+# ============================================================================
+# Recommendation Engine Views
+# ============================================================================
+
+class PersonalizedRecommendationsView(APIView):
+    """
+    Returns AI-powered personalized car recommendations tailored to user's
+    past bookings, preferred categories, price bracket, and transmission/fuel choices.
+    Gracefully falls back to popular cars for unauthenticated guest visitors.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        limit = int(request.query_params.get('limit', 10))
+        service = RecommendationService()
+        cars = service.get_recommendations_for_user(request.user, limit=limit)
+        serializer = CarListSerializer(cars, many=True, context={'request': request})
+        return Response({
+            'status': 'success',
+            'type': 'personalized' if request.user.is_authenticated else 'popular_fallback',
+            'count': len(cars),
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class SimilarCarsRecommendationsView(APIView):
+    """
+    Returns content-based similar vehicles based on category, brand, price tier,
+    transmission, fuel type, seating capacity, model year, and rating.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, car_id=None, pk=None):
+        target_id = car_id or pk or request.query_params.get('car_id')
+        if not target_id:
+            return Response({'error': 'car_id parameter or path variable is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            target_car = Car.objects.select_related('category', 'location').get(pk=target_id)
+        except Car.DoesNotExist:
+            return Response({'error': f'Car with ID {target_id} was not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        limit = int(request.query_params.get('limit', 5))
+        service = RecommendationService()
+        similar_cars = service.get_similar_cars(target_car, limit=limit)
+        serializer = CarListSerializer(similar_cars, many=True, context={'request': request})
+
+        return Response({
+            'status': 'success',
+            'type': 'similar',
+            'target_car': {
+                'id': target_car.id,
+                'name': target_car.display_name,
+                'category': target_car.category.name if target_car.category else None,
+                'price_per_day': float(target_car.price_per_day),
+            },
+            'count': len(similar_cars),
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class PopularCarsRecommendationsView(APIView):
+    """
+    Returns top popular cars based on booking volume and high customer satisfaction ratings.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        limit = int(request.query_params.get('limit', 10))
+        days = int(request.query_params.get('days', 30))
+        service = RecommendationService()
+        cars = service.get_popular_cars(limit=limit, time_range_days=days)
+        serializer = CarListSerializer(cars, many=True, context={'request': request})
+
+        return Response({
+            'status': 'success',
+            'type': 'popular',
+            'time_range_days': days,
+            'count': len(cars),
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class TrendingCarsRecommendationsView(APIView):
+    """
+    Returns trending cars experiencing a recent spike in bookings (week-over-week growth).
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        limit = int(request.query_params.get('limit', 10))
+        service = RecommendationService()
+        cars = service.get_trending_cars(limit=limit)
+        serializer = CarListSerializer(cars, many=True, context={'request': request})
+
+        return Response({
+            'status': 'success',
+            'type': 'trending',
+            'count': len(cars),
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class ContextRecommendationsView(APIView):
+    """
+    Returns context-aware recommendations matching trip requirements
+    (e.g., trip_type='family', 'business', 'adventure', passenger count, budget).
+    Supports both GET query parameters and POST JSON request body.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def _process_recommendations(self, request, data):
+        trip_type = data.get('trip_type', 'family')
+        try:
+            passengers = int(data.get('passengers', 2))
+        except (ValueError, TypeError):
+            passengers = 2
+
+        budget_raw = data.get('budget')
+        budget = None
+        if budget_raw is not None:
+            try:
+                budget = float(budget_raw)
+            except (ValueError, TypeError):
+                budget = None
+
+        try:
+            limit = int(data.get('limit', 10))
+        except (ValueError, TypeError):
+            limit = 10
+
+        context = {
+            'trip_type': trip_type,
+            'passengers': passengers,
+            'budget': budget
+        }
+
+        service = RecommendationService()
+        cars = service.get_recommendations_by_context(context, limit=limit)
+        serializer = CarListSerializer(cars, many=True, context={'request': request})
+
+        return Response({
+            'status': 'success',
+            'type': 'context_aware',
+            'context': context,
+            'count': len(cars),
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        return self._process_recommendations(request, request.query_params)
+
+    def post(self, request):
+        return self._process_recommendations(request, request.data)
+
+
+# ============================================================================
+# Search Logging & Recommendation Click Tracking Views
+# ============================================================================
+
+class TrackClickView(APIView):
+    """
+    Tracks clicks and conversions for recommendations and searches.
+    1. If recommendation_type or car_id is provided, creates/updates RecommendationClick.
+    2. If details button is clicked for a car from search, records clicked_car on the SearchLog!
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        data = request.data
+        car_id = data.get('car_id')
+        rec_type = data.get('recommendation_type', 'similar')
+        try:
+            position = int(data.get('position', 1))
+        except (ValueError, TypeError):
+            position = 1
+
+        clicked = bool(data.get('clicked', True))
+        booked = bool(data.get('booked', False))
+        search_log_id = data.get('search_log_id')
+        click_id = data.get('recommendation_click_id')
+
+        car = None
+        if car_id:
+            try:
+                car = Car.objects.get(pk=car_id)
+            except Car.DoesNotExist:
+                return Response({'error': f'Car with ID {car_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 1. Update existing RecommendationClick if click_id is passed (e.g. marking booked=True upon booking)
+        rec_click = None
+        if click_id:
+            try:
+                rec_click = RecommendationClick.objects.get(pk=click_id)
+                if booked:
+                    rec_click.booked = True
+                if clicked:
+                    rec_click.clicked = True
+                rec_click.save()
+            except RecommendationClick.DoesNotExist:
+                pass
+        elif car and rec_type:
+            rec_click = RecommendationClick.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                car=car,
+                recommendation_type=rec_type,
+                position=position,
+                clicked=clicked,
+                booked=booked
+            )
+
+        # 2. Update SearchLog clicked_car ONLY when details button is clicked
+        updated_search_log = None
+        if car:
+            if search_log_id:
+                try:
+                    s_log = SearchLog.objects.get(pk=search_log_id)
+                    s_log.clicked_car = car
+                    s_log.save(update_fields=['clicked_car'])
+                    updated_search_log = s_log
+                except SearchLog.DoesNotExist:
+                    pass
+
+            # If no explicit search_log_id was sent, link to the most recent unclicked SearchLog for this user/session
+            if not updated_search_log:
+                recent_qs = SearchLog.objects.filter(clicked_car__isnull=True)
+                if request.user.is_authenticated:
+                    recent_qs = recent_qs.filter(user=request.user)
+                elif request.session.session_key:
+                    recent_qs = recent_qs.filter(session_id=request.session.session_key)
+                else:
+                    recent_qs = None
+
+                if recent_qs is not None and recent_qs.exists():
+                    recent_log = recent_qs.order_by('-created_at').first()
+                    if recent_log:
+                        recent_log.clicked_car = car
+                        recent_log.save(update_fields=['clicked_car'])
+                        updated_search_log = recent_log
+
+        return Response({
+            'status': 'success',
+            'message': 'Click tracked successfully.',
+            'recommendation_click_id': rec_click.id if rec_click else None,
+            'search_log_id': updated_search_log.id if updated_search_log else None,
+            'clicked_car_id': car.id if car else None
+        }, status=status.HTTP_200_OK)
+
+
+class TrendingSearchesView(APIView):
+    """
+    Returns high-frequency trending search keywords and filter trends.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        try:
+            limit = int(request.query_params.get('limit', 8))
+        except (ValueError, TypeError):
+            limit = 8
+
+        trending = AnalyticsService.get_trending_searches(limit=limit)
+        return Response({
+            'status': 'success',
+            'count': len(trending),
+            'results': trending
+        }, status=status.HTTP_200_OK)
+
+
+class AdminRecommendationPerformanceView(APIView):
+    """
+    Returns AI recommendation conversion rate, CTR, and algorithm breakdown.
+    Also recalculates and refreshes CarPopularityMetrics.
+    """
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        # Refresh popularity metrics across all fleet
+        AnalyticsService.update_all_car_metrics()
+        perf = AnalyticsService.get_recommendation_performance()
+        return Response({
+            'status': 'success',
+            'performance': perf
+        }, status=status.HTTP_200_OK)
+
+
+

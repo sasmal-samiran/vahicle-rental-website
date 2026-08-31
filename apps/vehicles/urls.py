@@ -8,6 +8,7 @@ from .views import (
     CheckCarAvailabilityView,
     AdminCarViewSet
 )
+from apps.analytics.views import SimilarCarsRecommendationsView
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
@@ -18,6 +19,8 @@ urlpatterns = [
     path('', include(router.urls)),
     path('cars/', CarListView.as_view(), name='car-list'),
     path('cars/<int:pk>/', CarDetailView.as_view(), name='car-detail'),
+    path('cars/<int:pk>/similar/', SimilarCarsRecommendationsView.as_view(), name='car-similar'),
     path('cars/<int:pk>/check-availability/', CheckCarAvailabilityView.as_view(), name='car-check-availability'),
     path('cars/check-availability/', CheckCarAvailabilityView.as_view(), name='cars-check-availability'),
 ]
+

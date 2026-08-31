@@ -46,7 +46,7 @@ class User(AbstractUser):
     driver_license_number = models.CharField(max_length=50, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    profile_image_path = models.CharField(max_length=255, blank=True, null=True, help_text="Supabase Storage path, e.g. profiles/42/profile.jpg")
     is_phone_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -56,6 +56,11 @@ class User(AbstractUser):
     def __str__(self):
         name = self.get_full_name() or self.username
         return f'{name} ({self.role})'
+
+    @property
+    def profile_picture_url(self):
+        from utils.supabase_storage import SupabaseStorageService
+        return SupabaseStorageService.get_profile_image_url(self.profile_image_path)
 
     @property
     def is_admin_user(self):

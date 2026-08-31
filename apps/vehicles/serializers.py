@@ -21,6 +21,8 @@ def parse_datetime_param(val, is_end=False):
         dt = timezone.make_aware(dt)
     return dt
 
+from utils.supabase_storage import SupabaseStorageService
+
 class CategorySerializer(serializers.ModelSerializer):
     car_count = serializers.SerializerMethodField()
 
@@ -42,16 +44,10 @@ class CarImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CarImage
-        fields = ['id', 'car', 'image', 'url', 'view_type', 'view_type_display', 'caption', 'is_primary']
+        fields = ['id', 'car', 'image_path', 'url', 'view_type', 'view_type_display', 'caption', 'is_primary']
 
     def get_url(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            try:
-                return request.build_absolute_uri(obj.image.url) if request else obj.image.url
-            except Exception:
-                return obj.image.url
-        return obj.image_url or ''
+        return SupabaseStorageService.get_gallery_image_url(obj.image_path)
 
 class CarListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
@@ -64,11 +60,12 @@ class CarListSerializer(serializers.ModelSerializer):
         queryset=Location.objects.all(), source='location', write_only=True, required=False, allow_null=True
     )
     primary_image = serializers.SerializerMethodField()
+    main_image_url = serializers.SerializerMethodField()
     display_name = serializers.ReadOnlyField()
     average_rating = serializers.SerializerMethodField()
     total_reviews = serializers.SerializerMethodField()
     is_available_for_dates = serializers.SerializerMethodField()
-    main_image = serializers.ImageField(required=False, allow_null=True)
+    main_image = serializers.FileField(required=False, allow_null=True, write_only=True)
 
     class Meta:
         model = Car
@@ -77,10 +74,26 @@ class CarListSerializer(serializers.ModelSerializer):
             'category', 'category_id', 'location', 'location_id',
             'transmission', 'fuel_type', 'seats', 'doors', 'luggage_capacity',
             'mileage_limit', 'engine_capacity', 'power_hp', 'price_per_day',
-            'security_deposit', 'primary_image', 'main_image', 'main_image_url', 'images', 'status',
+            'security_deposit', 'main_image_path', 'primary_image', 'main_image_url', 'main_image', 'images', 'status',
             'is_available_for_dates',
             'features', 'description', 'average_rating', 'total_reviews', 'created_at'
         ]
+
+    def create(self, validated_data):
+        main_image = validated_data.pop('main_image', None)
+        car = super().create(validated_data)
+        if main_image:
+            from apps.vehicles.services import VehicleService
+            VehicleService.upload_and_save_main_image(car, main_image)
+        return car
+
+    def update(self, instance, validated_data):
+        main_image = validated_data.pop('main_image', None)
+        car = super().update(instance, validated_data)
+        if main_image:
+            from apps.vehicles.services import VehicleService
+            VehicleService.upload_and_save_main_image(car, main_image)
+        return car
 
     def validate_features(self, value):
         if isinstance(value, str):
@@ -91,15 +104,10 @@ class CarListSerializer(serializers.ModelSerializer):
         return value
 
     def get_primary_image(self, obj):
-        request = self.context.get('request')
-        if obj.main_image:
-            try:
-                return request.build_absolute_uri(obj.main_image.url) if request else obj.main_image.url
-            except Exception:
-                return obj.main_image.url
-        if obj.main_image_url:
-            return obj.main_image_url
-        return 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'
+        return SupabaseStorageService.get_car_image_url(obj.main_image_path)
+
+    def get_main_image_url(self, obj):
+        return self.get_primary_image(obj)
 
     def get_average_rating(self, obj):
         avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
@@ -139,12 +147,13 @@ class CarDetailSerializer(serializers.ModelSerializer):
     )
     images = CarImageSerializer(many=True, read_only=True)
     primary_image = serializers.SerializerMethodField()
+    main_image_url = serializers.SerializerMethodField()
     display_name = serializers.ReadOnlyField()
     average_rating = serializers.SerializerMethodField()
     total_reviews = serializers.SerializerMethodField()
     is_available_for_dates = serializers.SerializerMethodField()
     recent_reviews = serializers.SerializerMethodField()
-    main_image = serializers.ImageField(required=False, allow_null=True)
+    main_image = serializers.FileField(required=False, allow_null=True, write_only=True)
 
     class Meta:
         model = Car
@@ -152,10 +161,26 @@ class CarDetailSerializer(serializers.ModelSerializer):
             'id', 'brand', 'model', 'display_name', 'year', 'license_plate', 'vin_number',
             'category', 'category_id', 'location', 'location_id', 'transmission', 'fuel_type', 'seats', 'doors',
             'luggage_capacity', 'mileage_limit', 'engine_capacity', 'power_hp',
-            'price_per_day', 'security_deposit', 'primary_image', 'main_image', 'main_image_url',
+            'price_per_day', 'security_deposit', 'main_image_path', 'primary_image', 'main_image_url', 'main_image',
             'images', 'status', 'is_available_for_dates', 'features', 'description', 'average_rating',
             'total_reviews', 'recent_reviews', 'created_at', 'updated_at'
         ]
+
+    def create(self, validated_data):
+        main_image = validated_data.pop('main_image', None)
+        car = super().create(validated_data)
+        if main_image:
+            from apps.vehicles.services import VehicleService
+            VehicleService.upload_and_save_main_image(car, main_image)
+        return car
+
+    def update(self, instance, validated_data):
+        main_image = validated_data.pop('main_image', None)
+        car = super().update(instance, validated_data)
+        if main_image:
+            from apps.vehicles.services import VehicleService
+            VehicleService.upload_and_save_main_image(car, main_image)
+        return car
 
     def validate_features(self, value):
         if isinstance(value, str):
@@ -166,15 +191,10 @@ class CarDetailSerializer(serializers.ModelSerializer):
         return value
 
     def get_primary_image(self, obj):
-        request = self.context.get('request')
-        if obj.main_image:
-            try:
-                return request.build_absolute_uri(obj.main_image.url) if request else obj.main_image.url
-            except Exception:
-                return obj.main_image.url
-        if obj.main_image_url:
-            return obj.main_image_url
-        return 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'
+        return SupabaseStorageService.get_car_image_url(obj.main_image_path)
+
+    def get_main_image_url(self, obj):
+        return self.get_primary_image(obj)
 
     def get_average_rating(self, obj):
         avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']

@@ -27,6 +27,9 @@ urlpatterns = [
     path('fleet/', TemplateView.as_view(template_name='fleet.html'), name='fleet-catalog'),
     path('customer-portal/', TemplateView.as_view(template_name='customer_portal.html'), name='customer-portal'),
     path('admin-portal/', TemplateView.as_view(template_name='admin.html'), name='admin-portal'),
+    path('terms/', TemplateView.as_view(template_name='legal.html'), name='terms-of-service'),
+    path('privacy/', TemplateView.as_view(template_name='legal.html'), name='privacy-policy'),
+    path('legal/', TemplateView.as_view(template_name='legal.html'), name='legal-hub'),
 ]
 
 if settings.DEBUG:

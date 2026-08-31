@@ -28,10 +28,11 @@ export const Customer = {
     async init() {
         this.parseUrlParams();
         this.setDefaultDates();
-        await this.loadLocations();
-        await this.loadCategories();
         this.bindEvents();
-        
+        this.loadLocations();
+        this.loadCategories();
+        this.loadTrendingSearches();
+
         if (document.getElementById('cars-grid-container')) {
             await this.fetchCars();
         } else if (document.getElementById('featured-cars-grid')) {
@@ -94,6 +95,13 @@ export const Customer = {
                 this.filters.search = e.target.value;
                 this.applyFiltersDebounced();
             });
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.filters.search = e.target.value;
+                    this.fetchCars();
+                }
+            });
         }
 
         // Sort selector
@@ -152,6 +160,33 @@ export const Customer = {
                 dropoffContainer.classList.toggle('hidden', e.target.checked);
             });
         }
+
+        // Real-time Authentication Sync:
+        // When a user logs in or registers (even after scrolling down),
+        // instantly refresh recommendations for their profile without reloading the page or losing scroll position!
+        document.addEventListener('auth:change', (event) => {
+            const user = event?.detail?.user || API.getUser();
+
+            // 1. Refresh Fleet Catalog grid with logged-in user recommendations
+            if (document.getElementById('cars-grid-container')) {
+                this.fetchCars();
+                this.loadTrendingSearches();
+            }
+
+            // 2. Refresh Home Page Curated Showcase
+            if (document.getElementById('featured-cars-grid')) {
+                this.switchCuratedTab(this.activeCuratedTab || 'personalized');
+            }
+
+            // 3. Refresh Similar Cars in open detail modal
+            if (this.activeCar && document.getElementById('car-detail-modal')?.classList.contains('active')) {
+                this.loadSimilarCars(this.activeCar.id);
+            }
+
+            if (user) {
+                Toast.info('✨ Personalized vehicle recommendations updated for your profile.', 'AI Matched');
+            }
+        });
     },
 
     debounceTimer: null,
@@ -250,6 +285,32 @@ export const Customer = {
         this.fetchCars();
     },
 
+    async loadTrendingSearches() {
+        const container = document.getElementById('fleet-trending-searches');
+        if (!container) return;
+
+        try {
+            const data = await API.get('/analytics/trending-searches/', { limit: 6 });
+            const searches = (data.results || data || []);
+            if (!searches.length) return;
+
+            container.innerHTML = searches.map(item => `
+                <button type="button" class="filter-chip" style="font-size:0.7rem; padding:2px 8px; margin:0; background:#f1f5f9; border:1px solid var(--border-color); cursor:pointer; font-weight:600;" onclick="Customer.quickSearch('${item.query.replace(/'/g, "\\'")}')">
+                    ${item.query}
+                </button>
+            `).join('');
+        } catch (e) {
+            console.warn('Trending searches fetch notice:', e);
+        }
+    },
+
+    quickSearch(term) {
+        this.filters.search = term;
+        const searchInput = document.getElementById('fleet-search-input');
+        if (searchInput) searchInput.value = term;
+        this.fetchCars();
+    },
+
     async fetchCars() {
         const grid = document.getElementById('cars-grid-container');
         const countEl = document.getElementById('results-count-display');
@@ -300,22 +361,113 @@ export const Customer = {
         }
     },
 
-    async fetchFeaturedCars() {
+    activeCuratedTab: 'personalized',
+    curatedFilter: '',
+
+    async switchCuratedTab(type = 'personalized') {
+        this.activeCuratedTab = type;
         const grid = document.getElementById('featured-cars-grid');
-        if (!grid) return;
+        const titleEl = document.getElementById('curated-section-title');
+        const descEl = document.getElementById('curated-section-desc');
+
+        // Update tab buttons active state
+        document.querySelectorAll('#curated-tabs-wrapper .category-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const activeBtn = document.getElementById(`tab-btn-${type}`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        // Update section titles
+        if (type === 'personalized') {
+            if (titleEl) titleEl.innerText = 'Recommended For You';
+            if (descEl) descEl.innerText = 'Personalized vehicles matched to your driving preferences, past trips, and favorite vehicle classes.';
+        } else if (type === 'trending') {
+            if (titleEl) titleEl.innerText = 'Trending This Week';
+            if (descEl) descEl.innerText = 'Vehicles experiencing the highest surge in bookings and weekly reservation momentum.';
+        } else if (type === 'popular') {
+            if (titleEl) titleEl.innerText = 'Most Popular Fleet';
+            if (descEl) descEl.innerText = 'Customer-favorite luxury and executive vehicles with top satisfaction ratings (4.8+ Stars).';
+        }
+
+        if (grid) {
+            grid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align:center; padding:50px 0;">
+                    <i class="fa-solid fa-circle-notch fa-spin text-gradient" style="font-size:2rem; margin-bottom:12px;"></i>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">Loading ${type} vehicles...</p>
+                </div>
+            `;
+        }
+
         try {
-            const data = await API.get('/cars/', { ordering: '-price_per_day' });
-            const cars = (data.results || data).slice(0, 8);
-            grid.innerHTML = cars.map(car => this.generateCarCardHtml(car)).join('');
+            const data = await API.get(`/analytics/recommendations/${type}/`, { limit: 8 });
+            const cars = (data.results || data || []);
+            if (grid) {
+                if (!cars.length) {
+                    grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text-muted);">No vehicles found in this collection.</div>`;
+                } else {
+                    grid.innerHTML = cars.map(car => this.generateCarCardHtml(car)).join('');
+                }
+            }
         } catch (e) {
-            console.error('Featured cars error:', e);
+            console.error(`Curated cars error (${type}):`, e);
+            if (grid) grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:30px; color:var(--danger);">Could not load ${type} vehicles.</div>`;
         }
     },
 
-    generateCarCardHtml(car) {
+    async selectCuratedFleet(type = '') {
+        this.curatedFilter = type;
+        const countEl = document.getElementById('results-count-display');
+        const viewLabel = document.getElementById('curated-view-label');
+        const grid = document.getElementById('cars-grid-container');
+
+        // Update pills active state
+        document.querySelectorAll('#curated-fleet-pills .filter-chip').forEach(c => c.classList.remove('active'));
+        if (type === 'personalized') {
+            document.getElementById('curated-recommended-chip')?.classList.add('active');
+            if (viewLabel) viewLabel.innerText = 'AI Recommended Vehicles';
+        } else if (type === 'trending') {
+            document.getElementById('curated-trending-chip')?.classList.add('active');
+            if (viewLabel) viewLabel.innerText = 'Trending This Week';
+        } else if (type === 'popular') {
+            document.getElementById('curated-popular-chip')?.classList.add('active');
+            if (viewLabel) viewLabel.innerText = 'Most Popular Fleet';
+        } else {
+            document.getElementById('curated-all-chip')?.classList.add('active');
+            if (viewLabel) viewLabel.innerText = 'All Available Fleet';
+            this.fetchCars();
+            return;
+        }
+
+        if (grid) {
+            grid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align:center; padding:60px 0;">
+                    <i class="fa-solid fa-circle-notch fa-spin text-gradient" style="font-size:2.5rem; margin-bottom:12px;"></i>
+                    <p style="color:var(--text-secondary);">Loading curated collection...</p>
+                </div>
+            `;
+        }
+
+        try {
+            const data = await API.get(`/analytics/recommendations/${type}/`, { limit: 20 });
+            this.cars = (data.results || data || []);
+            if (countEl) {
+                countEl.innerText = `${this.cars.length} Curated Vehicle${this.cars.length === 1 ? '' : 's'}`;
+            }
+            this.renderCars();
+        } catch (e) {
+            console.error('Curated fleet error:', e);
+            if (grid) grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--danger);">${e.message}</div>`;
+        }
+    },
+
+    async fetchFeaturedCars() {
+        await this.switchCuratedTab('personalized');
+    },
+
+    generateCarCardHtml(car, position = 1, source = 'search_details') {
+        const isBookedForDates = car.status === 'AVAILABLE' && car.is_available_for_dates === false;
         let statusBadgeHtml = '';
         let actionBtnHtml = '';
-        const isBookedForDates = car.status === 'AVAILABLE' && car.is_available_for_dates === false;
 
         if (car.status === 'AVAILABLE' && !isBookedForDates) {
             statusBadgeHtml = `
@@ -324,25 +476,25 @@ export const Customer = {
                 </span>
             `;
             actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
                     <i class="fa-regular fa-eye"></i> Details
                 </button>
                 <button class="btn btn-primary btn-sm" onclick="BookingWizard.startBooking(${car.id})">
-                    <i class="fa-solid fa-key"></i> Book Now
+                    <i class="fa-solid fa-calendar-check"></i> Book Now
                 </button>
             `;
         } else if (isBookedForDates) {
             statusBadgeHtml = `
-                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(245,158,11,0.35); background:#f59e0b; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
+                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(239,68,68,0.35); background:#ef4444; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
                     <i class="fa-solid fa-calendar-xmark"></i> Reserved for Dates
                 </span>
             `;
             actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
                     <i class="fa-regular fa-eye"></i> Details
                 </button>
-                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="This vehicle has an active reservation for the selected date range.">
-                    <i class="fa-solid fa-calendar-xmark"></i> Booked for Dates
+                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="Already reserved for your selected dates">
+                    <i class="fa-solid fa-calendar-xmark"></i> Booked Dates
                 </button>
             `;
         } else if (car.status === 'RENTED') {
@@ -352,10 +504,10 @@ export const Customer = {
                 </span>
             `;
             actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
                     <i class="fa-regular fa-eye"></i> Details
                 </button>
-                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="This vehicle is currently on trip with another customer">
+                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="Currently out on an active customer rental">
                     <i class="fa-solid fa-clock"></i> Rented Out
                 </button>
             `;
@@ -366,7 +518,7 @@ export const Customer = {
                 </span>
             `;
             actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
                     <i class="fa-regular fa-eye"></i> Details
                 </button>
                 <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="Undergoing routine mechanical maintenance">
@@ -380,16 +532,21 @@ export const Customer = {
                 </span>
             `;
             actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id})">
+                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
                     <i class="fa-regular fa-eye"></i> Details
                 </button>
             `;
         }
 
+        const carImgUrl = car.primary_image || car.main_image_url;
+        const carImgMarkup = carImgUrl
+            ? `<img src="${carImgUrl}" alt="${car.display_name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div class="image-unavailable-placeholder" style="display:none;"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>`
+            : `<div class="image-unavailable-placeholder"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>`;
+
         return `
             <div class="car-card animate-slide-in">
                 <div class="car-img-wrapper" style="position:relative;">
-                    <img src="${car.primary_image || car.main_image_url}" alt="${car.display_name}" loading="lazy" />
+                    ${carImgMarkup}
                     <span class="badge badge-primary car-category-badge">
                         <i class="fa-solid ${car.category?.icon || 'fa-car'}"></i> ${car.category?.name || 'Car'}
                     </span>
@@ -441,7 +598,7 @@ export const Customer = {
             return;
         }
 
-        grid.innerHTML = this.cars.map(car => this.generateCarCardHtml(car)).join('');
+        grid.innerHTML = this.cars.map((car, idx) => this.generateCarCardHtml(car, idx + 1, 'search_details')).join('');
     },
 
     resetFilters() {
@@ -470,9 +627,22 @@ export const Customer = {
 
         document.querySelectorAll('.category-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.slug === ''));
         this.fetchCars();
-    },
+    },    async openDetailModal(carId, source = 'search_details', position = 1) {
+        // Track click and write clicked_car to SearchLog only when details button is clicked!
+        try {
+            API.post('/analytics/track-click/', {
+                car_id: carId,
+                recommendation_type: source,
+                position: position,
+                clicked: true,
+                search_log_id: this.currentSearchLogId || null
+            }).then(res => {
+                if (res && res.recommendation_click_id) {
+                    this.lastRecommendationClickId = res.recommendation_click_id;
+                }
+            }).catch(e => console.warn('Click tracking notice:', e));
+        } catch (e) {}
 
-    async openDetailModal(carId) {
         try {
             const car = await API.get(`/cars/${carId}/`);
             this.activeCar = car;
@@ -495,6 +665,7 @@ export const Customer = {
 
             const thumbsContainer = document.getElementById('detail-thumbs-container');
             const mainImg = document.getElementById('detail-main-img');
+            const mainPlaceholder = document.getElementById('detail-main-img-placeholder');
             const badgeEl = document.getElementById('detail-angle-badge');
 
             const gallery = [
@@ -505,18 +676,36 @@ export const Customer = {
                 })) || [])
             ].filter(item => Boolean(item.url));
 
-            if (mainImg && gallery.length) {
-                mainImg.src = gallery[0].url;
-                if (badgeEl) badgeEl.innerHTML = `<i class="fa-solid fa-camera"></i> ${gallery[0].label}`;
+            if (gallery.length && gallery[0].url) {
+                if (mainImg) {
+                    mainImg.style.display = 'block';
+                    mainImg.src = gallery[0].url;
+                }
+                if (mainPlaceholder) mainPlaceholder.style.display = 'none';
+                if (badgeEl) {
+                    badgeEl.style.display = 'inline-flex';
+                    badgeEl.innerHTML = `<i class="fa-solid fa-camera"></i> ${gallery[0].label}`;
+                }
+            } else {
+                if (mainImg) mainImg.style.display = 'none';
+                if (mainPlaceholder) mainPlaceholder.style.display = 'flex';
+                if (badgeEl) badgeEl.style.display = 'none';
             }
 
             if (thumbsContainer) {
-                thumbsContainer.innerHTML = gallery.map((item, i) => `
-                    <div class="gallery-thumb-wrapper ${i === 0 ? 'active' : ''}" onclick="Customer.switchGalleryImage('${item.url}', '${item.label}', this)" style="cursor:pointer; flex-shrink:0; text-align:center;">
-                        <img src="${item.url}" class="gallery-thumb" style="width:70px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:2px solid ${i === 0 ? 'var(--primary)' : 'var(--border-color)'}; transition:var(--transition);" alt="${item.label}" />
-                        <span style="font-size:0.65rem; color:var(--text-secondary); display:block; margin-top:2px; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.label}</span>
-                    </div>
-                `).join('');
+                if (gallery.length > 1) {
+                    thumbsContainer.style.display = 'flex';
+                    thumbsContainer.innerHTML = gallery.map((item, i) => `
+                        <div class="gallery-thumb-wrapper ${i === 0 ? 'active' : ''}" onclick="Customer.switchGalleryImage('${item.url}', '${item.label}', this)" style="cursor:pointer; flex-shrink:0; text-align:center;">
+                            <img src="${item.url}" class="gallery-thumb" style="width:70px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:2px solid ${i === 0 ? 'var(--primary)' : 'var(--border-color)'}; transition:var(--transition);" alt="${item.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                            <div class="image-unavailable-placeholder thumb-size" style="width:70px; height:50px; display:none; margin:0 auto;"><i class="fa-solid fa-car-side"></i></div>
+                            <span style="font-size:0.65rem; color:var(--text-secondary); display:block; margin-top:2px; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.label}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    thumbsContainer.style.display = 'none';
+                    thumbsContainer.innerHTML = '';
+                }
             }
 
             const specsContainer = document.getElementById('detail-specs-table');
@@ -554,18 +743,28 @@ export const Customer = {
                 if (!reviews.length) {
                     reviewsContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No customer reviews yet.</p>';
                 } else {
-                    reviewsContainer.innerHTML = reviews.map(r => `
+                    reviewsContainer.innerHTML = reviews.map(r => {
+                        const revInitial = (r.customer_name ? r.customer_name[0] : 'U').toUpperCase();
+                        const revAvatar = r.customer_avatar
+                            ? `<div class="user-avatar-circle" style="width:28px; height:28px; font-size:0.75rem; flex-shrink:0; overflow:hidden;"><img src="${r.customer_avatar}" alt="${r.customer_name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.outerHTML='<span>${revInitial}</span>';" /></div>`
+                            : `<div class="user-avatar-circle" style="width:28px; height:28px; font-size:0.75rem; flex-shrink:0; background:linear-gradient(135deg, var(--primary), var(--secondary));">${revInitial}</div>`;
+
+                        return `
                         <div style="padding:14px 0; border-bottom:1px solid var(--border-color);">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                                <strong style="font-size:0.9rem;">${r.customer_name}</strong>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    ${revAvatar}
+                                    <strong style="font-size:0.88rem;">${r.customer_name}</strong>
+                                </div>
                                 <div style="font-size:0.8rem; display:flex; gap:2px;">
                                     ${Array.from({length: 5}, (_, i) => `<i class="fa-solid fa-star" style="color:${i < r.rating ? '#f59e0b' : '#cbd5e1'};"></i>`).join('')}
                                 </div>
                             </div>
                             <div style="font-weight:600; font-size:0.85rem; margin-bottom:2px;">${r.title || ''}</div>
-                            <div style="font-size:0.85rem; color:var(--text-secondary);">${r.comment}</div>
+                            <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">${r.comment}</div>
                         </div>
-                    `).join('');
+                    `;
+                    }).join('');
                 }
             }
 
@@ -608,17 +807,109 @@ export const Customer = {
                 }
             }
 
+            // Load AI-matched Similar Cars using analytics recommendation engine
+            this.loadSimilarCars(car.id);
+
             modal.classList.add('active');
         } catch (e) {
             Toast.error('Could not load car details.');
         }
     },
 
+    async loadSimilarCars(carId) {
+        const container = document.getElementById('detail-similar-cars-container');
+        const section = document.getElementById('detail-similar-cars-section');
+        if (!container) return;
+
+        if (section) section.style.display = 'block';
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align:center; padding:18px 0; color:var(--text-muted); font-size:0.85rem;">
+                <i class="fa-solid fa-circle-notch fa-spin text-gradient" style="margin-right:6px;"></i> Finding similar vehicles in fleet...
+            </div>
+        `;
+
+        try {
+            const data = await API.get(`/analytics/recommendations/similar/${carId}/`, { limit: 4 });
+            const cars = data.results || data || [];
+
+            if (!cars.length) {
+                if (section) section.style.display = 'none';
+                return;
+            }
+
+            if (section) section.style.display = 'block';
+
+            container.innerHTML = cars.map((car, idx) => {
+                const simImg = car.primary_image || car.main_image_url;
+                const simImgHtml = simImg
+                    ? `<img src="${simImg}" alt="${car.display_name}" style="width:100%; height:100%; object-fit:cover;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div class="image-unavailable-placeholder thumb-size" style="width:100%; height:100%; display:none;"><i class="fa-solid fa-car-side"></i></div>`
+                    : `<div class="image-unavailable-placeholder thumb-size" style="width:100%; height:100%;"><i class="fa-solid fa-car-side"></i></div>`;
+
+                return `
+                    <div class="similar-car-card" style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-md); overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.04);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 4px rgba(0,0,0,0.04)';">
+                        <div style="position:relative; width:100%; height:110px; background:#0f172a; cursor:pointer;" onclick="Customer.openDetailModal(${car.id}, 'similar', ${idx + 1})">
+                            ${simImgHtml}
+                            <span class="badge" style="position:absolute; top:6px; left:6px; font-size:0.65rem; background:rgba(15,23,42,0.8); color:#fff; backdrop-filter:blur(4px); padding:2px 6px; border-radius:4px;">
+                                ${car.category?.name || 'Vehicle'}
+                            </span>
+                            <span class="badge" style="position:absolute; top:6px; right:6px; font-size:0.65rem; background:#10b981; color:#fff; padding:2px 6px; border-radius:4px;">
+                                <i class="fa-solid fa-star"></i> ${car.average_rating}
+                            </span>
+                        </div>
+                        <div style="padding:10px 12px; display:flex; flex-direction:column; flex:1; justify-content:space-between;">
+                            <div>
+                                <div style="font-weight:700; font-size:0.85rem; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="Customer.openDetailModal(${car.id}, 'similar', ${idx + 1})" title="${car.display_name}">
+                                    ${car.brand} ${car.model}
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin:3px 0 6px; display:flex; gap:6px; flex-wrap:wrap;">
+                                    <span><i class="fa-solid fa-gear"></i> ${car.transmission}</span>
+                                    <span>&bull;</span>
+                                    <span><i class="fa-solid fa-gas-pump"></i> ${car.fuel_type}</span>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px; padding-top:6px; border-top:1px dashed var(--border-color);">
+                                <div style="font-weight:800; font-size:0.88rem; color:var(--primary);">
+                                    ${formatCurrency(car.price_per_day)}<small style="font-size:0.68rem; font-weight:normal; color:var(--text-secondary);"> /d</small>
+                                </div>
+                                <div style="display:flex; gap:4px;">
+                                    <button class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.7rem;" onclick="Customer.openDetailModal(${car.id}, 'similar', ${idx + 1})" title="View Details">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-primary btn-sm" style="padding:4px 8px; font-size:0.7rem;" onclick="BookingWizard.startBooking(${car.id})" title="Book Car">
+                                        <i class="fa-solid fa-key"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (e) {
+            console.error('Similar cars error:', e);
+            if (section) section.style.display = 'none';
+        }
+    },
+
     switchGalleryImage(imgUrl, label, el) {
         const mainImg = document.getElementById('detail-main-img');
+        const mainPlaceholder = document.getElementById('detail-main-img-placeholder');
         const badgeEl = document.getElementById('detail-angle-badge');
-        if (mainImg) mainImg.src = imgUrl;
-        if (badgeEl && label) badgeEl.innerHTML = `<i class="fa-solid fa-camera"></i> ${label}`;
+
+        if (imgUrl) {
+            if (mainImg) {
+                mainImg.style.display = 'block';
+                mainImg.src = imgUrl;
+            }
+            if (mainPlaceholder) mainPlaceholder.style.display = 'none';
+            if (badgeEl && label) {
+                badgeEl.style.display = 'inline-flex';
+                badgeEl.innerHTML = `<i class="fa-solid fa-camera"></i> ${label}`;
+            }
+        } else {
+            if (mainImg) mainImg.style.display = 'none';
+            if (mainPlaceholder) mainPlaceholder.style.display = 'flex';
+            if (badgeEl) badgeEl.style.display = 'none';
+        }
         
         document.querySelectorAll('.gallery-thumb-wrapper').forEach(w => {
             w.classList.remove('active');

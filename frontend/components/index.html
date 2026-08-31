@@ -14,7 +14,7 @@
             <!-- Luxury CTA Action Buttons -->
             <div style="display: flex; gap: 16px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 36px;">
                 <a href="/fleet/" class="btn btn-primary btn-lg" style="font-weight: 700;">
-                    <i class="fa-solid fa-car-side"></i> Browse All Available Cars (13+)
+                    <i class="fa-solid fa-car-side"></i> Browse All Available Cars (100+)
                 </a>
                 <a href="#featured-fleet-section" class="btn btn-secondary btn-lg">
                     <i class="fa-solid fa-star"></i> Featured Highlights
@@ -29,11 +29,11 @@
                 <a href="/fleet/?category=luxury" class="filter-chip" style="cursor: pointer; text-decoration: none;">
                     <i class="fa-solid fa-crown" style="color: var(--primary);"></i> Luxury & Exotic
                 </a>
-                <a href="/fleet/?category=sports" class="filter-chip" style="cursor: pointer; text-decoration: none;">
-                    <i class="fa-solid fa-flag-checkered" style="color: #e07a38;"></i> Sports Coupes
-                </a>
                 <a href="/fleet/?category=suv" class="filter-chip" style="cursor: pointer; text-decoration: none;">
-                    <i class="fa-solid fa-mountain" style="color: #10b981;"></i> 7-Seat & Family SUV
+                    <i class="fa-solid fa-flag-checkered" style="color: #e07a38;"></i> SUV
+                </a>
+                <a href="/fleet/?category=family" class="filter-chip" style="cursor: pointer; text-decoration: none;">
+                    <i class="fa-solid fa-mountain" style="color: #10b981;"></i> 7-Seat & Family
                 </a>
             </div>
 
@@ -45,8 +45,184 @@
             </div>
         </div>
     </header>
+    <!-- Curated Fleet Showcase (Recommended, Popular, Trending) -->
+    <section class="catalog-section" id="featured-fleet-section" style="background:#f8fafc; border-top:1px solid var(--border-color); border-bottom:1px solid var(--border-color); padding: 50px 0 70px;">
+        <div class="container">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+                <div>
+                    <span class="section-tag"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Curated Collections</span>
+                    <h2 class="section-title" id="curated-section-title" style="margin-bottom:4px;">Recommended For You</h2>
+                    <p class="section-desc" id="curated-section-desc" style="margin-bottom:0; font-size:0.92rem;">
+                        Personalized vehicles matched to your driving preferences, past trips, and favorite vehicle classes.
+                    </p>
+                </div>
+                <a href="/fleet/" class="btn btn-secondary">
+                    View Complete Fleet <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Curated Collection Tabs Switcher -->
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:30px; overflow-x:auto; padding-bottom:8px;" id="curated-tabs-wrapper">
+                <button class="category-tab-btn active" id="tab-btn-personalized" onclick="Customer.switchCuratedTab('personalized')">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="color:#f9b643;"></i> Recommended For You
+                </button>
+                <button class="category-tab-btn" id="tab-btn-trending" onclick="Customer.switchCuratedTab('trending')">
+                    <i class="fa-solid fa-fire-flame-curved" style="color:#ef4444;"></i> Trending This Week
+                </button>
+                <button class="category-tab-btn" id="tab-btn-popular" onclick="Customer.switchCuratedTab('popular')">
+                    <i class="fa-solid fa-crown" style="color:#f59e0b;"></i> Most Popular Fleet
+                </button>
+            </div>
+
+            <!-- Featured Cards Grid -->
+            <div class="cars-grid" id="featured-cars-grid">
+                <!-- Populated dynamically via Customer.switchCuratedTab() -->
+            </div>
+
+            <div style="text-align:center; margin-top:40px;">
+                <a href="/fleet/" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-magnifying-glass"></i> Explore All Vehicles & Hub Locations
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Compact Eye-Catching Advertising: Protection Plans & Optional Add-ons -->
+    <section class="perks-advert-section">
+        <div class="container">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+                <div>
+                    <span class="section-tag" style="margin-bottom:4px;"><i class="fa-solid fa-gem"></i> Tailored Mobility Upgrades</span>
+                    <h2 style="font-size:1.65rem; font-weight:800; margin:0; color:var(--text-primary);">
+                        Shield Your Journey & Elevate Your Drive
+                    </h2>
+                </div>
+                <a href="/terms/#terms-insurance" class="btn btn-outline btn-sm" style="font-size:0.82rem; font-weight:700;">
+                    <i class="fa-solid fa-shield-halved"></i> Compare Protection Coverage &rarr;
+                </a>
+            </div>
+
+            <div class="perks-advert-grid">
+                
+                <!-- Card 1: Protection Plans Advert -->
+                <div class="perks-advert-card">
+                    <div class="perks-card-badge shield">
+                        <i class="fa-solid fa-shield-heart"></i> Comprehensive Protection
+                    </div>
+                    <h3 class="perks-card-title">Zero-Worry Coverage Tiers</h3>
+                    <p class="perks-card-desc">
+                        Every DriveLuxe rental includes statutory cover. Upgrade to premium Collision Damage Waiver for complete peace of mind.
+                    </p>
+
+                    <div class="perk-items-list">
+                        <div class="perk-item-row">
+                            <div class="perk-item-left">
+                                <div class="perk-icon-wrap green"><i class="fa-solid fa-shield-check"></i></div>
+                                <div>
+                                    <strong style="color:var(--text-primary); font-size:0.88rem;">Premium Zero-Liability</strong>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">₹0 Zero Deductible + 100% Glass & Tire Shield</div>
+                                </div>
+                            </div>
+                            <span class="perk-item-tag highlight">16% / day</span>
+                        </div>
+
+                        <div class="perk-item-row">
+                            <div class="perk-item-left">
+                                <div class="perk-icon-wrap blue"><i class="fa-solid fa-shield"></i></div>
+                                <div>
+                                    <strong style="color:var(--text-primary); font-size:0.88rem;">Standard (CDW) Protection</strong>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Capped ₹10,000 Liability + 50% Glass Protection</div>
+                                </div>
+                            </div>
+                            <span class="perk-item-tag">9% / day</span>
+                        </div>
+
+                        <div class="perk-item-row">
+                            <div class="perk-item-left">
+                                <div class="perk-icon-wrap amber"><i class="fa-solid fa-circle-info"></i></div>
+                                <div>
+                                    <strong style="color:var(--text-primary); font-size:0.88rem;">Basic Statutory Cover</strong>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Third-party road liability & standard roadside support</div>
+                                </div>
+                            </div>
+                            <span class="perk-item-tag" style="background:#dcfce7; color:#166534; font-weight:700;">Included Free</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:12px;">
+                        <span><i class="fa-solid fa-check text-gradient"></i> Instant Claim Approval</span>
+                        <a href="/fleet/" style="color:var(--primary); font-weight:700; text-decoration:none;">Select at Checkout &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- Card 2: Optional In-Cabin Services Advert -->
+                <div class="perks-advert-card">
+                    <div class="perks-card-badge addons">
+                        <i class="fa-solid fa-sliders"></i> In-Cabin Convenience
+                    </div>
+                    <h3 class="perks-card-title">Smart Travel Accessories</h3>
+                    <p class="perks-card-desc">
+                        Customise your road trip with pre-installed accessories and add-ons verified before every single dispatch.
+                    </p>
+
+                    <div class="perk-items-list">
+                        <div class="perk-item-row">
+                            <div class="perk-item-left">
+                                <div class="perk-icon-wrap blue"><i class="fa-solid fa-location-crosshairs"></i></div>
+                                <div>
+                                    <strong style="color:var(--text-primary); font-size:0.88rem;">GPS Navigation System</strong>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Real-time offline voice routing & live traffic maps</div>
+                                </div>
+                            </div>
+                            <span class="perk-item-tag">₹9 / day</span>
+                        </div>
+
+                        <div class="perk-item-row">
+                            <div class="perk-item-left">
+                                <div class="perk-icon-wrap green"><i class="fa-solid fa-baby"></i></div>
+                                <div>
+                                    <strong style="color:var(--text-primary); font-size:0.88rem;">ISOFIX Child Safety Seat</strong>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Sanitized crash-tested infant & toddler comfort</div>
+                                </div>
+                            </div>
+                            <span class="perk-item-tag">₹249 / day</span>
+                        </div>
+
+                        <div class="perk-item-row">
+                            <div class="perk-item-left">
+                                <div class="perk-icon-wrap amber"><i class="fa-solid fa-user-plus"></i></div>
+                                <div>
+                                    <strong style="color:var(--text-primary); font-size:0.88rem;">Additional Authorized Driver</strong>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Fully insured shared driving on long road trips</div>
+                                </div>
+                            </div>
+                            <span class="perk-item-tag">₹299 / day</span>
+                        </div>
+
+                        <div class="perk-item-row">
+                            <div class="perk-item-left">
+                                <div class="perk-icon-wrap blue"><i class="fa-solid fa-wifi"></i></div>
+                                <div>
+                                    <strong style="color:var(--text-primary); font-size:0.88rem;">4G LTE In-Car Wi-Fi Hotspot</strong>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">Unlimited high-speed in-cabin passenger hotspot</div>
+                                </div>
+                            </div>
+                            <span class="perk-item-tag">₹99 / day</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:12px;">
+                        <span><i class="fa-solid fa-wand-magic-sparkles text-gradient"></i> Pre-Sanitized & Ready</span>
+                        <a href="/fleet/" style="color:var(--primary); font-weight:700; text-decoration:none;">Book with Add-ons &rarr;</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
     <!-- Why Choose Us Features Section -->
-    <section class="catalog-section" id="features-section" style="background:#ffffff; border-top:1px solid var(--border-color); border-bottom:1px solid var(--border-color);">
+    <section class="catalog-section" id="features-section" style="background:#ffffff; border-bottom:1px solid var(--border-color);">
         <div class="container">
             <div class="section-header">
                 <span class="section-tag">The DriveLuxe Standard</span>
@@ -86,32 +262,6 @@
                     <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:8px; color:var(--text-primary);">Verified Rental Reviews</h3>
                     <p style="color:var(--text-secondary); font-size:0.9rem;">Read authentic, verified reviews written exclusively by real customers who completed rentals for each car.</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Featured Fleet Highlights -->
-    <section class="catalog-section" id="featured-fleet-section">
-        <div class="container">
-            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:32px; flex-wrap:wrap; gap:16px;">
-                <div>
-                    <span class="section-tag">Featured Vehicles</span>
-                    <h2 class="section-title" style="margin-bottom:0;">Popular Luxury & Performance Fleet</h2>
-                </div>
-                <a href="/fleet/" class="btn btn-secondary">
-                    View Complete Fleet & Filters (13+ Cars) <i class="fa-solid fa-arrow-right"></i>
-                </a>
-            </div>
-
-            <!-- 4 Featured Cards Grid -->
-            <div class="cars-grid" id="featured-cars-grid">
-                <!-- Populated dynamically via Customer.fetchFeaturedCars() -->
-            </div>
-
-            <div style="text-align:center; margin-top:40px;">
-                <a href="/fleet/" class="btn btn-primary btn-lg">
-                    <i class="fa-solid fa-magnifying-glass"></i> Open Full Vehicle Search & Catalog
-                </a>
             </div>
         </div>
     </section>

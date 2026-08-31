@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (currentPath === '/' || currentPath === '') {
+            const featuredSec = document.getElementById('featured-fleet-section');
             const featuresSec = document.getElementById('features-section');
             const howItWorksSec = document.getElementById('how-it-works-section');
             const scrollPos = window.scrollY + 140;
@@ -68,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeTarget = 'how-it-works';
             } else if (featuresSec && scrollPos >= featuresSec.offsetTop) {
                 activeTarget = 'features';
+            } else if (featuredSec && scrollPos >= featuredSec.offsetTop) {
+                activeTarget = 'featured';
             }
 
             navLinksList.forEach(link => {
@@ -75,6 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (activeTarget === 'how-it-works' && href.includes('how-it-works')) {
                     link.classList.add('active');
                 } else if (activeTarget === 'features' && href.includes('features')) {
+                    link.classList.add('active');
+                } else if (activeTarget === 'featured' && href.includes('featured-fleet')) {
                     link.classList.add('active');
                 } else if (activeTarget === 'home' && (href === '/' || href === '')) {
                     link.classList.add('active');

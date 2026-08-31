@@ -13,8 +13,10 @@ from .serializers import (
     CarImageSerializer
 )
 from .filters import CarFilter
-from .services import rename_uploaded_image_file
+from .services import VehicleService, CarSearchService
+from apps.analytics.services import RecommendationService
 from apps.bookings.models import Booking
+from apps.analytics.models import SearchLog
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -50,6 +52,71 @@ class CarListView(generics.ListAPIView):
         if not (self.request.user.is_authenticated and self.request.user.is_staff):
             queryset = queryset.exclude(status='INACTIVE')
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        search_query = request.query_params.get('search', '').strip()
+        ordering_param = request.query_params.get('ordering', '').strip()
+
+        # Fallback mechanism: If search query yielded no results, invoke CarSearchService fallback
+        if search_query and not queryset.exists():
+            search_service = CarSearchService()
+            fallback_qs = search_service.get_fallback_matches(
+                query=search_query,
+                base_queryset=self.get_queryset()
+            )
+            if fallback_qs.exists():
+                queryset = fallback_qs
+
+        # Default to AI Recommended ranking if no manual sorting or search query is specified
+        car_list = None
+        if not ordering_param and not search_query and queryset.exists():
+            service = RecommendationService()
+            recommended_cars = service.get_recommendations_for_user(request.user, limit=200)
+            rec_id_order = {car.id: idx for idx, car in enumerate(recommended_cars)}
+
+            car_list = list(queryset)
+            car_list.sort(key=lambda c: rec_id_order.get(c.id, 9999))
+            serializer = self.get_serializer(car_list, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+
+        # Search Logging: Write to SearchLog on every search or filter query
+        query_text = search_query or ''
+        active_filters = {}
+        for key in ['category', 'status', 'max_price', 'transmission', 'fuel_type', 'seats', 'location_id', 'pickup_date', 'return_date']:
+            val = request.query_params.get(key)
+            if val:
+                active_filters[key] = val
+
+        search_log_id = None
+        if query_text or active_filters:
+            session_id = request.session.session_key
+            if not session_id:
+                try:
+                    request.session.save()
+                    session_id = request.session.session_key
+                except Exception:
+                    session_id = None
+
+            try:
+                res_count = len(car_list) if car_list is not None else (len(queryset) if isinstance(queryset, list) else queryset.count())
+                log_entry = SearchLog.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    query=query_text,
+                    filters=active_filters,
+                    results_count=res_count,
+                    clicked_car=None,  # Only added when details button is clicked!
+                    session_id=session_id
+                )
+                search_log_id = log_entry.id
+            except Exception as e:
+                print(f"[SearchLog Error] {e}")
+
+        response = Response(serializer.data)
+        if search_log_id:
+            response['X-Search-Log-Id'] = str(search_log_id)
+        return response
 
 class CarDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
@@ -123,21 +190,10 @@ class AdminCarViewSet(viewsets.ModelViewSet):
         return CarListSerializer
 
     def perform_create(self, serializer):
-        main_image = self.request.FILES.get('main_image')
-        if main_image:
-            rename_uploaded_image_file(main_image, serializer.validated_data, 'main')
         car = serializer.save()
         self._handle_gallery_uploads(car)
 
     def perform_update(self, serializer):
-        main_image = self.request.FILES.get('main_image')
-        if main_image:
-            car_fields = {
-                'brand': serializer.validated_data.get('brand', serializer.instance.brand),
-                'model': serializer.validated_data.get('model', serializer.instance.model),
-                'license_plate': serializer.validated_data.get('license_plate', serializer.instance.license_plate),
-            }
-            rename_uploaded_image_file(main_image, car_fields, 'main')
         car = serializer.save()
         self._handle_gallery_uploads(car)
 
@@ -146,23 +202,16 @@ class AdminCarViewSet(viewsets.ModelViewSet):
         gallery_files = self.request.FILES.getlist('gallery_images')
         view_types = self.request.data.getlist('gallery_view_types') if hasattr(self.request.data, 'getlist') else []
         captions = self.request.data.getlist('gallery_captions') if hasattr(self.request.data, 'getlist') else []
-
-        for idx, img_file in enumerate(gallery_files):
-            v_type = view_types[idx] if idx < len(view_types) else 'OTHER'
-            cap = captions[idx] if idx < len(captions) else ''
-            rename_uploaded_image_file(img_file, car, 'gallery', v_type)
-            CarImage.objects.create(
-                car=car,
-                image=img_file,
-                view_type=v_type,
-                caption=cap
-            )
+        VehicleService.handle_gallery_uploads(car, gallery_files, view_types, captions)
 
     @action(detail=True, methods=['delete'], url_path='gallery/(?P<image_id>[0-9]+)')
     def delete_gallery_image(self, request, pk=None, image_id=None):
         car = self.get_object()
         try:
+            from utils.supabase_storage import SupabaseStorageService
             image = car.images.get(pk=image_id)
+            if image.image_path:
+                SupabaseStorageService.delete_gallery_image(image.image_path)
             image.delete()
             return Response({'detail': 'Image removed successfully.'}, status=status.HTTP_200_OK)
         except CarImage.DoesNotExist:

@@ -18,13 +18,23 @@ export const CustomerPortal = {
         const isPortalPage = !!document.getElementById('customer-portal-container');
 
         if (isPortalPage) {
-            this.bindEvents();
-            this.bindReviewRating();
-
             if (!API.isAuthenticated()) {
-                this.renderUnauthenticatedState();
+                const portalContainer = document.getElementById('customer-portal-container');
+                if (portalContainer) portalContainer.style.display = 'none';
+                window.location.href = '/';
                 return;
             }
+
+            document.addEventListener('auth:change', (e) => {
+                if (!e.detail?.user) {
+                    const portalContainer = document.getElementById('customer-portal-container');
+                    if (portalContainer) portalContainer.style.display = 'none';
+                    window.location.href = '/';
+                }
+            });
+
+            this.bindEvents();
+            this.bindReviewRating();
 
             await this.loadProfileHeader();
             await this.loadBookings();
@@ -113,7 +123,7 @@ export const CustomerPortal = {
 
             if (avatarEl) {
                 if (user.profile_picture) {
-                    avatarEl.innerHTML = `<img src="${user.profile_picture}" alt="${displayName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
+                    avatarEl.innerHTML = `<img src="${user.profile_picture}" alt="${displayName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;" onerror="this.outerHTML='<span>${initial}</span>';" />`;
                 } else {
                     avatarEl.innerHTML = `<span>${initial}</span>`;
                 }
@@ -121,7 +131,7 @@ export const CustomerPortal = {
 
             if (previewEl) {
                 if (user.profile_picture) {
-                    previewEl.innerHTML = `<img src="${user.profile_picture}" alt="${displayName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
+                    previewEl.innerHTML = `<img src="${user.profile_picture}" alt="${displayName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;" onerror="this.outerHTML='<span>${initial}</span>';" />`;
                     if (removeBtn) removeBtn.classList.remove('hidden');
                 } else {
                     previewEl.innerHTML = `<span>${initial}</span>`;
@@ -229,7 +239,7 @@ export const CustomerPortal = {
 
         if (previewEl) {
             if (user.profile_picture) {
-                previewEl.innerHTML = `<img src="${user.profile_picture}" alt="${displayName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;" />`;
+                previewEl.innerHTML = `<img src="${user.profile_picture}" alt="${displayName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;" onerror="this.outerHTML='<span>${initial}</span>';" />`;
                 if (removeBtn) removeBtn.classList.remove('hidden');
             } else {
                 previewEl.innerHTML = `<span>${initial}</span>`;
@@ -340,13 +350,16 @@ export const CustomerPortal = {
             const isCompleted = b.status === 'COMPLETED';
             const isCancellable = ['PENDING', 'CONFIRMED'].includes(b.status);
 
-            const carImage = b.car?.primary_image || b.car?.main_image_url || '/static/images/car_placeholder.jpg';
+            const carImage = b.car?.primary_image || b.car?.main_image_url;
+            const carImgHtml = carImage
+                ? `<img src="${carImage}" alt="${b.car?.display_name || 'Vehicle'}" style="width:90px; height:60px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-color);" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div class="image-unavailable-placeholder thumb-size" style="width:90px; height:60px; display:none;"><i class="fa-solid fa-car-side"></i></div>`
+                : `<div class="image-unavailable-placeholder thumb-size" style="width:90px; height:60px;"><i class="fa-solid fa-car-side"></i></div>`;
 
             return `
                 <div class="card" style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px; box-shadow:var(--shadow-sm);">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                         <div style="display:flex; gap:16px; align-items:center;">
-                            <img src="${carImage}" alt="${b.car?.display_name || 'Vehicle'}" style="width:90px; height:60px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border-color);" />
+                            ${carImgHtml}
                             <div>
                                 <div style="display:flex; align-items:center; gap:8px;">
                                     <span class="badge ${statusBadges[b.status] || 'badge-primary'}">${b.status}</span>

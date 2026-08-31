@@ -4,7 +4,6 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Try to load .env file
 try:
     from dotenv import load_dotenv
     load_dotenv(BASE_DIR / '.env')
@@ -72,46 +71,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'car_rental_backend.wsgi.application'
 
-# Database Configuration with PostgreSQL and zero-setup fallback
-DB_ENGINE = os.environ.get('DB_ENGINE', '').lower()
-DB_NAME = os.environ.get('DB_NAME', '')
-
-use_postgres = False
-if DB_ENGINE == 'postgresql' and DB_NAME:
-    # Test if PostgreSQL can be connected to
-    try:
-        import psycopg2
-        test_conn = psycopg2.connect(
-            dbname=DB_NAME,
-            user=os.environ.get('DB_USER', 'postgres'),
-            password=os.environ.get('DB_PASSWORD', 'postgres'),
-            host=os.environ.get('DB_HOST', 'localhost'),
-            port=os.environ.get('DB_PORT', '5432'),
-            connect_timeout=2
-        )
-        test_conn.close()
-        use_postgres = True
-    except Exception:
-        use_postgres = False
-
-if use_postgres:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'car_rental_db'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': os.environ.get('DB_ENGINE'),
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
+
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -177,3 +147,10 @@ RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+
+# Supabase Storage Configuration
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
+SUPABASE_CAR_BUCKET = os.environ.get('SUPABASE_CAR_BUCKET', 'car-images')
+SUPABASE_PROFILE_BUCKET = os.environ.get('SUPABASE_PROFILE_BUCKET', 'profile-images')
+

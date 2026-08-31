@@ -1,0 +1,634 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}DriveLuxe | Legal & Compliance Center - Terms of Service & Privacy Policy{% endblock %}
+
+{% block search_widget %}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/legal.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- 1. Hero Header -->
+<header class="legal-hero-section">
+    <div class="container">
+        <div class="legal-hero-content">
+            <div class="legal-badge-pill">
+                <i class="fa-solid fa-scale-balanced"></i> Corporate Governance & Compliance
+            </div>
+            <h1 class="legal-hero-title">Terms of Service & Privacy Policy</h1>
+            <p class="legal-hero-subtitle">
+                At DriveLuxe, transparency, vehicle safety, data protection, and customer trust are the cornerstones of our premium mobility services. Read our complete operational agreements and data governance commitments below.
+            </p>
+            <div class="legal-meta-bar">
+                <div class="legal-meta-item">
+                    <i class="fa-regular fa-building"></i> DriveLuxe Technologies Private Limited
+                </div>
+                <div class="legal-meta-item">
+                    <i class="fa-regular fa-calendar-check"></i> Effective Date: January 1, 2026
+                </div>
+                <div class="legal-meta-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Last Updated: August 2026 (v2.4)
+                </div>
+                <div class="legal-meta-item">
+                    <i class="fa-solid fa-shield-check" style="color:var(--success, #10b981);"></i> Verified & Statutory Compliant
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- 2. Sticky Tab Navigation -->
+<nav class="legal-nav-tabs-wrapper">
+    <div class="container">
+        <div class="legal-nav-tabs">
+            <button type="button" class="legal-tab-btn active" id="tab-btn-terms" onclick="switchLegalTab('terms')">
+                <i class="fa-solid fa-file-contract"></i> Terms of Service & Rental Agreement
+            </button>
+            <button type="button" class="legal-tab-btn" id="tab-btn-privacy" onclick="switchLegalTab('privacy')">
+                <i class="fa-solid fa-user-shield"></i> Privacy Policy & Data Governance
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- 3. Main Legal Content Section -->
+<main class="legal-content-container">
+    <div class="container">
+        <div class="legal-layout-grid">
+            
+            <!-- Sticky Sidebar: Table of Contents -->
+            <aside class="legal-toc-sidebar">
+                <div class="legal-toc-title">
+                    <i class="fa-solid fa-list-ul"></i> Table of Contents
+                </div>
+
+                <!-- Terms TOC -->
+                <ul class="legal-toc-list" id="toc-terms-list">
+                    <li><a href="#terms-intro" class="legal-toc-link active">1. Introduction & Agreement</a></li>
+                    <li><a href="#terms-eligibility" class="legal-toc-link">2. Driver Eligibility & KYC</a></li>
+                    <li><a href="#terms-booking" class="legal-toc-link">3. Reservations & Pricing</a></li>
+                    <li><a href="#terms-deposit" class="legal-toc-link">4. Security Deposit & Refund</a></li>
+                    <li><a href="#terms-insurance" class="legal-toc-link">5. Insurance & Liability Tiers</a></li>
+                    <li><a href="#terms-cancellation" class="legal-toc-link">6. Cancellation & Refunds</a></li>
+                    <li><a href="#terms-fuel-tolls" class="legal-toc-link">7. Fuel, EV Charging & Tolls</a></li>
+                    <li><a href="#terms-telematics" class="legal-toc-link">8. GPS Telematics & Safety</a></li>
+                    <li><a href="#terms-prohibited" class="legal-toc-link">9. Prohibited Vehicle Uses</a></li>
+                    <li><a href="#terms-breakdown" class="legal-toc-link">10. Accidents & Breakdown</a></li>
+                    <li><a href="#terms-indemnity" class="legal-toc-link">11. Indemnity & Legal Dispute</a></li>
+                </ul>
+
+                <!-- Privacy TOC -->
+                <ul class="legal-toc-list hidden" id="toc-privacy-list">
+                    <li><a href="#privacy-commitment" class="legal-toc-link">1. CEO Privacy Pledge</a></li>
+                    <li><a href="#privacy-collection" class="legal-toc-link">2. Personal Data We Collect</a></li>
+                    <li><a href="#privacy-license-verification" class="legal-toc-link">3. Driving License Verification</a></li>
+                    <li><a href="#privacy-telematics" class="legal-toc-link">4. Telematics & GPS Tracking</a></li>
+                    <li><a href="#privacy-usage" class="legal-toc-link">5. How We Use Your Data</a></li>
+                    <li><a href="#privacy-storage" class="legal-toc-link">6. Cloud Storage & Encryption</a></li>
+                    <li><a href="#privacy-sharing" class="legal-toc-link">7. Third-Party Sharing</a></li>
+                    <li><a href="#privacy-rights" class="legal-toc-link">8. Your Data Rights & Deletion</a></li>
+                    <li><a href="#privacy-cookies" class="legal-toc-link">9. Cookies & Sessions</a></li>
+                    <li><a href="#privacy-contact" class="legal-toc-link">10. Grievance Redressal</a></li>
+                </ul>
+
+                <div class="legal-toc-actions">
+                    <button type="button" class="btn btn-outline btn-sm btn-print" style="width:100%;" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> Print / Save as PDF
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Legal Content Body -->
+            <article class="legal-document-card">
+                
+                <!-- =========================================================
+                     TAB 1: TERMS OF SERVICE & VEHICLE RENTAL AGREEMENT
+                     ========================================================= -->
+                <div id="content-terms" class="legal-tab-content">
+                    
+                    <!-- CEO Executive Statement -->
+                    <div class="ceo-message-callout">
+                        <div class="ceo-message-header">
+                            <div class="ceo-avatar-badge">SS</div>
+                            <div class="ceo-meta">
+                                <h4>Samiran Sasmal</h4>
+                                <span>Chief Executive Officer & Founder, DriveLuxe Technologies</span>
+                            </div>
+                        </div>
+                        <div class="ceo-message-body">
+                            "Welcome to DriveLuxe. When you reserve a vehicle with us, you are not just renting a machine; you are entrusting us with your journey, your safety, and your time. Our Terms of Service are built on mutual respect, complete price transparency, and zero hidden clauses. We promise world-class maintained vehicles and fair treatment, and we ask our drivers to respect our fleet and road safety regulations in return. Drive with pride and confidence."
+                        </div>
+                    </div>
+
+                    <!-- 1. Introduction -->
+                    <section class="legal-section" id="terms-intro">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">1</span>
+                            <h2 class="legal-section-title">Introduction & Binding Master Rental Agreement</h2>
+                        </div>
+                        <p>
+                            This Master Vehicle Rental Agreement and Terms of Service (<strong>"Agreement"</strong>) is a legally binding contract between you (the <strong>"Hirer"</strong>, <strong>"Customer"</strong>, or <strong>"You"</strong>) and <strong>DriveLuxe Technologies Private Limited</strong> (<strong>"DriveLuxe"</strong>, <strong>"Company"</strong>, <strong>"We"</strong>, or <strong>"Us"</strong>), governing your access to and use of our website, mobile interfaces, vehicle reservation systems, and physical vehicle fleets.
+                        </p>
+                        <p>
+                            By creating an account, authenticating via OTP, reserving a vehicle, or signing a digital handover invoice, you explicitly certify that you have read, understood, and agreed to be bound by every provision of this Agreement. If you do not agree to these terms, you must refrain from booking or operating any DriveLuxe vehicle.
+                        </p>
+                    </section>
+
+                    <!-- 2. Eligibility & Driver Verification -->
+                    <section class="legal-section" id="terms-eligibility">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">2</span>
+                            <h2 class="legal-section-title">Driver Eligibility, KYC & Document Verification</h2>
+                        </div>
+                        <p>
+                            To ensure road safety and statutory compliance under the Motor Vehicles Act, every driver operating a DriveLuxe vehicle must satisfy the following minimum criteria:
+                        </p>
+                        <ul>
+                            <li><strong>Age Requirement:</strong> Minimum <strong>21 years</strong> of age for Economy, Sedan, and Compact SUV categories. Minimum <strong>25 years</strong> of age for Premium, Luxury Executive, and Sports categories (e.g. Porsche 911, Audi A4, BMW 5 Series).</li>
+                            <li><strong>Valid Driving License:</strong> You must possess an original, valid, non-probationary Government Driving License (LMV - Light Motor Vehicle) held for at least <strong>12 consecutive months</strong>. Learner licenses are strictly ineligible.</li>
+                            <li><strong>Identity & Phone Verification:</strong> Account registration requires an authenticated mobile number via one-time password (OTP), proof of identification (Aadhaar, Passport, or National ID), and valid address verification.</li>
+                            <li><strong>Sole Authorized Driver:</strong> Only the registered customer who uploaded their driving license is legally authorized to drive the vehicle, unless additional drivers were explicitly added during the booking wizard and approved by DriveLuxe.</li>
+                        </ul>
+                        <div class="legal-highlight-box danger">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444; margin-right:6px;"></i>
+                            <strong>Strict Liability Warning:</strong> Allowing an unauthorized, unverified, or third-party individual to drive the vehicle immediately voids all insurance coverage, terminates the rental contract, incurs a ₹25,000 breach penalty, and makes the registered hirer 100% financially and criminally liable for all damages or third-party claims.
+                        </div>
+                    </section>
+
+                    <!-- 3. Reservations, Pricing & Fuel -->
+                    <section class="legal-section" id="terms-booking">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">3</span>
+                            <h2 class="legal-section-title">Reservations, Dynamic Pricing & Invoicing</h2>
+                        </div>
+                        <p>
+                            DriveLuxe operates an automated, dynamic rental system. Your rental quote is calculated based on:
+                        </p>
+                        <ol>
+                            <li><strong>Base Daily Rental Rate:</strong> Standard 24-hour rate for the selected vehicle model.</li>
+                            <li><strong>Multi-Day Tier Discounts:</strong> Automated reductions applied for extended rental periods.</li>
+                            <li><strong>Selected Add-ons:</strong> Daily charges for optional additions including GPS navigation systems, infant/child safety seats, Wi-Fi connectivity, and registered secondary drivers.</li>
+                            <li><strong>Insurance Protection Tier:</strong> Daily premium corresponding to your chosen coverage package (Basic, Standard, or Premium).</li>
+                            <li><strong>Coupons & Promotional Credits:</strong> Legitimate coupon codes applied at checkout prior to payment processing.</li>
+                        </ol>
+                        <p>
+                            All quotes are inclusive of statutory GST. Toll taxes (FASTag), inter-state entry taxes, parking fees, and fuel costs are the sole responsibility of the customer.
+                        </p>
+                    </section>
+
+                    <!-- 4. Security Deposit & Refund Policy -->
+                    <section class="legal-section" id="terms-deposit">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">4</span>
+                            <h2 class="legal-section-title">Refundable Security Deposit & Inspection Protocol</h2>
+                        </div>
+                        <p>
+                            A mandatory refundable security deposit is held prior to vehicle dispatch or handover to protect against incidental expenses, traffic penalties, late returns, or minor damages:
+                        </p>
+                        <ul>
+                            <li><strong>Standard / Economy Fleet:</strong> ₹5,000 to ₹10,000 security deposit.</li>
+                            <li><strong>Executive / Luxury / Sports Fleet:</strong> ₹15,000 to ₹35,000 security deposit.</li>
+                        </ul>
+                        <p>
+                            <strong>Return Inspection & Refund Timeline:</strong>
+                        </p>
+                        <p>
+                            Upon vehicle return at a designated DriveLuxe hub (Downtown Hub, Airport Express Terminal, Luxury Lounge, etc.), a joint digital vehicle inspection is conducted recording odometer readings, fuel/battery level, exterior scratch scan, and interior upholstery condition.
+                        </p>
+                        <div class="legal-highlight-box success">
+                            <i class="fa-solid fa-circle-check" style="color:#10b981; margin-right:6px;"></i>
+                            <strong>Automated Refund Guarantee:</strong> Once the return inspection is completed with zero damage and verified fuel levels, DriveLuxe initiates the 100% refund of your security deposit within <strong>24 to 48 banking hours</strong> directly to your original payment method (Bank Account / Card / UPI).
+                        </div>
+                    </section>
+
+                    <!-- 5. Insurance & Liability Tiers -->
+                    <section class="legal-section" id="terms-insurance">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">5</span>
+                            <h2 class="legal-section-title">Insurance Protection Packages & Financial Liability</h2>
+                        </div>
+                        <p>
+                            Every DriveLuxe rental includes comprehensive commercial motor insurance in compliance with Indian Motor Vehicle Laws. Customers may choose between three protection tiers:
+                        </p>
+                        
+                        <div class="legal-table-wrapper">
+                            <table class="legal-table">
+                                <thead>
+                                    <tr>
+                                        <th>Protection Tier</th>
+                                        <th>Third-Party Liability</th>
+                                        <th>Customer Maximum Deductible</th>
+                                        <th>Tire & Glass Protection</th>
+                                        <th>24/7 Roadside Assistance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Basic Protection</strong></td>
+                                        <td>Included (Statutory)</td>
+                                        <td>Up to ₹35,000 / Actual Damage</td>
+                                        <td>Not Included</td>
+                                        <td>Standard Support</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Standard (CDW)</strong></td>
+                                        <td>Included (Statutory)</td>
+                                        <td>Capped at ₹10,000</td>
+                                        <td>50% Coverage</td>
+                                        <td>Priority Towing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Premium Zero-Liability</strong></td>
+                                        <td>Included (Statutory)</td>
+                                        <td><strong style="color:#10b981;">₹0 (Zero Deductible)</strong></td>
+                                        <td>100% Full Cover</td>
+                                        <td>24/7 VIP Emergency Dispatch</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p>
+                            <strong>Insurance Invalidation Conditions:</strong> Insurance coverage is strictly voided if damage occurs due to driving under the influence of alcohol or narcotics (DUI/DWI), unauthorized driver operation, willful stunt driving, water submersion due to reckless driving into flooded zones, or driving on unauthorized off-road tracks. In such events, the hirer bears 100% of all repair costs and legal liabilities.
+                        </p>
+                    </section>
+
+                    <!-- 6. Cancellation & Refunds -->
+                    <section class="legal-section" id="terms-cancellation">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">6</span>
+                            <h2 class="legal-section-title">Cancellation, Rescheduling & Refund Schedule</h2>
+                        </div>
+                        <p>
+                            We understand that travel plans can change unexpectedly. Our transparent cancellation policy applies as follows:
+                        </p>
+                        <div class="legal-table-wrapper">
+                            <table class="legal-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cancellation Notice Period</th>
+                                        <th>Refund Amount</th>
+                                        <th>Processing Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>More than 24 hours</strong> before trip start time</td>
+                                        <td><strong style="color:#10b981;">100% Full Refund</strong></td>
+                                        <td>Zero Fee (₹0)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Between 6 to 24 hours</strong> before trip start time</td>
+                                        <td><strong>80% Refund</strong></td>
+                                        <td>20% of Base Rental</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Less than 6 hours</strong> before trip start time</td>
+                                        <td><strong>50% Refund</strong> (or 100% DriveLuxe Wallet Credit)</td>
+                                        <td>50% of Base Rental</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>No-Show</strong> after scheduled booking start time</td>
+                                        <td>Non-Refundable (Security deposit refunded in full)</td>
+                                        <td>100% of Rental Charge</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- 7. Fuel, EV Charging & Tolls -->
+                    <section class="legal-section" id="terms-fuel-tolls">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">7</span>
+                            <h2 class="legal-section-title">Fuel Policy, EV Charging & FASTag Toll Charges</h2>
+                        </div>
+                        <ul>
+                            <li><strong>Fair Fuel Policy (Like-to-Like):</strong> Vehicles are provided with a verified fuel level (typically 100% full tank) and must be returned at the exact same level. If returned with less fuel, the differential is charged at prevailing market rates plus a ₹250 refueling convenience charge.</li>
+                            <li><strong>Electric Vehicles (EV) Battery Policy:</strong> EVs are handed over with at least 85% battery charge. Hirers must return the EV with at least <strong>20% battery charge</strong> to avoid battery deep-discharge recovery penalties.</li>
+                            <li><strong>Electronic Tolls (FASTag):</strong> All DriveLuxe vehicles are equipped with active commercial FASTags. All toll plazas, airport parking fees, and expressway charges incurred during your rental are logged and deducted cleanly from the security deposit, with detailed digital receipts provided.</li>
+                            <li><strong>Traffic Violations & Fines:</strong> Any e-challans, speeding tickets, signal jumping fines, or towing charges generated by traffic authorities during your rental timeframe will be forwarded to your registered email and charged to your account.</li>
+                        </ul>
+                    </section>
+
+                    <!-- 8. GPS Telematics & Vehicle Safety -->
+                    <section class="legal-section" id="terms-telematics">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">8</span>
+                            <h2 class="legal-section-title">GPS Telematics, Speed Limiting & Safety Monitoring</h2>
+                        </div>
+                        <p>
+                            For passenger safety, fleet security, and statutory insurance compliance, all DriveLuxe vehicles are fitted with secure onboard telematics devices recording:
+                        </p>
+                        <ul>
+                            <li>Real-time GPS location and route tracking.</li>
+                            <li>Vehicle speed and excessive overspeeding alerts (>120 km/h or statutory state highway limits).</li>
+                            <li>Collision and impact sensor data for automated emergency SOS dispatch.</li>
+                            <li>Engine health, battery status, and diagnostic error codes.</li>
+                        </ul>
+                        <div class="legal-highlight-box warning">
+                            <i class="fa-solid fa-gauge-high" style="color:#f59e0b; margin-right:6px;"></i>
+                            <strong>Speed Advisory:</strong> In accordance with Central Motor Vehicles Rules, speed is monitored. Continued severe overspeeding exceeding 130 km/h triggers an automated warning, and repeat violations incur a ₹2,500 speed governance fine to protect driver and passenger lives.
+                        </div>
+                    </section>
+
+                    <!-- 9. Prohibited Uses -->
+                    <section class="legal-section" id="terms-prohibited">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">9</span>
+                            <h2 class="legal-section-title">Prohibited Vehicle Uses & Breach Penalties</h2>
+                        </div>
+                        <p>The hirer agrees NOT to use or permit the vehicle to be used for:</p>
+                        <ol>
+                            <li>Commercial passenger ferrying (taxi, ride-share) or commercial goods haulage.</li>
+                            <li>Sub-leasing, renting, or transferring the vehicle to any third party.</li>
+                            <li>Speed testing, drag racing, drifting, rally competitions, or driving instruction schools.</li>
+                            <li>Transportation of illegal substances, weapons, inflammable chemicals, or contraband under the NDPS Act.</li>
+                            <li>Towing or pushing any other vehicle, trailer, or motorized equipment.</li>
+                            <li>Driving outside the Republic of India or into restricted military/border territories without prior written approval.</li>
+                        </ol>
+                    </section>
+
+                    <!-- 10. Accidents & Breakdown Protocol -->
+                    <section class="legal-section" id="terms-breakdown">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">10</span>
+                            <h2 class="legal-section-title">Accidents, Mechanical Breakdown & Roadside Assistance</h2>
+                        </div>
+                        <p>
+                            In the rare event of a mechanical malfunction, flat tire, or road collision:
+                        </p>
+                        <ol>
+                            <li><strong>Safety First:</strong> Ensure all passengers are safe and turn on hazard flashers.</li>
+                            <li><strong>Call DriveLuxe Emergency Concierge:</strong> Immediately contact our 24/7 Roadside Hotline at <strong>+91 90000 10001</strong> or tap "Emergency Assistance" in the Customer Portal.</li>
+                            <li><strong>Accident Reporting:</strong> In case of accident or third-party damage, filing a First Information Report (FIR) at the nearest Police Station is mandatory for all insurance claim processing. Never admit liability or accept settlement offers without DriveLuxe representative presence.</li>
+                            <li><strong>Replacement Vehicle:</strong> If breakdown occurs due to mechanical failure unrelated to customer misuse, DriveLuxe dispatches a replacement vehicle or arranges complimentary alternate transit.</li>
+                        </ol>
+                    </section>
+
+                    <!-- 11. Indemnity & Dispute Resolution -->
+                    <section class="legal-section" id="terms-indemnity">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">11</span>
+                            <h2 class="legal-section-title">Indemnification, Limitation of Liability & Jurisdiction</h2>
+                        </div>
+                        <p>
+                            The Hirer agrees to indemnify, defend, and hold harmless DriveLuxe Technologies Private Limited, its directors, officers, and employees from any third-party claims, liabilities, damages, losses, or legal expenses arising from the Hirer's breach of this Agreement, violation of traffic regulations, or negligent vehicle operation.
+                        </p>
+                        <p>
+                            <strong>Governing Law & Dispute Resolution:</strong> This Agreement shall be governed by and construed in accordance with the Laws of India. Any legal dispute or controversy arising under or relating to this Agreement shall be subject to the exclusive jurisdiction of the competent courts in Kolkata, West Bengal, India.
+                        </p>
+                    </section>
+
+                </div>
+
+                <!-- =========================================================
+                     TAB 2: PRIVACY POLICY & DATA GOVERNANCE
+                     ========================================================= -->
+                <div id="content-privacy" class="legal-tab-content hidden">
+                    
+                    <!-- CEO Privacy Statement -->
+                    <div class="ceo-message-callout">
+                        <div class="ceo-message-header">
+                            <div class="ceo-avatar-badge">SS</div>
+                            <div class="ceo-meta">
+                                <h4>Samiran Sasmal</h4>
+                                <span>Chief Executive Officer & Founder, DriveLuxe Technologies</span>
+                            </div>
+                        </div>
+                        <div class="ceo-message-body">
+                            "Your personal data, government identity documents, and location history belong to you. At DriveLuxe, we treat your privacy with the same uncompromising standard of luxury and security as our vehicle fleet. We never sell your personal data to third-party ad brokers, we encrypt all sensitive documents in transit and at rest, and we maintain complete transparency on why and how your information is processed."
+                        </div>
+                    </div>
+
+                    <!-- 1. Privacy Pledge -->
+                    <section class="legal-section" id="privacy-commitment">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">1</span>
+                            <h2 class="legal-section-title">Our Privacy Pledge & Regulatory Compliance</h2>
+                        </div>
+                        <p>
+                            DriveLuxe Technologies Private Limited (<strong>"DriveLuxe"</strong>, <strong>"we"</strong>, <strong>"us"</strong>, or <strong>"our"</strong>) is committed to protecting your personal information and upholding your fundamental right to privacy. This Privacy Policy explains our data collection, processing, encryption, and sharing practices in compliance with:
+                        </p>
+                        <ul>
+                            <li>The <strong>Digital Personal Data Protection (DPDP) Act, 2023</strong> (India).</li>
+                            <li>The <strong>Information Technology Act, 2000</strong> and IT (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011.</li>
+                            <li>International data protection benchmarks including the <strong>General Data Protection Regulation (GDPR)</strong>.</li>
+                        </ul>
+                    </section>
+
+                    <!-- 2. Personal Data We Collect -->
+                    <section class="legal-section" id="privacy-collection">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">2</span>
+                            <h2 class="legal-section-title">Categories of Information We Collect</h2>
+                        </div>
+                        <p>To deliver seamless car rental experiences, we collect the following data categories:</p>
+                        <ul>
+                            <li><strong>Identity & Profile Information:</strong> Full legal name, username, email address, mobile phone number, profile photograph, and date of birth.</li>
+                            <li><strong>Government Driving Credentials:</strong> Driver's license number, scanned driving license images (front/back), issuing state transport authority, and validity dates.</li>
+                            <li><strong>Transactional & Financial Data:</strong> Order IDs, booking invoices, rental durations, payment gateway transaction tokens (Razorpay / Stripe), coupon code history, and security deposit refund records. <em>(Note: We never store your raw credit card numbers or CVVs on our servers).</em></li>
+                            <li><strong>Vehicle Telemetry & GPS Tracking:</strong> Live vehicle geolocation, travel speed, distance traveled, and trip start/end timestamps during active rental windows.</li>
+                            <li><strong>Technical & Browsing Data:</strong> IP address, device operating system, browser type, search logs, and vehicle model preference clickstreams to improve our AI recommendation system.</li>
+                        </ul>
+                    </section>
+
+                    <!-- 3. License Verification -->
+                    <section class="legal-section" id="privacy-license-verification">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">3</span>
+                            <h2 class="legal-section-title">Driving License & Identity Verification Security</h2>
+                        </div>
+                        <p>
+                            Under Indian Motor Vehicle Regulations, DriveLuxe is legally required to verify that every driver operating a rented vehicle holds an authentic, active driving license.
+                        </p>
+                        <p>
+                            All uploaded driver's license scans and avatar images are processed through automated validation checks and stored in <strong>encrypted, private cloud storage buckets</strong>. Access to license documents is restricted strictly to authorized DriveLuxe compliance officers under multi-factor authentication for statutory verification and insurance claim settlement purposes.
+                        </p>
+                    </section>
+
+                    <!-- 4. Telematics & GPS -->
+                    <section class="legal-section" id="privacy-telematics">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">4</span>
+                            <h2 class="legal-section-title">Vehicle Telematics & Live GPS Geolocation Policy</h2>
+                        </div>
+                        <p>
+                            DriveLuxe vehicles are equipped with telematics IoT hardware. We collect location data solely for:
+                        </p>
+                        <ol>
+                            <li>Assisting emergency roadside rescue teams in locating your vehicle during breakdowns or collisions.</li>
+                            <li>Enabling real-time theft prevention, unauthorized cross-border detection, and stolen vehicle recovery.</li>
+                            <li>Auditing accurate odometer readings for fair rental billing and electronic FASTag toll reconciliations.</li>
+                        </ol>
+                        <div class="legal-highlight-box success">
+                            <i class="fa-solid fa-lock" style="color:#10b981; margin-right:6px;"></i>
+                            <strong>Privacy Safeguard:</strong> Telematics logs are linked only to active rental booking IDs. Once a trip is completed and reconciled, granular real-time GPS telemetry is archived into cold encrypted storage with access strictly restricted.
+                        </div>
+                    </section>
+
+                    <!-- 5. How We Use Your Data -->
+                    <section class="legal-section" id="privacy-usage">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">5</span>
+                            <h2 class="legal-section-title">Lawful Bases & Purposes of Data Processing</h2>
+                        </div>
+                        <p>We process your personal information on the following legal grounds:</p>
+                        <ul>
+                            <li><strong>Contractual Necessity:</strong> To process vehicle bookings, facilitate pickup/drop-off, generate invoices, and execute security deposit refunds.</li>
+                            <li><strong>Legal & Regulatory Compliance:</strong> To maintain statutory motor vehicle hire registers and furnish documentation required by the Ministry of Road Transport & Highways (MoRTH).</li>
+                            <li><strong>Legitimate Interests:</strong> To detect fraud, prevent fleet theft, secure our network infrastructure, and enhance fleet recommendations.</li>
+                            <li><strong>Customer Consent:</strong> To send booking SMS alerts, OTP verification codes, and optional promotional loyalty rewards (which you can opt-out of at any time).</li>
+                        </ul>
+                    </section>
+
+                    <!-- 6. Cloud Storage & Security -->
+                    <section class="legal-section" id="privacy-storage">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">6</span>
+                            <h2 class="legal-section-title">Data Storage, Cloud Infrastructure & Encryption Standards</h2>
+                        </div>
+                        <p>
+                            DriveLuxe implements bank-grade security protocols to safeguard your personal data against unauthorized access, loss, or alteration:
+                        </p>
+                        <ul>
+                            <li><strong>Encryption in Transit:</strong> All data transmitted between your browser and our servers is protected using 256-bit Transport Layer Security (TLS 1.3 / HTTPS).</li>
+                            <li><strong>Encrypted Database Storage:</strong> Enterprise PostgreSQL database with encrypted data partitions and robust Row Level Security (RLS) configurations.</li>
+                            <li><strong>Private Supabase Storage:</strong> Sensitive assets (profile photos, driver verification records) are stored in secure private buckets and delivered only via short-lived, cryptographically signed URLs.</li>
+                            <li><strong>Tokenized Authentication:</strong> Secure JSON Web Token (JWT) architecture ensuring credentials are never exposed in transit.</li>
+                        </ul>
+                    </section>
+
+                    <!-- 7. Third-Party Sharing -->
+                    <section class="legal-section" id="privacy-sharing">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">7</span>
+                            <h2 class="legal-section-title">Third-Party Disclosures & Data Transfer</h2>
+                        </div>
+                        <p>
+                            We do not sell, rent, or trade your personal data to third parties for advertising purposes. We share data only with trusted partners strictly necessary to operate our service:
+                        </p>
+                        <ul>
+                            <li><strong>Payment Processors:</strong> PCI-DSS Level 1 compliant gateways (Razorpay and Stripe) for secure authorization and refund transactions.</li>
+                            <li><strong>Insurance Providers:</strong> Regulated insurance underwriters in the event of accident assessment or claims processing.</li>
+                            <li><strong>Emergency Roadside Partners:</strong> Certified breakdown recovery teams dispatched to assist you during transit.</li>
+                            <li><strong>Law Enforcement Authorities:</strong> Only when compelled by valid legal subpoenas, court orders, or statutory police investigation notices.</li>
+                        </ul>
+                    </section>
+
+                    <!-- 8. Your Data Rights & Deletion -->
+                    <section class="legal-section" id="privacy-rights">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">8</span>
+                            <h2 class="legal-section-title">Your Data Rights & "Right to be Forgotten"</h2>
+                        </div>
+                        <p>Under data protection laws, you possess comprehensive rights regarding your personal data:</p>
+                        <ul>
+                            <li><strong>Right of Access:</strong> You can view all your stored personal details, booking history, and invoices anytime via the Customer Portal.</li>
+                            <li><strong>Right to Rectification:</strong> You can edit your contact information and profile details directly in your account settings.</li>
+                            <li><strong>Right to Erasure (Account Deletion):</strong> You may request the deletion of your account and personal profile by emailing <strong>privacy@driveluxe.in</strong>.</li>
+                        </ul>
+                        <p style="font-size:0.88rem; color:var(--text-secondary);">
+                            <em>Note on Statutory Retention: In compliance with statutory tax audits and transport regulations, financial invoices and completed rental trip logs are retained for 7 years as mandated by law before permanent purging.</em>
+                        </p>
+                    </section>
+
+                    <!-- 9. Cookies & Sessions -->
+                    <section class="legal-section" id="privacy-cookies">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">9</span>
+                            <h2 class="legal-section-title">Cookies & Local Storage Usage</h2>
+                        </div>
+                        <p>
+                            We use essential session tokens in your browser's local storage to keep you securely signed in (`access_token`, `refresh_token`, and `driveluxe_user`). We do not deploy third-party advertising tracking cookies. You can clear your browser cookies and local storage at any time by clicking "Log Out" in the user menu.
+                        </p>
+                    </section>
+
+                    <!-- 10. Grievance Redressal -->
+                    <section class="legal-section" id="privacy-contact">
+                        <div class="legal-section-header">
+                            <span class="legal-section-num">10</span>
+                            <h2 class="legal-section-title">Grievance Redressal & Data Protection Officer</h2>
+                        </div>
+                        <p>
+                            If you have questions, feedback, or concerns regarding this Privacy Policy or wish to exercise your data rights, please contact our appointed Grievance Officer:
+                        </p>
+                        <div class="legal-highlight-box">
+                            <h4 style="margin:0 0 8px; color:var(--text-primary); font-size:1rem;">DriveLuxe Data Protection & Grievance Cell</h4>
+                            <p style="margin:0 0 4px;"><strong>Officer:</strong> Debargha Mondal, Compliance & Data Protection Lead</p>
+                            <p style="margin:0 0 4px;"><strong>Email:</strong> <a href="mailto:grievance@driveluxe.in" style="color:var(--primary); font-weight:600;">grievance@driveluxe.in</a> / <a href="mailto:privacy@driveluxe.in" style="color:var(--primary); font-weight:600;">privacy@driveluxe.in</a></p>
+                            <p style="margin:0 0 4px;"><strong>Corporate Address:</strong> DriveLuxe Technologies Pvt. Ltd., 12 Park Street, Corporate Hub, Kolkata - 700016, India</p>
+                            <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">Response Turnaround: We acknowledge all grievance requests within 48 hours and resolve within 30 statutory business days.</p>
+                        </div>
+                    </section>
+
+                </div>
+
+            </article>
+        </div>
+    </div>
+</main>
+
+<!-- JavaScript for Tab Switching & Scroll Sync -->
+<script>
+function switchLegalTab(tab) {
+    const isTerms = tab === 'terms';
+    
+    // Update Tab Buttons
+    document.getElementById('tab-btn-terms')?.classList.toggle('active', isTerms);
+    document.getElementById('tab-btn-privacy')?.classList.toggle('active', !isTerms);
+    
+    // Update Content Visibility
+    document.getElementById('content-terms')?.classList.toggle('hidden', !isTerms);
+    document.getElementById('content-privacy')?.classList.toggle('hidden', isTerms);
+
+    // Update Table of Contents
+    document.getElementById('toc-terms-list')?.classList.toggle('hidden', !isTerms);
+    document.getElementById('toc-privacy-list')?.classList.toggle('hidden', isTerms);
+
+    // Update URL hash without jumping
+    if (history.pushState) {
+        history.pushState(null, null, '#' + tab);
+    } else {
+        location.hash = '#' + tab;
+    }
+
+    // Scroll to top of content
+    window.scrollTo({ top: 380, behavior: 'smooth' });
+}
+
+// Auto-switch based on URL query or hash
+document.addEventListener('DOMContentLoaded', () => {
+    const hash = window.location.hash.toLowerCase();
+    const path = window.location.pathname.toLowerCase();
+
+    if (hash.includes('privacy') || path.includes('privacy')) {
+        switchLegalTab('privacy');
+    } else {
+        switchLegalTab('terms');
+    }
+
+    // Active TOC link highlight on scroll
+    const links = document.querySelectorAll('.legal-toc-link');
+    window.addEventListener('scroll', () => {
+        let current = '';
+        const sections = document.querySelectorAll('.legal-section');
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 180) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        links.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+                link.classList.add('active');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

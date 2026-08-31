@@ -5,14 +5,7 @@
 {% block content %}
 <!-- Dedicated Search Banner -->
 <section class="fleet-search-banner"
-    style="padding: 100px 0 0; background: linear-gradient(180deg, #edf2f7 0%, #f7f9fa 100%); border-bottom: 1px solid var(--border-color);">
-    <div class="container">
-        <div style="margin-bottom: 24px;">
-            <span class="section-tag"><i class="fa-solid fa-bolt"></i> Real-Time Vehicle Search</span>
-            <p style="color: var(--text-secondary); font-size: 0.95rem;">Filter by location, pickup and return dates,
-                vehicle class, and budget.</p>
-        </div>
-    </div>
+    style="padding: 75px 0 0; background: linear-gradient(180deg, #edf2f7 0%, #f7f9fa 100%); border-bottom: 1px solid var(--border-color);">
 </section>
 <!-- Main Catalog & Filter Area -->
 <main class="catalog-section" style="padding-top: 25px;">
@@ -33,6 +26,15 @@
                     <label class="filter-group-title">Search Model or Brand</label>
                     <input type="text" id="fleet-search-input" class="form-control"
                         placeholder="e.g. Audi, BMW, Porsche..." />
+                    <!-- Dynamic Trending Searches from SearchLog -->
+                    <div style="margin-top:8px;">
+                        <span style="font-size:0.72rem; color:var(--text-muted); display:flex; align-items:center; gap:4px; margin-bottom:5px;">
+                            <i class="fa-solid fa-fire" style="color:#ef4444;"></i> Popular Searches:
+                        </span>
+                        <div id="fleet-trending-searches" style="display:flex; flex-wrap:wrap; gap:4px;">
+                            <!-- Rendered dynamically from API -->
+                        </div>
+                    </div>
                 </div>
 
                 <div class="filter-group">

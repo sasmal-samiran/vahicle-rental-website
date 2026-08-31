@@ -11,7 +11,4 @@ db.sqlite3
 .db
 
 # extra 
-tests/
-*.jpg
-*.png
-*webp
+media/

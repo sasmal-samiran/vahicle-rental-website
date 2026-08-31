@@ -13,8 +13,12 @@
         <div class="modal-body">
             <div class="detail-modal-grid">
                 <div>
-                    <div style="position:relative; border-radius:var(--radius-md); overflow:hidden; margin-bottom:10px;">
-                        <img src="" id="detail-main-img" class="gallery-main-img" alt="Main Car Photo" style="width:100%; border-radius:var(--radius-md); max-height:280px; object-fit:cover; display:block;" />
+                    <div id="detail-main-img-container" style="position:relative; border-radius:var(--radius-md); overflow:hidden; margin-bottom:10px; min-height:220px; background:#0f172a;">
+                        <img src="" id="detail-main-img" class="gallery-main-img" alt="Main Car Photo" style="width:100%; border-radius:var(--radius-md); max-height:280px; object-fit:cover; display:block;" onerror="this.style.display='none'; document.getElementById('detail-main-img-placeholder').style.display='flex';" />
+                        <div id="detail-main-img-placeholder" class="image-unavailable-placeholder" style="min-height:240px; display:none;">
+                            <i class="fa-solid fa-car-side" style="font-size:3rem; color:#64748b;"></i>
+                            <span style="margin-top:8px;">Image Unavailable</span>
+                        </div>
                         <span id="detail-angle-badge" class="badge badge-primary" style="position:absolute; bottom:12px; left:12px; font-size:0.75rem; backdrop-filter:blur(8px); color:white; background:rgba(14, 77, 92, 0.9); box-shadow:var(--shadow-sm);"><i class="fa-solid fa-camera"></i> Main View</span>
                     </div>
                     <div class="gallery-thumbs" id="detail-thumbs-container" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px;"></div>
@@ -31,6 +35,22 @@
                     <h4 style="font-size:0.95rem; font-weight:700; margin:20px 0 8px;">Verified Customer Reviews</h4>
                     <div id="detail-reviews-container" style="max-height:220px; overflow-y:auto; padding-right:6px;">
                     </div>
+                </div>
+            </div>
+
+            <!-- Similar Vehicles AI Recommendations Section -->
+            <div id="detail-similar-cars-section" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border-color);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <h4 style="font-size:0.95rem; font-weight:800; margin:0; display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary);"></i> Similar Vehicles You Might Also Like
+                        </h4>
+                        <p style="font-size:0.78rem; color:var(--text-secondary); margin:2px 0 0;">Matched by category, engine power, seating capacity, and price range</p>
+                    </div>
+                    <span id="detail-similar-badge" class="badge badge-primary" style="font-size:0.75rem;"><i class="fa-solid fa-chart-line"></i> AI Matched</span>
+                </div>
+                <div id="detail-similar-cars-container" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px;">
+                    <!-- Loaded dynamically via API -->
                 </div>
             </div>
         </div>
@@ -225,14 +245,14 @@
             <!-- STEP 3: Driver Info -->
             <div class="wizard-panel hidden" data-step="3">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                    <div class="form-group"><label class="form-label">Primary Driver Full Name *</label><input
-                            type="text" id="b-driver-name" class="form-control" required /></div>
-                    <div class="form-group"><label class="form-label">Driver Phone Number *</label><input type="text"
-                            id="b-driver-phone" class="form-control" required /></div>
+                    <div class="form-group"><label class="form-label">Primary Driver Full Name</label><input
+                            type="text" id="b-driver-name" class="form-control" onkeydown="if(event.key==='Enter'){event.preventDefault(); BookingWizard.nextStep();}" required /></div>
+                    <div class="form-group"><label class="form-label">Driver Phone Number</label><input type="text"
+                            id="b-driver-phone" class="form-control" onkeydown="if(event.key==='Enter'){event.preventDefault(); BookingWizard.nextStep();}" required /></div>
                     <div class="form-group"><label class="form-label">Email Address</label><input type="email"
-                            id="b-driver-email" class="form-control" /></div>
+                            id="b-driver-email" class="form-control" onkeydown="if(event.key==='Enter'){event.preventDefault(); BookingWizard.nextStep();}" /></div>
                     <div class="form-group"><label class="form-label">Driver's License Number</label><input type="text"
-                            id="b-driver-license" class="form-control" placeholder="e.g. WB-05-20260001234" /></div>
+                            id="b-driver-license" class="form-control" placeholder="e.g. WB-05-20260001234" onkeydown="if(event.key==='Enter'){event.preventDefault(); BookingWizard.nextStep();}" required/></div>
                 </div>
                 <div class="form-group"><label class="form-label">Special Requests / Pickup Notes
                         (Optional)</label><textarea id="b-special-requests" class="form-control" rows="3"
@@ -245,7 +265,7 @@
                     <label class="form-label">Have a Promotional Coupon Code?</label>
                     <div style="display:flex; gap:8px;">
                         <input type="text" id="b-coupon-input" class="form-control"
-                            placeholder="e.g. DRIVE20, WELCOME10" style="text-transform:uppercase;" />
+                            placeholder="e.g. DRIVE20, WELCOME10" style="text-transform:uppercase;" onkeydown="if(event.key==='Enter'){event.preventDefault(); BookingWizard.applyCoupon();}" />
                         <button type="button" class="btn btn-outline"
                             onclick="BookingWizard.applyCoupon()">Apply</button>
                     </div>

@@ -101,8 +101,60 @@ export const Admin = {
 
             this.renderCharts(data.charts);
             this.renderRecentBookings(data.recent_bookings || []);
+            this.loadRecommendationPerformance();
         } catch (e) {
             console.error('Analytics error:', e);
+        }
+    },
+
+    async loadRecommendationPerformance() {
+        const tbody = document.getElementById('ai-rec-performance-tbody');
+        const listContainer = document.getElementById('ai-trending-searches-list');
+
+        try {
+            const [perfData, searchData] = await Promise.all([
+                API.get('/admin/analytics/recommendation-performance/'),
+                API.get('/analytics/trending-searches/', { limit: 6 })
+            ]);
+
+            // 1. Populate Algorithm Conversion Breakdown Table
+            if (tbody && perfData.performance) {
+                const breakdown = perfData.performance.breakdown || [];
+                if (!breakdown.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:var(--text-muted);">No recommendation click data logged yet.</td></tr>';
+                } else {
+                    tbody.innerHTML = breakdown.map(item => `
+                        <tr>
+                            <td><strong>${item.display_name}</strong></td>
+                            <td><span class="badge" style="background:#f1f5f9; color:var(--text-main); font-weight:700;">${item.clicks}</span></td>
+                            <td><span class="badge" style="background:rgba(16,185,129,0.15); color:var(--success); font-weight:700;">${item.bookings}</span></td>
+                            <td><strong style="color:${item.cvr_percent > 0 ? 'var(--primary)' : 'var(--text-muted)'};">${item.cvr_percent}%</strong></td>
+                        </tr>
+                    `).join('');
+                }
+            }
+
+            // 2. Populate High-Demand Customer Searches List
+            if (listContainer) {
+                const searches = searchData.results || searchData || [];
+                if (!searches.length) {
+                    listContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No user searches recorded yet.</p>';
+                } else {
+                    listContainer.innerHTML = searches.map(s => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:8px 12px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-magnifying-glass" style="font-size:0.8rem; color:var(--primary);"></i>
+                                <span style="font-weight:600; font-size:0.88rem; color:var(--text-main);">${s.query}</span>
+                            </div>
+                            <span class="badge" style="background:rgba(14,77,92,0.12); color:var(--primary); font-size:0.75rem; font-weight:700;">
+                                ${s.count} search${s.count === 1 ? '' : 'es'}
+                            </span>
+                        </div>
+                    `).join('');
+                }
+            }
+        } catch (e) {
+            console.error('AI Performance load error:', e);
         }
     },
 
@@ -324,10 +376,16 @@ export const Admin = {
             return;
         }
 
-        tbody.innerHTML = displayList.map(car => `
+        tbody.innerHTML = displayList.map(car => {
+            const imgUrl = car.primary_image || car.main_image_url;
+            const thumbMarkup = imgUrl
+                ? `<img src="${imgUrl}" class="table-thumb" alt="${car.display_name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div class="image-unavailable-placeholder thumb-size" style="display:none;"><i class="fa-solid fa-car-side"></i></div>`
+                : `<div class="image-unavailable-placeholder thumb-size"><i class="fa-solid fa-car-side"></i></div>`;
+
+            return `
             <tr>
                 <td>
-                    <img src="${car.primary_image || car.main_image_url}" class="table-thumb" alt="${car.display_name}" />
+                    ${thumbMarkup}
                 </td>
                 <td>
                     <strong>${car.brand} ${car.model}</strong>
@@ -352,7 +410,8 @@ export const Admin = {
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     },
 
     pendingGalleryFiles: [],
@@ -508,7 +567,12 @@ export const Admin = {
 
         const currentImg = car.primary_image || car.main_image_url;
         if (currentImg && previewContainer && previewImg) {
+            previewImg.style.display = 'block';
             previewImg.src = currentImg;
+            previewImg.onerror = function() {
+                this.style.display = 'none';
+                if (previewName) previewName.innerText = `Image Unavailable (Path: ${car.main_image_path || 'None'})`;
+            };
             if (previewName) previewName.innerText = `Current Image: ${car.brand} ${car.model}`;
             previewContainer.classList.remove('hidden');
             previewContainer.style.display = 'flex';

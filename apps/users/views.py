@@ -160,6 +160,29 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+    def perform_update(self, serializer):
+        user = serializer.save()
+        profile_picture_file = self.request.FILES.get('profile_picture') or self.request.FILES.get('profile_image')
+        
+        # Check if profile picture was explicitly cleared
+        remove_picture = (
+            self.request.data.get('profile_picture') == '' or
+            self.request.data.get('remove_profile_picture') in [True, 'true', '1']
+        )
+
+        from utils.supabase_storage import SupabaseStorageService
+        if profile_picture_file:
+            old_path = user.profile_image_path
+            new_path = SupabaseStorageService.upload_profile_image(user.id, profile_picture_file)
+            user.profile_image_path = new_path
+            user.save(update_fields=['profile_image_path', 'updated_at'])
+            if old_path and old_path != new_path:
+                SupabaseStorageService.delete_profile_image(old_path)
+        elif remove_picture and user.profile_image_path:
+            SupabaseStorageService.delete_profile_image(user.profile_image_path)
+            user.profile_image_path = None
+            user.save(update_fields=['profile_image_path', 'updated_at'])
+
 class AdminCustomerListView(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]
     serializer_class = UserSerializer

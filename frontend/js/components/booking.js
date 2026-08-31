@@ -617,6 +617,16 @@ export const BookingWizard = {
             document.getElementById('v-end-date').innerText = formatDateTime(this.activeBooking.end_date);
             document.getElementById('v-driver-name').innerText = this.activeBooking.driver_name;
             document.getElementById('v-total-amount').innerText = formatCurrency(this.activeBooking.total_amount);
+
+            // Track recommendation & search conversion to booked
+            try {
+                API.post('/analytics/track-click/', {
+                    car_id: this.activeBooking.car.id,
+                    recommendation_click_id: window.Customer?.lastRecommendationClickId || null,
+                    booked: true,
+                    clicked: true
+                }).catch(e => console.warn('Conversion tracking notice:', e));
+            } catch (e) {}
         }
 
         Notifications.fetchNotifications();

@@ -276,6 +276,39 @@ select.form-control option {
     color: var(--text-primary);
 }
 
+.password-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrap .form-control {
+    padding-right: 42px;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+    z-index: 3;
+}
+
+.password-toggle-btn:hover {
+    color: var(--primary);
+}
+
 /* Modals */
 .modal-backdrop {
     position: fixed;
@@ -748,3 +781,212 @@ select.form-control option {
         right: -42px;
     }
 }
+
+/* =========================================================================
+   Image Unavailable Fallback Styling
+   ========================================================================= */
+.image-unavailable-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #94a3b8;
+    border: 1px dashed rgba(148, 163, 184, 0.25);
+    border-radius: inherit;
+    text-align: center;
+    padding: 16px;
+    box-sizing: border-box;
+    user-select: none;
+    transition: var(--transition);
+}
+
+.image-unavailable-placeholder i {
+    font-size: 2.2rem;
+    color: #64748b;
+    margin-bottom: 8px;
+    opacity: 0.85;
+}
+
+.image-unavailable-placeholder span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.image-unavailable-placeholder.thumb-size {
+    min-height: 48px;
+    height: 48px;
+    width: 48px;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+}
+
+.image-unavailable-placeholder.thumb-size i {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+}
+
+.image-unavailable-placeholder.thumb-size span {
+    display: none;
+}
+
+.field-error-msg {
+    color: var(--danger, #ef4444);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    animation: fadeInError 0.2s ease-in-out;
+}
+
+@keyframes fadeInError {
+    from {
+        opacity: 0;
+        transform: translateY(-3px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Compact Protection & Optional Services Advertising Section */
+.perks-advert-section {
+    padding: 44px 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.perks-advert-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.perks-advert-card {
+    background: #f8fafc;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-lg, 12px);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.perks-advert-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary, #0e4d5c);
+    box-shadow: 0 10px 24px rgba(14, 77, 92, 0.08);
+}
+
+.perks-card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.perks-card-badge.shield {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.perks-card-badge.addons {
+    background: rgba(14, 77, 92, 0.1);
+    color: var(--primary, #0e4d5c);
+    border: 1px solid rgba(14, 77, 92, 0.2);
+}
+
+.perks-card-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary, #0f172a);
+    margin-bottom: 6px;
+}
+
+.perks-card-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #64748b);
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.perk-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.perk-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-md, 8px);
+    padding: 10px 14px;
+    font-size: 0.85rem;
+}
+
+.perk-item-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.perk-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.perk-icon-wrap.green {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+
+.perk-icon-wrap.blue {
+    background: rgba(14, 77, 92, 0.1);
+    color: var(--primary, #0e4d5c);
+}
+
+.perk-icon-wrap.amber {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+}
+
+.perk-item-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm, 4px);
+    background: #f1f5f9;
+    color: var(--text-secondary, #475569);
+}
+
+.perk-item-tag.highlight {
+    background: var(--primary-light, #e0f2f1);
+    color: var(--primary, #0e4d5c);
+    font-weight: 800;
+}
+

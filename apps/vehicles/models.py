@@ -78,8 +78,7 @@ class Car(models.Model):
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
     security_deposit = models.DecimalField(max_digits=10, decimal_places=2, default=200.00)
     
-    main_image_url = models.URLField(max_length=500, blank=True, null=True)
-    main_image = models.ImageField(upload_to='cars/', blank=True, null=True)
+    main_image_path = models.CharField(max_length=255, blank=True, null=True, help_text="Supabase Storage path, e.g. cars/15/main.jpg")
     
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='AVAILABLE', db_index=True)
     features = models.JSONField(default=list, blank=True, help_text='List of car features/amenities')
@@ -100,11 +99,34 @@ class Car(models.Model):
 
     @property
     def primary_image(self):
-        if self.main_image:
-            return self.main_image.url
-        if self.main_image_url:
-            return self.main_image_url
-        return 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'
+        from utils.supabase_storage import SupabaseStorageService
+        return SupabaseStorageService.get_car_image_url(self.main_image_path)
+
+    @property
+    def average_rating(self):
+        from django.db.models import Avg
+        avg = self.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
+        return round(float(avg), 1) if avg else 4.8
+
+    @property
+    def popularity_score(self):
+        """
+        Normalized base popularity score (0.0 to 10.0 scale)
+        combining customer reviews (40%), booking volume (40%), and conversion rate (20%).
+        """
+        base_rating_score = (self.average_rating / 5.0) * 4.0  # Max 4.0 pts
+        bookings_count = self.bookings.count()
+        booking_score = min(4.0, bookings_count * 1.0)         # Max 4.0 pts
+
+        conversion_bonus = 0.0
+        try:
+            if hasattr(self, 'popularity_metrics') and self.popularity_metrics:
+                # booking_conversion_rate is percentage (0-100), scale to max 2.0 pts
+                conversion_bonus = min(2.0, (self.popularity_metrics.booking_conversion_rate / 100.0) * 2.0)
+        except Exception:
+            conversion_bonus = 0.0
+
+        return round(float(base_rating_score + booking_score + conversion_bonus), 2)
 
 class CarImage(models.Model):
     VIEW_CHOICES = (
@@ -118,8 +140,7 @@ class CarImage(models.Model):
     )
 
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='car_gallery/', blank=True, null=True)
-    image_url = models.URLField(max_length=500, blank=True, null=True)
+    image_path = models.CharField(max_length=255, blank=True, null=True, help_text="Supabase Storage path, e.g. gallery/15/1.jpg")
     view_type = models.CharField(max_length=20, choices=VIEW_CHOICES, default='OTHER', blank=True)
     caption = models.CharField(max_length=100, blank=True, null=True)
     is_primary = models.BooleanField(default=False)
@@ -130,6 +151,6 @@ class CarImage(models.Model):
 
     @property
     def url(self):
-        if self.image:
-            return self.image.url
-        return self.image_url or ''
+        from utils.supabase_storage import SupabaseStorageService
+        return SupabaseStorageService.get_gallery_image_url(self.image_path)
+

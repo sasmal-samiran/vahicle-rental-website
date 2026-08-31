@@ -22,9 +22,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         return name if name else obj.customer.username
 
     def get_customer_avatar(self, obj):
-        if obj.customer.profile_picture:
-            return obj.customer.profile_picture.url
-        return None
+        from utils.supabase_storage import SupabaseStorageService
+        return SupabaseStorageService.get_profile_image_url(getattr(obj.customer, 'profile_image_path', None))
 
 class ReviewCreateSerializer(serializers.ModelSerializer):
     booking_code = serializers.CharField(write_only=True, required=True)

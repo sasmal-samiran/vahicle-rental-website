@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from apps.vehicles.models import Category, Location, Car, CarImage
-from apps.vehicles.services import download_and_save_car_image, download_and_save_gallery_image
+from apps.vehicles.services import VehicleService
 from apps.bookings.models import Booking, BookingAddon, Coupon
 from apps.payments.models import Payment
 from apps.reviews.models import Review
@@ -23,55 +23,23 @@ class Command(BaseCommand):
 
         # 1. Admin & Customer Users
         admin_user1, _ = User.objects.get_or_create(
-            username='samiran',
+            username='admin',
             defaults={
                 'email': 'admin1@gmail.com',
-                'phone_number': '8710066414',
-                'first_name': 'Samiran',
-                'last_name': 'Sasmal',
+                'phone_number': '9000000001',
+                'first_name': 'Admin',
+                'last_name': 'System',
                 'role': 'ADMIN',
                 'is_staff': True,
                 'is_superuser': True,
                 'is_phone_verified': True
             }
         )
-        admin_user1.set_password('samiran123')
+        admin_user1.set_password('admin123')
         admin_user1.save()
 
-        admin_user2, _ = User.objects.get_or_create(
-            username='asim',
-            defaults={
-                'email': 'admin2@gmail.com',
-                'phone_number': '9734635590',
-                'first_name': 'Asim',
-                'last_name': 'Giri',
-                'role': 'ADMIN',
-                'is_staff': True,
-                'is_superuser': True,
-                'is_phone_verified': True
-            }
-        )
-        admin_user2.set_password('asim123')
-        admin_user2.save()
-
-        admin_user3, _ = User.objects.get_or_create(
-            username='debargha',
-            defaults={
-                'email': 'admin3@gmail.com',
-                'phone_number': '8927057274',
-                'first_name': 'Debargha',
-                'last_name': 'Mondal',
-                'role': 'ADMIN',
-                'is_staff': True,
-                'is_superuser': True,
-                'is_phone_verified': True
-            }
-        )
-        admin_user3.set_password('debargha123')
-        admin_user3.save()
-
         rahul, _ = User.objects.get_or_create(
-            username='rahul_morgan',
+            username='rahul',
             defaults={
                 'email': 'rahul@example.com',
                 'phone_number': '9835754632',
@@ -88,7 +56,7 @@ class Command(BaseCommand):
         rahul.save()
 
         priya, _ = User.objects.get_or_create(
-            username='priya_j',
+            username='priya',
             defaults={
                 'email': 'priya@example.com',
                 'phone_number': '8567439521',
@@ -824,7 +792,7 @@ class Command(BaseCommand):
         for cdata in cars_data:
             data = cdata.copy()
             main_image_path = data.pop('main_image_path', None) or data.pop('image_location', None)
-            main_image_url = data.get('main_image_url')
+            main_image_url = data.pop('main_image_url', None)
             gallery_paths = data.pop('gallery_image_paths', []) or data.pop('gallery_locations', [])
             gallery_urls = data.pop('gallery_urls', [])
 
@@ -837,15 +805,17 @@ class Command(BaseCommand):
                 resolved_path = main_image_path if os.path.isabs(main_image_path) else os.path.join(settings.BASE_DIR, main_image_path)
                 if os.path.isfile(resolved_path):
                     with open(resolved_path, 'rb') as f:
-                        car_obj.main_image.save(os.path.basename(resolved_path), File(f), save=True)
+                        VehicleService.upload_and_save_main_image(car_obj, f, filename=os.path.basename(resolved_path))
                     image_saved = True
-                else:
-                    self.stdout.write(self.style.WARNING(f'Notice: Local image file not found at {resolved_path}.'))
 
-            # 2. If no local image, download from main_image_url, save to media/cars/ and store path in DB
-            if not image_saved and main_image_url and not car_obj.main_image:
-                self.stdout.write(f'Downloading image for {car_obj.display_name} from URL...')
-                download_and_save_car_image(car_obj, main_image_url)
+            # 2. If no local image and car has no main_image_path, download from URL and upload to Supabase
+            if not image_saved and not car_obj.main_image_path:
+                if main_image_url:
+                    VehicleService.download_and_save_main_image(car_obj, main_image_url)
+                else:
+                    # Deterministic storage path fallback
+                    car_obj.main_image_path = f"cars/{car_obj.id}/main.jpg"
+                    car_obj.save(update_fields=['main_image_path'])
 
             # 3. Attach Local Gallery Files
             for g_item in gallery_paths:
@@ -853,20 +823,16 @@ class Command(BaseCommand):
                 v_type = 'OTHER' if isinstance(g_item, str) else g_item.get('view_type', 'OTHER')
                 if g_path:
                     res_g_path = g_path if os.path.isabs(g_path) else os.path.join(settings.BASE_DIR, g_path)
-                    if os.path.isfile(res_g_path):
+                    if os.path.isfile(res_g_path) and not car_obj.images.filter(view_type=v_type).exists():
                         with open(res_g_path, 'rb') as gf:
-                            CarImage.objects.get_or_create(
-                                car=car_obj,
-                                view_type=v_type,
-                                defaults={'image': File(gf, name=os.path.basename(res_g_path))}
-                            )
+                            VehicleService.handle_gallery_uploads(car_obj, [gf], [v_type], [f"{v_type} View"])
 
             # 4. Download Gallery Images from URLs if provided
-            for g_url_item in gallery_urls:
+            for idx, g_url_item in enumerate(gallery_urls):
                 u_url = g_url_item if isinstance(g_url_item, str) else g_url_item.get('url')
                 v_type = 'OTHER' if isinstance(g_url_item, str) else g_url_item.get('view_type', 'OTHER')
                 if u_url and not car_obj.images.filter(view_type=v_type).exists():
-                    download_and_save_gallery_image(car_obj, u_url, view_type=v_type)
+                    VehicleService.download_and_save_gallery_image(car_obj, u_url, view_type=v_type)
 
             created_cars.append(car_obj)
 
@@ -1189,5 +1155,5 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS('Database seeding completed successfully!'))
-        self.stdout.write(self.style.SUCCESS('Admin Login: admin / admin123 (or OTP with +18005550199)'))
-        self.stdout.write(self.style.SUCCESS('Customer Login: rahul_morgan / user123 (or OTP with +15551234567)'))
+        self.stdout.write(self.style.SUCCESS('Admin Login: asim / asim123 (or OTP with 9734635590)'))
+        self.stdout.write(self.style.SUCCESS('Customer Login: rahul / rahul123 (or OTP with 9835754632)'))
