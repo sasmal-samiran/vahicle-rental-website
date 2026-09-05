@@ -2,11 +2,13 @@ from rest_framework import generics, viewsets, permissions, status, parsers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Q
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q, Avg, Count
 from django.utils.dateparse import parse_datetime, parse_date
 from .models import Category, Location, Car, CarImage
 from .serializers import (
     CategorySerializer,
+    CategorySimpleSerializer,
     LocationSerializer,
     CarListSerializer,
     CarDetailSerializer,
@@ -17,6 +19,22 @@ from .services import VehicleService, CarSearchService
 from apps.analytics.services import RecommendationService
 from apps.bookings.models import Booking
 from apps.analytics.models import SearchLog
+
+class StandardCarPagination(PageNumberPagination):
+    page_size = 9
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'page_size': self.get_page_size(self.request),
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -41,45 +59,64 @@ class LocationViewSet(viewsets.ModelViewSet):
 class CarListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CarListSerializer
-    pagination_class = None
+    pagination_class = StandardCarPagination
     filterset_class = CarFilter
     search_fields = ['brand', 'model', 'category__name', 'location__city', 'location__name', 'description']
     ordering_fields = ['price_per_day', 'year', 'created_at']
 
     def get_queryset(self):
-        queryset = Car.objects.select_related('category', 'location').prefetch_related('images', 'reviews')
+        queryset = Car.objects.select_related('category', 'location', 'popularity_metrics').prefetch_related('images').annotate(
+            annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+            annotated_total_reviews=Count('reviews', filter=Q(reviews__is_approved=True)),
+            annotated_bookings_count=Count('bookings', filter=Q(bookings__status__in=['CONFIRMED', 'COMPLETED', 'ONGOING']))
+        )
         # Public view excludes INACTIVE cars, showing AVAILABLE, RENTED, and MAINTENANCE cars
         if not (self.request.user.is_authenticated and self.request.user.is_staff):
             queryset = queryset.exclude(status='INACTIVE')
         return queryset
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        pickup_str = self.request.query_params.get('pickup_date')
+        return_str = self.request.query_params.get('return_date')
+        if pickup_str and return_str:
+            from .serializers import parse_datetime_param
+            start = parse_datetime_param(pickup_str, is_end=False)
+            end = parse_datetime_param(return_str, is_end=True)
+            if start and end and end > start:
+                context['booked_car_ids'] = set(
+                    Booking.objects.filter(
+                        status__in=['CONFIRMED', 'ONGOING', 'PENDING'],
+                        start_date__lt=end,
+                        end_date__gt=start
+                    ).values_list('car_id', flat=True)
+                )
+        return context
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         search_query = request.query_params.get('search', '').strip()
         ordering_param = request.query_params.get('ordering', '').strip()
 
+        car_list = list(queryset)
+
         # Fallback mechanism: If search query yielded no results, invoke CarSearchService fallback
-        if search_query and not queryset.exists():
+        if search_query and not car_list:
             search_service = CarSearchService()
             fallback_qs = search_service.get_fallback_matches(
                 query=search_query,
                 base_queryset=self.get_queryset()
             )
-            if fallback_qs.exists():
-                queryset = fallback_qs
+            car_list = list(fallback_qs)
 
         # Default to AI Recommended ranking if no manual sorting or search query is specified
-        car_list = None
-        if not ordering_param and not search_query and queryset.exists():
+        target_data = car_list
+        if not ordering_param and not search_query and car_list:
             service = RecommendationService()
-            recommended_cars = service.get_recommendations_for_user(request.user, limit=200)
+            recommended_cars = service.get_recommendations_for_user(request.user, limit=200, candidate_cars=car_list)
             rec_id_order = {car.id: idx for idx, car in enumerate(recommended_cars)}
-
-            car_list = list(queryset)
             car_list.sort(key=lambda c: rec_id_order.get(c.id, 9999))
-            serializer = self.get_serializer(car_list, many=True)
-        else:
-            serializer = self.get_serializer(queryset, many=True)
+            target_data = car_list
 
         # Search Logging: Write to SearchLog on every search or filter query
         query_text = search_query or ''
@@ -100,7 +137,7 @@ class CarListView(generics.ListAPIView):
                     session_id = None
 
             try:
-                res_count = len(car_list) if car_list is not None else (len(queryset) if isinstance(queryset, list) else queryset.count())
+                res_count = len(target_data) if isinstance(target_data, list) else target_data.count()
                 log_entry = SearchLog.objects.create(
                     user=request.user if request.user.is_authenticated else None,
                     query=query_text,
@@ -113,7 +150,19 @@ class CarListView(generics.ListAPIView):
             except Exception as e:
                 print(f"[SearchLog Error] {e}")
 
-        response = Response(serializer.data)
+        # Support disabling pagination if all=true is passed
+        if request.query_params.get('all', '').lower() == 'true' or request.query_params.get('no_page') == 'true':
+            serializer = self.get_serializer(target_data, many=True)
+            response = Response(serializer.data)
+        else:
+            page = self.paginate_queryset(target_data)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                response = self.get_paginated_response(serializer.data)
+            else:
+                serializer = self.get_serializer(target_data, many=True)
+                response = Response(serializer.data)
+
         if search_log_id:
             response['X-Search-Log-Id'] = str(search_log_id)
         return response
@@ -121,7 +170,12 @@ class CarListView(generics.ListAPIView):
 class CarDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CarDetailSerializer
-    queryset = Car.objects.select_related('category', 'location').prefetch_related('images', 'reviews__customer')
+    queryset = Car.objects.select_related('category', 'location').prefetch_related(
+        'images', 'reviews__customer'
+    ).annotate(
+        annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+        annotated_total_reviews=Count('reviews', filter=Q(reviews__is_approved=True))
+    )
 
 class CheckCarAvailabilityView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -179,7 +233,10 @@ class AdminCarViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
     pagination_class = None
-    queryset = Car.objects.all().order_by('-id')
+    queryset = Car.objects.all().select_related('category', 'location').prefetch_related('images').annotate(
+        annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+        annotated_total_reviews=Count('reviews', filter=Q(reviews__is_approved=True))
+    ).order_by('-id')
     serializer_class = CarListSerializer
     filterset_class = CarFilter
     search_fields = ['brand', 'model', 'license_plate', 'category__name', 'location__name']

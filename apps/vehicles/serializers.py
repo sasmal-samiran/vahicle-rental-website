@@ -23,6 +23,11 @@ def parse_datetime_param(val, is_end=False):
 
 from utils.supabase_storage import SupabaseStorageService
 
+class CategorySimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'icon', 'description', 'image_url']
+
 class CategorySerializer(serializers.ModelSerializer):
     car_count = serializers.SerializerMethodField()
 
@@ -50,7 +55,7 @@ class CarImageSerializer(serializers.ModelSerializer):
         return SupabaseStorageService.get_gallery_image_url(obj.image_path)
 
 class CarListSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
+    category = CategorySimpleSerializer(read_only=True)
     location = LocationSerializer(read_only=True)
     images = CarImageSerializer(many=True, read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
@@ -110,15 +115,24 @@ class CarListSerializer(serializers.ModelSerializer):
         return self.get_primary_image(obj)
 
     def get_average_rating(self, obj):
+        if hasattr(obj, 'annotated_avg_rating'):
+            return round(float(obj.annotated_avg_rating), 1) if obj.annotated_avg_rating is not None else 4.8
         avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
         return round(float(avg), 1) if avg else 4.8
 
     def get_total_reviews(self, obj):
+        if hasattr(obj, 'annotated_total_reviews'):
+            return obj.annotated_total_reviews or 0
         return obj.reviews.filter(is_approved=True).count()
 
     def get_is_available_for_dates(self, obj):
         if obj.status != 'AVAILABLE':
             return False
+
+        booked_car_ids = self.context.get('booked_car_ids')
+        if booked_car_ids is not None:
+            return obj.id not in booked_car_ids
+
         request = self.context.get('request')
         if not request:
             return True
@@ -197,15 +211,24 @@ class CarDetailSerializer(serializers.ModelSerializer):
         return self.get_primary_image(obj)
 
     def get_average_rating(self, obj):
+        if hasattr(obj, 'annotated_avg_rating'):
+            return round(float(obj.annotated_avg_rating), 1) if obj.annotated_avg_rating is not None else 4.9
         avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
         return round(float(avg), 1) if avg else 4.9
 
     def get_total_reviews(self, obj):
+        if hasattr(obj, 'annotated_total_reviews'):
+            return obj.annotated_total_reviews or 0
         return obj.reviews.filter(is_approved=True).count()
 
     def get_is_available_for_dates(self, obj):
         if obj.status != 'AVAILABLE':
             return False
+
+        booked_car_ids = self.context.get('booked_car_ids')
+        if booked_car_ids is not None:
+            return obj.id not in booked_car_ids
+
         request = self.context.get('request')
         if not request:
             return True

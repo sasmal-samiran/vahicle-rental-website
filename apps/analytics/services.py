@@ -14,21 +14,56 @@ class RecommendationService:
     """AI-powered recommendation engine"""
     
     def __init__(self):
-        self.available_cars = Car.objects.filter(status='AVAILABLE').select_related('category', 'location').prefetch_related('images', 'reviews')
+        self.available_cars = Car.objects.filter(status='AVAILABLE').select_related(
+            'category', 'location', 'popularity_metrics'
+        ).prefetch_related('images').annotate(
+            annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+            annotated_bookings_count=Count('bookings', filter=Q(bookings__status__in=['CONFIRMED', 'COMPLETED', 'ONGOING']))
+        )
     
-    def get_recommendations_for_user(self, user: User, limit: int = 10) -> List[Car]:
+    def _get_car_avg_rating(self, car: Car) -> float:
+        if hasattr(car, 'annotated_avg_rating'):
+            return round(float(car.annotated_avg_rating), 1) if car.annotated_avg_rating is not None else 4.8
+        return float(car.average_rating)
+
+    def _get_car_popularity_score(self, car: Car) -> float:
+        avg_rating = self._get_car_avg_rating(car)
+        base_rating_score = (avg_rating / 5.0) * 4.0
+        if hasattr(car, 'annotated_bookings_count') and car.annotated_bookings_count is not None:
+            bookings_count = car.annotated_bookings_count
+        else:
+            bookings_count = car.bookings.count()
+        booking_score = min(4.0, (bookings_count or 0) * 1.0)
+
+        conversion_bonus = 0.0
+        try:
+            pm = getattr(car, 'popularity_metrics', None)
+            if pm:
+                conversion_bonus = min(2.0, (pm.booking_conversion_rate / 100.0) * 2.0)
+        except Exception:
+            conversion_bonus = 0.0
+
+        return round(float(base_rating_score + booking_score + conversion_bonus), 2)
+    
+    def get_recommendations_for_user(self, user: User, limit: int = 10, candidate_cars: Optional[List[Car]] = None) -> List[Car]:
         """
         Get personalized recommendations for a user
         """
+        cars_pool = candidate_cars if candidate_cars is not None else self.available_cars
+
         if not user.is_authenticated:
+            if candidate_cars is not None:
+                # Rank candidate cars in memory by popularity score with 0 extra queries
+                sorted_pool = sorted(candidate_cars, key=lambda c: self._get_car_popularity_score(c), reverse=True)
+                return sorted_pool[:limit]
             return self.get_popular_cars(limit)
         
         # Get user preferences
         user_preferences = self._get_user_preferences(user)
         
-        # Calculate scores for all available cars
+        # Calculate scores for all candidate cars
         scored_cars = []
-        for car in self.available_cars:
+        for car in cars_pool:
             score = self._calculate_personal_score(car, user_preferences)
             scored_cars.append((car, score))
         
@@ -132,23 +167,22 @@ class RecommendationService:
         max_seats = 0
 
         # 1. Extract from Booking History (Weight: 3x per booking)
-        user_bookings = Booking.objects.filter(
+        user_bookings = list(Booking.objects.filter(
             customer=user
         ).filter(
             Q(status='COMPLETED') | Q(status='CONFIRMED') | Q(status='ONGOING')
-        ).select_related('car', 'car__category')
+        ).select_related('car', 'car__category'))
 
-        if user_bookings.exists():
-            for booking in user_bookings:
-                car = booking.car
-                if car.category:
-                    category_counts[car.category.id] = category_counts.get(car.category.id, 0) + 3
-                brand_counts[car.brand] = brand_counts.get(car.brand, 0) + 3
-                transmission_counts[car.transmission] = transmission_counts.get(car.transmission, 0) + 3
-                fuel_counts[car.fuel_type] = fuel_counts.get(car.fuel_type, 0) + 3
-                prices.append(float(car.price_per_day))
-                max_seats = max(max_seats, car.seats)
-                preferences['preferred_car_ids'].add(car.id)
+        for booking in user_bookings:
+            car = booking.car
+            if car.category:
+                category_counts[car.category.id] = category_counts.get(car.category.id, 0) + 3
+            brand_counts[car.brand] = brand_counts.get(car.brand, 0) + 3
+            transmission_counts[car.transmission] = transmission_counts.get(car.transmission, 0) + 3
+            fuel_counts[car.fuel_type] = fuel_counts.get(car.fuel_type, 0) + 3
+            prices.append(float(car.price_per_day))
+            max_seats = max(max_seats, car.seats)
+            preferences['preferred_car_ids'].add(car.id)
 
         # 2. Extract from SearchLog (Queries, Filters, and Clicked Cars) (Weight: 1.5x)
         recent_searches = SearchLog.objects.filter(user=user).select_related('clicked_car', 'clicked_car__category').order_by('-created_at')[:25]
@@ -238,7 +272,7 @@ class RecommendationService:
         score = 0.0
 
         # Base popularity score
-        score += car.popularity_score * 0.2
+        score += self._get_car_popularity_score(car) * 0.2
 
         # Direct clicked/viewed car boost (implicit high interest!)
         if car.id in preferences.get('preferred_car_ids', set()):
@@ -273,7 +307,7 @@ class RecommendationService:
             score += 1.0
 
         # Rating boost
-        if car.average_rating >= 4.5:
+        if self._get_car_avg_rating(car) >= 4.5:
             score += 1.0
 
         return score
@@ -320,7 +354,7 @@ class RecommendationService:
             similarity += 0.5
         
         # Rating similarity
-        if abs(car1.average_rating - car2.average_rating) < 0.5:
+        if abs(self._get_car_avg_rating(car1) - self._get_car_avg_rating(car2)) < 0.5:
             similarity += 1.0
         
         return similarity

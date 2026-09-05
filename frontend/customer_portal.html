@@ -88,6 +88,9 @@
                 <button type="button" class="portal-tab-btn" data-tab="profile">
                     <i class="fa-solid fa-user-gear"></i> Profile & Driver License
                 </button>
+                <button type="button" class="portal-tab-btn" data-tab="security">
+                    <i class="fa-solid fa-shield-halved"></i> Password & Security
+                </button>
                 <button type="button" class="portal-tab-btn" data-tab="reviews">
                     <i class="fa-solid fa-star"></i> My Reviews & Ratings
                     <span class="portal-tab-badge" id="portal-tab-reviews-count">0</span>
@@ -187,7 +190,10 @@
                             </div>
                         </div>
 
-                        <div style="margin-top:24px; display:flex; justify-content:flex-end; gap:12px;">
+                        <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <a href="javascript:void(0)" onclick="CustomerPortal.switchTab('security')" style="color:var(--primary); font-size:0.85rem; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-key"></i> Need to change account password? Go to Security &rarr;
+                            </a>
                             <button type="submit" class="btn btn-primary" id="prof-save-btn">
                                 <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
                             </button>
@@ -196,7 +202,86 @@
                 </div>
             </div>
 
-            <!-- PANEL 3: My Reviews & Ratings -->
+            <!-- PANEL 3: Password & Account Security -->
+            <div class="portal-tab-panel hidden" id="panel-security" data-tab="security">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Password & Account Security</h3>
+                        <p class="portal-panel-subtitle">Manage your account authentication credentials, update password, and review security settings.</p>
+                    </div>
+                </div>
+
+                <div class="portal-profile-card">
+                    <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid var(--border-color);">
+                        <div style="width:48px; height:48px; border-radius:50%; background:rgba(14, 77, 92, 0.12); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+                            <i class="fa-solid fa-key"></i>
+                        </div>
+                        <div>
+                            <h4 style="font-size:1.05rem; font-weight:700; margin:0 0 2px; color:var(--text-primary);">Change Account Password</h4>
+                            <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
+                                Choose a strong, unique password with at least 8 characters to secure your DriveLuxe account.
+                            </p>
+                        </div>
+                    </div>
+
+                    <form id="portal-change-password-form" onsubmit="event.preventDefault(); CustomerPortal.changePassword();">
+                        <div style="display:flex; flex-direction:column; gap:18px; max-width:540px;">
+                            
+                            <!-- Current Password -->
+                            <div class="form-group">
+                                <label class="form-label">Current Password *</label>
+                                <div class="password-input-wrap">
+                                    <input type="password" id="cp-current-password" class="form-control" placeholder="Enter your current password" required />
+                                    <button type="button" class="password-toggle-btn" onclick="Auth.togglePasswordVisibility('cp-current-password', this)" title="Show/Hide Password" tabindex="-1">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div id="cp-current-password-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.82rem; margin-top:6px; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
+                            </div>
+
+                            <!-- New Password -->
+                            <div class="form-group">
+                                <label class="form-label">New Password *</label>
+                                <div class="password-input-wrap">
+                                    <input type="password" id="cp-new-password" class="form-control" placeholder="Minimum 8 characters" minlength="8" required />
+                                    <button type="button" class="password-toggle-btn" onclick="Auth.togglePasswordVisibility('cp-new-password', this)" title="Show/Hide Password" tabindex="-1">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div id="cp-new-password-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.82rem; margin-top:6px; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
+                                <small style="color:var(--text-muted); font-size:0.78rem; display:block; margin-top:4px;">
+                                    Must be at least 8 characters long.
+                                </small>
+                            </div>
+
+                            <!-- Confirm New Password -->
+                            <div class="form-group">
+                                <label class="form-label">Confirm New Password *</label>
+                                <div class="password-input-wrap">
+                                    <input type="password" id="cp-confirm-password" class="form-control" placeholder="Re-enter new password" minlength="8" required />
+                                    <button type="button" class="password-toggle-btn" onclick="Auth.togglePasswordVisibility('cp-confirm-password', this)" title="Show/Hide Password" tabindex="-1">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div id="cp-confirm-password-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.82rem; margin-top:6px; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
+                            </div>
+
+                            <div id="cp-global-error" class="field-error-msg hidden" style="color:var(--danger, #ef4444); font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
+
+                            <div style="margin-top:8px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                <button type="submit" class="btn btn-primary" id="cp-save-btn" style="min-width:180px;">
+                                    <i class="fa-solid fa-lock"></i> Update Password
+                                </button>
+                                <button type="button" class="btn btn-outline" onclick="CustomerPortal.resetPasswordForm()">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PANEL 4: My Reviews & Ratings -->
             <div class="portal-tab-panel hidden" id="panel-reviews" data-tab="reviews">
                 <div class="portal-panel-header">
                     <div>

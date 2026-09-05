@@ -56,6 +56,18 @@ class PasswordLoginSerializer(serializers.Serializer):
     username_or_phone = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, min_length=8, write_only=True)
+    confirm_password = serializers.CharField(required=True, min_length=8, write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "New passwords do not match."})
+        if data['current_password'] == data['new_password']:
+            raise serializers.ValidationError({"new_password": "New password cannot be the same as your current password."})
+        return data
+
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6, required=True)
     phone_number = serializers.CharField(max_length=20, required=True)

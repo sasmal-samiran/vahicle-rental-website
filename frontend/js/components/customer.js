@@ -24,6 +24,16 @@ export const Customer = {
         return_date: ''
     },
     activeCar: null,
+    // Fleet Pagination & Load More State
+    currentPage: 1,
+    pageSize: 9,
+    totalCount: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+    isLoadingMore: false,
+    isFetching: false,
+    hasInitialFetchCompleted: false,
 
     async init() {
         this.parseUrlParams();
@@ -34,9 +44,11 @@ export const Customer = {
         this.loadTrendingSearches();
 
         if (document.getElementById('cars-grid-container')) {
-            await this.fetchCars();
+            await this.fetchCars(this.currentPage, false);
+            this.hasInitialFetchCompleted = true;
         } else if (document.getElementById('featured-cars-grid')) {
             await this.fetchFeaturedCars();
+            this.hasInitialFetchCompleted = true;
         }
     },
 
@@ -49,6 +61,14 @@ export const Customer = {
         if (params.get('category')) this.filters.category = params.get('category');
         if (params.get('status')) this.filters.status = params.get('status');
         if (params.get('search')) this.filters.search = params.get('search');
+        if (params.get('page')) {
+            const p = parseInt(params.get('page'), 10);
+            if (!isNaN(p) && p > 0) this.currentPage = p;
+        }
+        if (params.get('page_size')) {
+            const ps = parseInt(params.get('page_size'), 10);
+            if (!isNaN(ps) && ps > 0) this.pageSize = ps;
+        }
     },
 
     setDefaultDates() {
@@ -99,7 +119,8 @@ export const Customer = {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     this.filters.search = e.target.value;
-                    this.fetchCars();
+                    this.currentPage = 1;
+                    this.fetchCars(1, false);
                 }
             });
         }
@@ -109,7 +130,8 @@ export const Customer = {
         if (sortSelect) {
             sortSelect.addEventListener('change', (e) => {
                 this.filters.ordering = e.target.value;
-                this.fetchCars();
+                this.currentPage = 1;
+                this.fetchCars(1, false);
             });
         }
 
@@ -119,7 +141,8 @@ export const Customer = {
             if (this.filters.status) statusSelect.value = this.filters.status;
             statusSelect.addEventListener('change', (e) => {
                 this.filters.status = e.target.value;
-                this.fetchCars();
+                this.currentPage = 1;
+                this.fetchCars(1, false);
             });
         }
 
@@ -139,7 +162,8 @@ export const Customer = {
                     chip.classList.add('active');
                     this.filters[group] = value;
                 }
-                this.fetchCars();
+                this.currentPage = 1;
+                this.fetchCars(1, false);
             });
         });
 
@@ -169,8 +193,10 @@ export const Customer = {
 
             // 1. Refresh Fleet Catalog grid with logged-in user recommendations
             if (document.getElementById('cars-grid-container')) {
-                this.fetchCars();
-                this.loadTrendingSearches();
+                if (this.hasInitialFetchCompleted && !this.isFetching) {
+                    this.fetchCars(1, false);
+                    this.loadTrendingSearches();
+                }
             }
 
             // 2. Refresh Home Page Curated Showcase
@@ -183,7 +209,7 @@ export const Customer = {
                 this.loadSimilarCars(this.activeCar.id);
             }
 
-            if (user) {
+            if (user && this.hasInitialFetchCompleted) {
                 Toast.info('✨ Personalized vehicle recommendations updated for your profile.', 'AI Matched');
             }
         });
@@ -192,7 +218,10 @@ export const Customer = {
     debounceTimer: null,
     applyFiltersDebounced() {
         clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => this.fetchCars(), 300);
+        this.debounceTimer = setTimeout(() => {
+            this.currentPage = 1;
+            this.fetchCars(1, false);
+        }, 300);
     },
 
     async loadLocations() {
@@ -237,11 +266,12 @@ export const Customer = {
 
     selectCategory(slug) {
         this.filters.category = slug;
+        this.currentPage = 1;
         document.querySelectorAll('.category-tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.slug === slug);
         });
         if (document.getElementById('cars-grid-container')) {
-            this.fetchCars();
+            this.fetchCars(1, false);
         } else {
             window.location.href = `/fleet/?category=${slug}`;
         }
@@ -269,6 +299,7 @@ export const Customer = {
 
         this.filters.pickup_location_id = pickupLoc;
         this.filters.dropoff_location_id = dropoffLoc;
+        this.currentPage = 1;
 
         // If on Home Page, route to the dedicated /fleet/ search page with parameters
         if (!document.getElementById('cars-grid-container')) {
@@ -282,7 +313,7 @@ export const Customer = {
         }
 
         // If already on /fleet/, fetch immediately
-        this.fetchCars();
+        this.fetchCars(1, false);
     },
 
     async loadTrendingSearches() {
@@ -306,21 +337,40 @@ export const Customer = {
 
     quickSearch(term) {
         this.filters.search = term;
+        this.currentPage = 1;
         const searchInput = document.getElementById('fleet-search-input');
         if (searchInput) searchInput.value = term;
-        this.fetchCars();
+        this.fetchCars(1, false);
     },
 
-    async fetchCars() {
+    async fetchCars(page = null, append = false) {
+        if (this.isFetching && !append) {
+            return;
+        }
+
         const grid = document.getElementById('cars-grid-container');
-        const countEl = document.getElementById('results-count-display');
-        if (grid) {
-            grid.innerHTML = `
-                <div style="grid-column: 1/-1; text-align:center; padding:60px 0;">
-                    <i class="fa-solid fa-circle-notch fa-spin text-gradient" style="font-size:2.5rem; margin-bottom:12px;"></i>
-                    <p style="color:var(--text-secondary);">Searching available fleet in real time...</p>
-                </div>
-            `;
+        const loadMoreBtn = document.getElementById('fleet-load-more-btn');
+
+        if (page !== null) {
+            this.currentPage = page;
+        }
+
+        if (append) {
+            this.isLoadingMore = true;
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Loading More Vehicles...</span>`;
+            }
+        } else {
+            this.isFetching = true;
+            if (grid) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align:center; padding:60px 0;">
+                        <i class="fa-solid fa-circle-notch fa-spin text-gradient" style="font-size:2.5rem; margin-bottom:12px;"></i>
+                        <p style="color:var(--text-secondary);">Searching available fleet in real time...</p>
+                    </div>
+                `;
+            }
         }
 
         try {
@@ -335,30 +385,222 @@ export const Customer = {
                 ordering: this.filters.ordering,
                 location_id: this.filters.pickup_location_id,
                 pickup_date: this.filters.pickup_date,
-                return_date: this.filters.return_date
+                return_date: this.filters.return_date,
+                page: this.currentPage,
+                page_size: this.pageSize
             };
 
             const data = await API.get('/cars/', params);
-            this.cars = data.results || data;
 
-            if (countEl) {
-                const total = this.cars.length;
-                const available = this.cars.filter(c => c.status === 'AVAILABLE' && c.is_available_for_dates !== false).length;
-                const bookedDates = this.cars.filter(c => c.status === 'AVAILABLE' && c.is_available_for_dates === false).length;
-                const rented = this.cars.filter(c => c.status === 'RENTED').length;
-                const maintenance = this.cars.filter(c => c.status === 'MAINTENANCE').length;
-                let breakdownParts = [];
-                if (available) breakdownParts.push(`${available} Available`);
-                if (bookedDates) breakdownParts.push(`${bookedDates} Booked for Dates`);
-                if (rented) breakdownParts.push(`${rented} Rented`);
-                if (maintenance) breakdownParts.push(`${maintenance} In Service`);
-                const breakdown = breakdownParts.length ? ` (${breakdownParts.join(', ')})` : '';
-                countEl.innerText = `${total} Vehicle${total === 1 ? '' : 's'}${breakdown}`;
+            let newCars = [];
+            if (data && typeof data === 'object' && Array.isArray(data.results)) {
+                this.totalCount = data.count !== undefined ? data.count : data.results.length;
+                this.totalPages = data.total_pages || Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+                this.currentPage = data.current_page || this.currentPage;
+                this.hasNextPage = !!data.next;
+                this.hasPrevPage = !!data.previous;
+                newCars = data.results;
+            } else if (Array.isArray(data)) {
+                this.totalCount = data.length;
+                this.totalPages = Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+                this.hasNextPage = this.currentPage < this.totalPages;
+                this.hasPrevPage = this.currentPage > 1;
+                newCars = data;
             }
-            this.renderCars();
+
+            if (append) {
+                const prevCount = this.cars.length;
+                this.cars = [...this.cars, ...newCars];
+                if (grid) {
+                    const appendedHtml = newCars.map((car, idx) => this.generateCarCardHtml(car, prevCount + idx + 1, 'search_details')).join('');
+                    grid.insertAdjacentHTML('beforeend', appendedHtml);
+                }
+            } else {
+                this.cars = newCars;
+                this.renderCars();
+            }
+
+            this.updateResultsCountDisplay();
+            this.updatePaginationUI();
+            this.updateUrlParams();
         } catch (err) {
-            if (grid) grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--danger);">${err.message}</div>`;
+            console.error('Fetch cars error:', err);
+            if (!append && grid) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--danger);">${err.message || 'Failed to load vehicles.'}</div>`;
+            } else {
+                Toast.error(err.message || 'Could not load additional vehicles.');
+            }
+        } finally {
+            this.isFetching = false;
+            this.isLoadingMore = false;
+            this.hasInitialFetchCompleted = true;
         }
+    },
+
+    updateResultsCountDisplay() {
+        const countEl = document.getElementById('results-count-display');
+        if (!countEl) return;
+        const total = this.totalCount;
+        const showing = this.cars.length;
+        if (total === 0) {
+            countEl.innerText = '0 Vehicles Found';
+            return;
+        }
+        if (showing < total) {
+            countEl.innerText = `Showing ${showing} of ${total} Vehicle${total === 1 ? '' : 's'}`;
+        } else {
+            countEl.innerText = `${total} Vehicle${total === 1 ? '' : 's'}`;
+        }
+    },
+
+    updatePaginationUI() {
+        const container = document.getElementById('fleet-pagination-container');
+        if (!container) return;
+
+        if (this.totalCount === 0 || this.totalPages <= 1) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        container.classList.remove('hidden');
+
+        // 1. Update Load More Button Box
+        const loadMoreBox = document.getElementById('fleet-load-more-box');
+        const loadMoreBtn = document.getElementById('fleet-load-more-btn');
+        const loadMoreProgress = document.getElementById('fleet-load-more-progress');
+
+        if (this.cars.length < this.totalCount && this.currentPage < this.totalPages) {
+            if (loadMoreBox) loadMoreBox.style.display = 'flex';
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = false;
+                const remaining = this.totalCount - this.cars.length;
+                loadMoreBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span>Load More Vehicles (${remaining} remaining)</span>`;
+            }
+            if (loadMoreProgress) {
+                loadMoreProgress.innerText = `Showing ${this.cars.length} of ${this.totalCount} vehicles`;
+            }
+        } else {
+            if (loadMoreBox) loadMoreBox.style.display = 'none';
+        }
+
+        // 2. Update Numbered Page Navigation Bar
+        const pagesList = document.getElementById('fleet-pages-list');
+        const pageSummary = document.getElementById('fleet-page-summary');
+        const pageSizeSelect = document.getElementById('fleet-page-size-select');
+
+        if (pageSizeSelect) {
+            pageSizeSelect.value = String(this.pageSize);
+        }
+
+        if (pageSummary) {
+            pageSummary.innerText = `Page ${this.currentPage} of ${this.totalPages}`;
+        }
+
+        if (pagesList) {
+            let pagesHtml = '';
+
+            // Previous Button
+            pagesHtml += `
+                <button type="button" class="page-btn" ${this.currentPage <= 1 ? 'disabled' : ''} onclick="Customer.goToPage(${this.currentPage - 1})" title="Previous Page">
+                    <i class="fa-solid fa-chevron-left"></i> <span>Prev</span>
+                </button>
+            `;
+
+            // Calculate page range with ellipsis
+            const pages = this.getPageNumbers(this.currentPage, this.totalPages);
+            pages.forEach(p => {
+                if (p === '...') {
+                    pagesHtml += `<span class="page-ellipsis">...</span>`;
+                } else {
+                    const isActive = p === this.currentPage;
+                    pagesHtml += `
+                        <button type="button" class="page-btn ${isActive ? 'active' : ''}" onclick="Customer.goToPage(${p})" ${isActive ? 'aria-current="page"' : ''}>
+                            ${p}
+                        </button>
+                    `;
+                }
+            });
+
+            // Next Button
+            pagesHtml += `
+                <button type="button" class="page-btn" ${this.currentPage >= this.totalPages ? 'disabled' : ''} onclick="Customer.goToPage(${this.currentPage + 1})" title="Next Page">
+                    <span>Next</span> <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            `;
+
+            pagesList.innerHTML = pagesHtml;
+        }
+    },
+
+    getPageNumbers(current, total) {
+        if (total <= 7) {
+            return Array.from({ length: total }, (_, i) => i + 1);
+        }
+        const pages = [];
+        pages.push(1);
+        
+        let start = Math.max(2, current - 1);
+        let end = Math.min(total - 1, current + 1);
+
+        if (current <= 3) {
+            start = 2;
+            end = 4;
+        } else if (current >= total - 2) {
+            start = total - 3;
+            end = total - 1;
+        }
+
+        if (start > 2) pages.push('...');
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+        if (end < total - 1) pages.push('...');
+
+        pages.push(total);
+        return pages;
+    },
+
+    async goToPage(pageNum) {
+        if (pageNum < 1 || pageNum > this.totalPages || pageNum === this.currentPage) return;
+        this.currentPage = pageNum;
+        await this.fetchCars(pageNum, false);
+        const catalogLayout = document.querySelector('.catalog-layout') || document.getElementById('cars-grid-container');
+        if (catalogLayout) {
+            const yOffset = -90;
+            const y = catalogLayout.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    },
+
+    async loadMoreCars() {
+        if (this.isLoadingMore || this.currentPage >= this.totalPages) return;
+        const nextPage = this.currentPage + 1;
+        await this.fetchCars(nextPage, true);
+    },
+
+    changePageSize(newSize) {
+        const size = parseInt(newSize, 10);
+        if (size && size > 0) {
+            this.pageSize = size;
+            this.currentPage = 1;
+            this.fetchCars(1, false);
+        }
+    },
+
+    updateUrlParams() {
+        if (!document.getElementById('cars-grid-container')) return;
+        const url = new URL(window.location.href);
+        if (this.currentPage > 1) {
+            url.searchParams.set('page', String(this.currentPage));
+        } else {
+            url.searchParams.delete('page');
+        }
+        if (this.pageSize !== 9) {
+            url.searchParams.set('page_size', String(this.pageSize));
+        } else {
+            url.searchParams.delete('page_size');
+        }
+        window.history.replaceState({}, '', url.toString());
     },
 
     activeCuratedTab: 'personalized',
@@ -419,6 +661,7 @@ export const Customer = {
         const countEl = document.getElementById('results-count-display');
         const viewLabel = document.getElementById('curated-view-label');
         const grid = document.getElementById('cars-grid-container');
+        const paginationContainer = document.getElementById('fleet-pagination-container');
 
         // Update pills active state
         document.querySelectorAll('#curated-fleet-pills .filter-chip').forEach(c => c.classList.remove('active'));
@@ -434,9 +677,12 @@ export const Customer = {
         } else {
             document.getElementById('curated-all-chip')?.classList.add('active');
             if (viewLabel) viewLabel.innerText = 'All Available Fleet';
-            this.fetchCars();
+            this.currentPage = 1;
+            this.fetchCars(1, false);
             return;
         }
+
+        if (paginationContainer) paginationContainer.classList.add('hidden');
 
         if (grid) {
             grid.innerHTML = `
@@ -538,14 +784,65 @@ export const Customer = {
             `;
         }
 
-        const carImgUrl = car.primary_image || car.main_image_url;
-        const carImgMarkup = carImgUrl
-            ? `<img src="${carImgUrl}" alt="${car.display_name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div class="image-unavailable-placeholder" style="display:none;"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>`
-            : `<div class="image-unavailable-placeholder"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>`;
+        // Build complete list of images for this car
+        const allImages = [];
+        const primaryUrl = car.primary_image || car.main_image_url;
+        if (primaryUrl) {
+            allImages.push({ url: primaryUrl, label: 'Main View' });
+        }
+        if (Array.isArray(car.images)) {
+            car.images.forEach((img, idx) => {
+                if (img && img.url && !allImages.some(item => item.url === img.url)) {
+                    allImages.push({
+                        url: img.url,
+                        label: img.view_type_display || img.caption || `View ${idx + 1}`
+                    });
+                }
+            });
+        }
+
+        let carImgMarkup = '';
+        if (allImages.length === 0) {
+            carImgMarkup = `<div class="image-unavailable-placeholder"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>`;
+        } else if (allImages.length === 1) {
+            carImgMarkup = `
+                <img src="${allImages[0].url}" alt="${car.display_name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                <div class="image-unavailable-placeholder" style="display:none;"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>
+            `;
+        } else {
+            const slidesHtml = allImages.map((img, i) => `
+                <img src="${img.url}" alt="${car.display_name} - ${img.label}" class="car-gallery-slide ${i === 0 ? 'active' : ''}" data-index="${i}" loading="lazy" onerror="this.style.display='none';" />
+            `).join('');
+
+            const dotsHtml = allImages.map((_, i) => `
+                <span class="gallery-dot ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="event.stopPropagation(); Customer.setCardImage(this, ${i});" title="Image ${i + 1} of ${allImages.length}"></span>
+            `).join('');
+
+            const imageCountBadge = `
+                <div class="car-gallery-counter">
+                    <i class="fa-solid fa-camera"></i> <span class="counter-curr">1</span>/${allImages.length}
+                </div>
+            `;
+
+            carImgMarkup = `
+                <div class="car-card-gallery" 
+                     data-total="${allImages.length}" 
+                     data-current="0"
+                     onmouseenter="Customer.startCardGalleryLoop(this)" 
+                     onmouseleave="Customer.stopCardGalleryLoop(this)">
+                    ${slidesHtml}
+                    <div class="car-gallery-indicators">
+                        ${dotsHtml}
+                    </div>
+                    ${imageCountBadge}
+                    <div class="image-unavailable-placeholder" style="display:none;"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>
+                </div>
+            `;
+        }
 
         return `
             <div class="car-card animate-slide-in">
-                <div class="car-img-wrapper" style="position:relative;">
+                <div class="car-img-wrapper" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
                     ${carImgMarkup}
                     <span class="badge badge-primary car-category-badge">
                         <i class="fa-solid ${car.category?.icon || 'fa-car'}"></i> ${car.category?.name || 'Car'}
@@ -558,7 +855,7 @@ export const Customer = {
                 <div class="car-content">
                     <div class="car-header-row">
                         <div>
-                            <h3 class="car-title">${car.brand} ${car.model}</h3>
+                            <h3 class="car-title" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})" style="cursor:pointer;">${car.brand} ${car.model}</h3>
                             <span class="car-year">${car.year}</span>
                         </div>
                         <div class="car-rating">
@@ -580,6 +877,74 @@ export const Customer = {
                 </div>
             </div>
         `;
+    },
+
+    galleryIntervals: new Map(),
+
+    startCardGalleryLoop(galleryEl) {
+        if (!galleryEl) return;
+        const total = parseInt(galleryEl.dataset.total, 10) || 1;
+        if (total <= 1) return;
+
+        if (this.galleryIntervals.has(galleryEl)) {
+            clearInterval(this.galleryIntervals.get(galleryEl));
+        }
+
+        // Loop automatically through all images in sequence
+        const intervalId = setInterval(() => {
+            let current = parseInt(galleryEl.dataset.current, 10) || 0;
+            let next = (current + 1) % total;
+            this.updateCardGalleryIndex(galleryEl, next);
+        }, 1100);
+
+        this.galleryIntervals.set(galleryEl, intervalId);
+    },
+
+    stopCardGalleryLoop(galleryEl) {
+        if (!galleryEl) return;
+        if (this.galleryIntervals.has(galleryEl)) {
+            clearInterval(this.galleryIntervals.get(galleryEl));
+            this.galleryIntervals.delete(galleryEl);
+        }
+        // Smoothly reset back to the primary cover image
+        this.updateCardGalleryIndex(galleryEl, 0);
+    },
+
+    setCardImage(dotEl, index) {
+        const galleryEl = dotEl.closest('.car-card-gallery');
+        if (!galleryEl) return;
+        const total = parseInt(galleryEl.dataset.total, 10) || 1;
+        this.updateCardGalleryIndex(galleryEl, index);
+
+        // Continue loop from new index if currently hovering
+        if (this.galleryIntervals.has(galleryEl)) {
+            clearInterval(this.galleryIntervals.get(galleryEl));
+            const intervalId = setInterval(() => {
+                let curr = parseInt(galleryEl.dataset.current, 10) || 0;
+                let nxt = (curr + 1) % total;
+                this.updateCardGalleryIndex(galleryEl, nxt);
+            }, 1100);
+            this.galleryIntervals.set(galleryEl, intervalId);
+        }
+    },
+
+    updateCardGalleryIndex(galleryEl, index) {
+        galleryEl.dataset.current = index;
+        const slides = galleryEl.querySelectorAll('.car-gallery-slide');
+        const dots = galleryEl.querySelectorAll('.gallery-dot');
+        const counterEl = galleryEl.querySelector('.counter-curr');
+
+        slides.forEach((slide, i) => {
+            slide.classList.toggle('active', i === index);
+        });
+
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+
+        if (counterEl) {
+            counterEl.textContent = String(index + 1);
+        }
     },
 
     renderCars() {
@@ -610,6 +975,7 @@ export const Customer = {
         this.filters.fuel_type = '';
         this.filters.seats = '';
         this.filters.ordering = '';
+        this.currentPage = 1;
         
         const slider = document.getElementById('price-range-slider');
         if (slider) slider.value = 10000;
@@ -626,8 +992,10 @@ export const Customer = {
         if (allStatusChip) allStatusChip.classList.add('active');
 
         document.querySelectorAll('.category-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.slug === ''));
-        this.fetchCars();
-    },    async openDetailModal(carId, source = 'search_details', position = 1) {
+        this.fetchCars(1, false);
+    },
+
+    async openDetailModal(carId, source = 'search_details', position = 1) {
         // Track click and write clicked_car to SearchLog only when details button is clicked!
         try {
             API.post('/analytics/track-click/', {

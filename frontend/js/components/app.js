@@ -6,10 +6,10 @@ import { Customer } from './customer.js';
 import { CustomerPortal } from './customer-portal.js';
 import { Admin } from './admin.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // 1. Initialize Components
     Toast.init();
-    Auth.init();
+    await Auth.init();
     Notifications.init();
 
     const params = new URLSearchParams(window.location.search);

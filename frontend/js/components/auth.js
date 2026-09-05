@@ -10,8 +10,9 @@ export const Auth = {
     regCountdownSeconds: 60,
     pendingRegistrationData: null,
 
-    init() {
+    async init() {
         this.bindEvents();
+        await API.validateSession();
         this.updateNavUser();
     },
 

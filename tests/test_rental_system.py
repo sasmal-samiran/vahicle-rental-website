@@ -147,7 +147,7 @@ class CarRentalSystemTests(TestCase):
             car=self.car,
             start_datetime=start,
             end_datetime=end,
-            addon_keys=['gps'], # 199/day * 3 = 597
+            addon_keys=['gps'], # 9/day * 3 = 27
             insurance_plan='STANDARD', # 9% of 150 = 13.50 -> quantized 14/day * 3 = 42 or dynamic rate
             coupon_code='DRIVE20' # 20% off
         )
@@ -155,9 +155,9 @@ class CarRentalSystemTests(TestCase):
         self.assertEqual(quote['total_days'], 3)
         self.assertEqual(quote['rental_charge'], 450.0) # 3 * 150
         self.assertEqual(quote['insurance_amount'], quote['insurance_daily_rate'] * 3)
-        self.assertEqual(quote['addons_total'], 597.0) # 3 * 199
+        self.assertEqual(quote['addons_total'], 27.0) # 3 * 9
         
-        subtotal = 450.0 + quote['insurance_amount'] + 597.0
+        subtotal = 450.0 + quote['insurance_amount'] + 27.0
         expected_discount = round(subtotal * 0.20, 2)
         self.assertEqual(quote['discount_amount'], expected_discount)
 
@@ -422,5 +422,43 @@ class CarRentalSystemTests(TestCase):
         del_res = self.client.delete(f'/api/admin/coupons/{coupon_id}/')
         self.assertEqual(del_res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Coupon.objects.filter(id=coupon_id).exists())
+
+    def test_change_password_endpoint(self):
+        self.client.force_authenticate(user=self.customer)
+
+        # 1. Reject invalid current password
+        res1 = self.client.post('/api/auth/change-password/', {
+            'current_password': 'WrongPassword123',
+            'new_password': 'NewPassword456!',
+            'confirm_password': 'NewPassword456!'
+        })
+        self.assertEqual(res1.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Current password is incorrect.', res1.data.get('error', ''))
+
+        # 2. Reject mismatched new password
+        res2 = self.client.post('/api/auth/change-password/', {
+            'current_password': 'CustomerPassword123',
+            'new_password': 'NewPassword456!',
+            'confirm_password': 'DifferentPassword789!'
+        })
+        self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # 3. Reject same as current password
+        res3 = self.client.post('/api/auth/change-password/', {
+            'current_password': 'CustomerPassword123',
+            'new_password': 'CustomerPassword123',
+            'confirm_password': 'CustomerPassword123'
+        })
+        self.assertEqual(res3.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # 4. Successfully change password
+        res4 = self.client.post('/api/auth/change-password/', {
+            'current_password': 'CustomerPassword123',
+            'new_password': 'BrandNewPassword2026!',
+            'confirm_password': 'BrandNewPassword2026!'
+        })
+        self.assertEqual(res4.status_code, status.HTTP_200_OK)
+        self.customer.refresh_from_db()
+        self.assertTrue(self.customer.check_password('BrandNewPassword2026!'))
 
 

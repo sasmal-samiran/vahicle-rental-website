@@ -104,6 +104,8 @@ class Car(models.Model):
 
     @property
     def average_rating(self):
+        if hasattr(self, 'annotated_avg_rating'):
+            return round(float(self.annotated_avg_rating), 1) if self.annotated_avg_rating is not None else 4.8
         from django.db.models import Avg
         avg = self.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
         return round(float(avg), 1) if avg else 4.8
@@ -115,14 +117,18 @@ class Car(models.Model):
         combining customer reviews (40%), booking volume (40%), and conversion rate (20%).
         """
         base_rating_score = (self.average_rating / 5.0) * 4.0  # Max 4.0 pts
-        bookings_count = self.bookings.count()
+        if hasattr(self, 'annotated_bookings_count') and self.annotated_bookings_count is not None:
+            bookings_count = self.annotated_bookings_count
+        else:
+            bookings_count = self.bookings.count()
         booking_score = min(4.0, bookings_count * 1.0)         # Max 4.0 pts
 
         conversion_bonus = 0.0
         try:
-            if hasattr(self, 'popularity_metrics') and self.popularity_metrics:
-                # booking_conversion_rate is percentage (0-100), scale to max 2.0 pts
-                conversion_bonus = min(2.0, (self.popularity_metrics.booking_conversion_rate / 100.0) * 2.0)
+            # Check cached or select_related popularity_metrics without hitting db if already populated
+            pm = getattr(self, 'popularity_metrics', None)
+            if pm:
+                conversion_bonus = min(2.0, (pm.booking_conversion_rate / 100.0) * 2.0)
         except Exception:
             conversion_bonus = 0.0
 

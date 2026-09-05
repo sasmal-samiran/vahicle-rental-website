@@ -5,6 +5,7 @@ from .views import (
     RequestOTPView,
     VerifyOTPView,
     PasswordLoginView,
+    ChangePasswordView,
     UserProfileView,
     AdminCustomerListView,
     AdminCustomerToggleStatusView
@@ -15,6 +16,7 @@ urlpatterns = [
     path('auth/otp/request/', RequestOTPView.as_view(), name='otp-request'),
     path('auth/otp/verify/', VerifyOTPView.as_view(), name='otp-verify'),
     path('auth/login/', PasswordLoginView.as_view(), name='password-login'),
+    path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('auth/profile/', UserProfileView.as_view(), name='user-profile'),
     path('admin/customers/', AdminCustomerListView.as_view(), name='admin-customer-list'),

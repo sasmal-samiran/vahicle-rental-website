@@ -10,6 +10,7 @@ from .serializers import (
     OTPRequestSerializer,
     OTPVerifySerializer,
     PasswordLoginSerializer,
+    ChangePasswordSerializer,
     CustomerRegistrationSerializer
 )
 from .services import OTPService
@@ -182,6 +183,36 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
             SupabaseStorageService.delete_profile_image(user.profile_image_path)
             user.profile_image_path = None
             user.save(update_fields=['profile_image_path', 'updated_at'])
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        current_password = serializer.validated_data['current_password']
+        new_password = serializer.validated_data['new_password']
+
+        if not user.check_password(current_password):
+            return Response({'error': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        # Generate fresh tokens so user session continues uninterrupted
+        refresh = RefreshToken.for_user(user)
+        refresh['role'] = user.role
+        refresh['username'] = user.username
+
+        return Response({
+            'detail': 'Password changed successfully.',
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        }, status=status.HTTP_200_OK)
 
 class AdminCustomerListView(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]

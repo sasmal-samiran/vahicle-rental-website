@@ -10,8 +10,67 @@ export const API = {
         return headers;
     },
 
+    parseJwt(token) {
+        try {
+            if (!token || typeof token !== 'string') return null;
+            const parts = token.split('.');
+            if (parts.length !== 3) return null;
+            const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    },
+
+    isTokenExpired(token, offsetSeconds = 0) {
+        if (!token) return true;
+        const payload = this.parseJwt(token);
+        if (!payload || !payload.exp) return true;
+        return (Date.now() / 1000) >= (payload.exp - offsetSeconds);
+    },
+
+    async validateSession() {
+        const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        const refresh = localStorage.getItem(CONFIG.STORAGE_KEYS.REFRESH_TOKEN);
+
+        if (!token && !refresh) {
+            this.clearAuth();
+            return false;
+        }
+
+        // If access token is expired, attempt refresh
+        if (this.isTokenExpired(token, 10)) {
+            if (refresh && !this.isTokenExpired(refresh)) {
+                const refreshed = await this.refreshToken();
+                if (!refreshed) {
+                    this.clearAuth();
+                    return false;
+                }
+                return true;
+            } else {
+                this.clearAuth();
+                return false;
+            }
+        }
+
+        return true;
+    },
+
     async request(endpoint, options = {}) {
         const url = endpoint.startsWith('http') ? endpoint : `${CONFIG.API_BASE}${endpoint}`;
+
+        // Auto-refresh token proactively before dispatching if access token is near expiry
+        if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/token/refresh') && !endpoint.includes('/auth/otp/')) {
+            const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+            const refresh = localStorage.getItem(CONFIG.STORAGE_KEYS.REFRESH_TOKEN);
+            if (token && this.isTokenExpired(token, 10) && refresh && !this.isTokenExpired(refresh)) {
+                await this.refreshToken();
+            }
+        }
+
         const config = {
             ...options,
             headers: {
@@ -112,6 +171,11 @@ export const API = {
         return false;
     },
 
+    setTokens(access, refresh = null) {
+        if (access) localStorage.setItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN, access);
+        if (refresh) localStorage.setItem(CONFIG.STORAGE_KEYS.REFRESH_TOKEN, refresh);
+    },
+
     clearAuth() {
         localStorage.removeItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem(CONFIG.STORAGE_KEYS.REFRESH_TOKEN);
@@ -120,6 +184,7 @@ export const API = {
     },
 
     getUser() {
+        if (!this.isAuthenticated()) return null;
         try {
             const userStr = localStorage.getItem(CONFIG.STORAGE_KEYS.USER);
             return userStr ? JSON.parse(userStr) : null;
@@ -129,7 +194,13 @@ export const API = {
     },
 
     isAuthenticated() {
-        return !!localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        const token = localStorage.getItem(CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+        if (!token) return false;
+        if (!this.isTokenExpired(token)) return true;
+        const refresh = localStorage.getItem(CONFIG.STORAGE_KEYS.REFRESH_TOKEN);
+        if (refresh && !this.isTokenExpired(refresh)) return true;
+        this.clearAuth();
+        return false;
     },
 
     isAdmin() {

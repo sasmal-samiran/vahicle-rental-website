@@ -103,6 +103,40 @@
                 </div>
 
                 <div class="cars-grid" id="cars-grid-container"></div>
+
+                <!-- Fleet Pagination & Load More Controller -->
+                <div id="fleet-pagination-container" class="fleet-pagination-wrapper hidden">
+                    <!-- Load More Button Box -->
+                    <div id="fleet-load-more-box" class="fleet-load-more-box">
+                        <button id="fleet-load-more-btn" class="btn-load-more" onclick="Customer.loadMoreCars()">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            <span>Load More Vehicles</span>
+                        </button>
+                        <div id="fleet-load-more-progress" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">
+                            <!-- e.g. Showing 9 of 24 vehicles -->
+                        </div>
+                    </div>
+
+                    <!-- Numbered Page Navigation Bar -->
+                    <div id="fleet-pagination-bar" class="fleet-pagination-bar">
+                        <div class="page-size-selector">
+                            <label for="fleet-page-size-select"><i class="fa-solid fa-list-ol"></i> Per page:</label>
+                            <select id="fleet-page-size-select" onchange="Customer.changePageSize(this.value)">
+                                <option value="9">9 cars</option>
+                                <option value="18">18 cars</option>
+                                <option value="27">27 cars</option>
+                            </select>
+                        </div>
+
+                        <nav class="pagination-pages-list" id="fleet-pages-list" aria-label="Fleet pagination">
+                            <!-- Dynamically generated numbered page buttons -->
+                        </nav>
+
+                        <div id="fleet-page-summary" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                            <!-- Page 1 of 3 -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

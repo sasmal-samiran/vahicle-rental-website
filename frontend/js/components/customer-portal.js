@@ -168,6 +168,24 @@ export const CustomerPortal = {
                 this.switchTab(tab);
             });
         });
+
+        // Clear change password errors on input and submit on Enter
+        ['cp-current-password', 'cp-new-password', 'cp-confirm-password'].forEach(id => {
+            const el = document.getElementById(id);
+            el?.addEventListener('input', () => {
+                const err = document.getElementById(`${id}-error`);
+                if (err) err.classList.add('hidden');
+                el.style.borderColor = '';
+                const globalErr = document.getElementById('cp-global-error');
+                if (globalErr) globalErr.classList.add('hidden');
+            });
+            el?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.changePassword();
+                }
+            });
+        });
     },
 
     switchTab(tabName) {
@@ -188,6 +206,8 @@ export const CustomerPortal = {
             this.renderBookings();
         } else if (tabName === 'profile') {
             this.loadProfile();
+        } else if (tabName === 'security') {
+            this.clearPasswordErrors();
         } else if (tabName === 'reviews') {
             this.renderReviews();
         }
@@ -636,6 +656,112 @@ export const CustomerPortal = {
             if (saveBtn) {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Profile Changes';
+            }
+        }
+    },
+
+    clearPasswordErrors() {
+        ['cp-current-password-error', 'cp-new-password-error', 'cp-confirm-password-error', 'cp-global-error'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerText = '';
+                el.classList.add('hidden');
+            }
+        });
+        ['cp-current-password', 'cp-new-password', 'cp-confirm-password'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.style.borderColor = '';
+        });
+    },
+
+    showPasswordError(fieldId, errorElId, message) {
+        const input = document.getElementById(fieldId);
+        const errorEl = document.getElementById(errorElId);
+        if (input) input.style.borderColor = '#ef4444';
+        if (errorEl) {
+            errorEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${message}`;
+            errorEl.classList.remove('hidden');
+        }
+    },
+
+    resetPasswordForm() {
+        this.clearPasswordErrors();
+        const form = document.getElementById('portal-change-password-form');
+        if (form) form.reset();
+        ['cp-current-password', 'cp-new-password', 'cp-confirm-password'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.type = 'password';
+        });
+        document.querySelectorAll('#portal-change-password-form .password-toggle-btn i').forEach(icon => {
+            icon.className = 'fa-solid fa-eye';
+        });
+    },
+
+    async changePassword() {
+        this.clearPasswordErrors();
+
+        const currentPassword = document.getElementById('cp-current-password')?.value || '';
+        const newPassword = document.getElementById('cp-new-password')?.value || '';
+        const confirmPassword = document.getElementById('cp-confirm-password')?.value || '';
+
+        if (!currentPassword) {
+            this.showPasswordError('cp-current-password', 'cp-current-password-error', 'Please enter your current password.');
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            this.showPasswordError('cp-new-password', 'cp-new-password-error', 'New password must be at least 8 characters long.');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            this.showPasswordError('cp-confirm-password', 'cp-confirm-password-error', 'New passwords do not match.');
+            return;
+        }
+
+        if (currentPassword === newPassword) {
+            this.showPasswordError('cp-new-password', 'cp-new-password-error', 'New password cannot be the same as your current password.');
+            return;
+        }
+
+        const saveBtn = document.getElementById('cp-save-btn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Updating...';
+        }
+
+        try {
+            const res = await API.post('/auth/change-password/', {
+                current_password: currentPassword,
+                new_password: newPassword,
+                confirm_password: confirmPassword
+            });
+
+            if (res.tokens?.access) {
+                API.setTokens(res.tokens.access, res.tokens.refresh);
+            }
+
+            Toast.success('Password changed successfully! Your account credentials have been updated.');
+            this.resetPasswordForm();
+        } catch (err) {
+            const msg = err.message || 'Failed to update password.';
+            if (msg.toLowerCase().includes('current password') || msg.toLowerCase().includes('incorrect')) {
+                this.showPasswordError('cp-current-password', 'cp-current-password-error', 'Current password is incorrect.');
+            } else if (msg.toLowerCase().includes('match')) {
+                this.showPasswordError('cp-confirm-password', 'cp-confirm-password-error', msg);
+            } else if (msg.toLowerCase().includes('new password') || msg.toLowerCase().includes('same')) {
+                this.showPasswordError('cp-new-password', 'cp-new-password-error', msg);
+            } else {
+                const globalErr = document.getElementById('cp-global-error');
+                if (globalErr) {
+                    globalErr.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${msg}`;
+                    globalErr.classList.remove('hidden');
+                }
+            }
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Update Password';
             }
         }
     }
