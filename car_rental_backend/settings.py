@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'apps.reviews',
     'apps.notifications',
     'apps.analytics',
+    'apps.rental_agent'
 ]
 
 MIDDLEWARE = [

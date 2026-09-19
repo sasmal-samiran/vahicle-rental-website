@@ -1,6 +1,24 @@
     <!-- Hero Section -->
     <header class="hero-section">
         <div class="container hero-container" style="text-align: center; max-width: 1100px;">
+            <!-- Floating Advertisement Banner at Top of Landing Section -->
+            <div class="landing-floating-advert" id="landing-floating-advert" onclick="Assistant.open(true)" title="Click to chat with DriveLuxe AI Concierge">
+                <div class="floating-advert-inner">
+                    <div class="floating-advert-pill">
+                        <span class="advert-pulse-dot"></span>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>AI Concierge Live</span>
+                    </div>
+                    <div class="floating-advert-text">
+                        <strong>DriveLuxe AI Rental Agent:</strong> Ask about cars, live rates, deposits &amp; instant booking!
+                    </div>
+                    <button type="button" class="floating-advert-cta" aria-label="Open AI Concierge Live" onclick="event.stopPropagation(); Assistant.open(true);">
+                        <span>Try Live</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="hero-badge">
                 <i class="fa-solid fa-bolt"></i> Instant 2-Minute Digital Rental Checkout
             </div>
@@ -83,6 +101,110 @@
                 <a href="/fleet/" class="btn btn-primary btn-lg">
                     <i class="fa-solid fa-magnifying-glass"></i> Explore All Vehicles & Hub Locations
                 </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Rental Agent Advertisement & Suggestion Queries Section -->
+    <section class="ai-agent-advert-section" id="ai-agent-advert-section">
+        <div class="container">
+            <div class="ai-agent-banner-card">
+                <!-- Section Header -->
+                <div class="ai-agent-header-row">
+                    <div>
+                        <span class="section-tag ai-tag"><i class="fa-solid fa-wand-magic-sparkles"></i> 24/7 Autonomous Rental Concierge</span>
+                        <h2 class="ai-agent-heading">
+                            Meet Your Personal <span class="text-gradient-agent">DriveLuxe AI</span> Agent
+                        </h2>
+                        <p class="ai-agent-subheading">
+                            Looking for instant luxury recommendations, live fleet comparisons, transparent pricing breakdowns, or guided reservations? Tap any suggestion query below to test drive our AI assistant:
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-md ai-launch-btn" onclick="Assistant.open(true)" title="Open AI Concierge Chat">
+                        <i class="fa-solid fa-comments"></i> Open AI Concierge
+                    </button>
+                </div>
+
+                <!-- Suggestion Queries Grid -->
+                <div class="ai-queries-grid">
+                    <button type="button" class="ai-query-card" onclick="Assistant.askSuggestion('Can you recommend a luxury sedan available in your fleet for this weekend?')">
+                        <div class="ai-query-icon-box">
+                            <i class="fa-solid fa-car-side"></i>
+                        </div>
+                        <div class="ai-query-content">
+                            <div class="ai-query-title">Recommend a Luxury Sedan</div>
+                            <p class="ai-query-prompt">"Can you recommend a luxury sedan available in your fleet for this weekend?"</p>
+                        </div>
+                        <div class="ai-query-action">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </button>
+
+                    <button type="button" class="ai-query-card" onclick="Assistant.askSuggestion('What high-performance electric and hybrid vehicles do you have in the catalog?')">
+                        <div class="ai-query-icon-box">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="ai-query-content">
+                            <div class="ai-query-title">Electric & Hybrid Fleet</div>
+                            <p class="ai-query-prompt">"What high-performance electric and hybrid vehicles do you have in the catalog?"</p>
+                        </div>
+                        <div class="ai-query-action">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </button>
+
+                    <button type="button" class="ai-query-card" onclick="Assistant.askSuggestion('How do security deposits, insurance coverage, and rental pricing work?')">
+                        <div class="ai-query-icon-box">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="ai-query-content">
+                            <div class="ai-query-title">Deposits & Insurance Breakdown</div>
+                            <p class="ai-query-prompt">"How do security deposits, insurance coverage, and rental pricing work?"</p>
+                        </div>
+                        <div class="ai-query-action">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </button>
+
+                    <button type="button" class="ai-query-card" onclick="Assistant.askSuggestion('How does digital driver license verification and online booking work?')">
+                        <div class="ai-query-icon-box">
+                            <i class="fa-solid fa-id-card"></i>
+                        </div>
+                        <div class="ai-query-content">
+                            <div class="ai-query-title">Digital License Verification</div>
+                            <p class="ai-query-prompt">"How does digital driver license verification and online booking work?"</p>
+                        </div>
+                        <div class="ai-query-action">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </button>
+
+                    <button type="button" class="ai-query-card" onclick="Assistant.askSuggestion('Recommend the best vehicle tailored to my driving history and favorite car classes.')">
+                        <div class="ai-query-icon-box">
+                            <i class="fa-solid fa-crown"></i>
+                        </div>
+                        <div class="ai-query-content">
+                            <div class="ai-query-title">Personalized Recommendations</div>
+                            <p class="ai-query-prompt">"Recommend the best vehicle tailored to my driving history and favorite car classes."</p>
+                        </div>
+                        <div class="ai-query-action">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </button>
+
+                    <button type="button" class="ai-query-card" onclick="Assistant.askSuggestion('Can you check the current status of my vehicle bookings and upcoming reservations?')">
+                        <div class="ai-query-icon-box">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div class="ai-query-content">
+                            <div class="ai-query-title">Check Reservations & Bookings</div>
+                            <p class="ai-query-prompt">"Can you check the current status of my vehicle bookings and upcoming reservations?"</p>
+                        </div>
+                        <div class="ai-query-action">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </button>
+                </div>
             </div>
         </div>
     </section>

@@ -60,120 +60,150 @@ export const BookingWizard = {
         rLocSelect.innerHTML = options;
     },
 
-    async startBooking(carId) {
-        if (!API.isAuthenticated()) {
-            Toast.info('Please log in or enter your phone/email to continue booking.');
-            Auth.openAuthModal('otp');
-            return;
-        }
-
+    async preloadLocations() {
+        if (this.locations && this.locations.length) return this.locations;
         try {
-            this.car = await API.get(`/cars/${carId}/`);
-            this.bookingData.car_id = carId;
-
-            if (!this.locations || !this.locations.length) {
-                const locData = await API.get('/locations/');
-                this.locations = locData.results || locData;
-            }
-
-            this.populateTimeSelects();
+            const locData = await API.get('/locations/');
+            this.locations = locData.results || locData || [];
+            window._cachedLocations = this.locations;
             this.populateLocationSelects();
-
-            // 1. Extract values from Hero Search Widget (#search-pickup-date, #search-return-date, #search-pickup-location, #search-dropoff-location)
-            const searchPDate = document.getElementById('search-pickup-date')?.value;
-            const searchRDate = document.getElementById('search-return-date')?.value;
-            const searchPLoc = document.getElementById('search-pickup-location')?.value;
-            const searchRLoc = document.getElementById('search-dropoff-location')?.value;
-            const sameLocChecked = document.getElementById('same-location-checkbox')?.checked;
-
-            const now = new Date();
-            const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-            const inFourDays = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 4);
-
-            let pDateVal = '';
-            let pTimeVal = '10:00';
-            let rDateVal = '';
-            let rTimeVal = '10:00';
-            let pLocVal = searchPLoc || (this.car.location ? String(this.car.location.id) : (this.locations[0]?.id ? String(this.locations[0].id) : '1'));
-            let rLocVal = (searchRLoc && searchRLoc !== '') ? searchRLoc : (sameLocChecked ? pLocVal : pLocVal);
-
-            if (searchPDate) {
-                if (searchPDate.includes('T')) {
-                    const pParts = searchPDate.split('T');
-                    pDateVal = pParts[0];
-                    if (pParts[1]) pTimeVal = pParts[1].substring(0, 5);
-                } else {
-                    pDateVal = searchPDate;
-                }
-            } else {
-                pDateVal = tomorrow.toISOString().split('T')[0];
-            }
-
-            if (searchRDate) {
-                if (searchRDate.includes('T')) {
-                    const rParts = searchRDate.split('T');
-                    rDateVal = rParts[0];
-                    if (rParts[1]) rTimeVal = rParts[1].substring(0, 5);
-                } else {
-                    rDateVal = searchRDate;
-                }
-            } else {
-                rDateVal = inFourDays.toISOString().split('T')[0];
-            }
-
-            // Normalise time strings to HH:MM format (e.g. "09:00", "14:30")
-            const findClosestTime = (timeStr) => {
-                if (!timeStr) return '10:00';
-                const [hStr, mStr] = timeStr.split(':');
-                const h = Math.min(23, Math.max(6, parseInt(hStr || '10')));
-                const m = parseInt(mStr || '0');
-                const roundedM = m >= 45 ? '00' : (m >= 15 ? '30' : '00');
-                const finalH = (m >= 45 && h < 23) ? h + 1 : h;
-                return `${String(finalH).padStart(2, '0')}:${roundedM}`;
-            };
-
-            pTimeVal = findClosestTime(pTimeVal);
-            rTimeVal = findClosestTime(rTimeVal);
-
-            const pDateEl = document.getElementById('b-pickup-date');
-            const rDateEl = document.getElementById('b-return-date');
-            const pTimeEl = document.getElementById('b-pickup-time');
-            const rTimeEl = document.getElementById('b-return-time');
-            const pLocEl = document.getElementById('b-pickup-loc');
-            const rLocEl = document.getElementById('b-return-loc');
-
-            if (pDateEl) {
-                pDateEl.value = pDateVal;
-                pDateEl.min = tomorrow.toISOString().split('T')[0];
-            }
-            if (rDateEl) {
-                rDateEl.value = rDateVal;
-                rDateEl.min = tomorrow.toISOString().split('T')[0];
-            }
-            if (pTimeEl) {
-                pTimeEl.value = pTimeVal;
-            }
-            if (rTimeEl) {
-                rTimeEl.value = rTimeVal;
-            }
-            if (pLocEl) pLocEl.value = pLocVal;
-            if (rLocEl) rLocEl.value = rLocVal;
-
-            const user = API.getUser();
-            if (user) {
-                this.bookingData.driver_name = user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username;
-                this.bookingData.driver_phone = user.phone_number || '';
-                this.bookingData.driver_email = user.email || '';
-                this.bookingData.driver_license = user.driver_license_number || '';
-            }
-
-            this.currentStep = 1;
-            this.openWizardModal();
-            this.updateStepView();
-            await this.onScheduleChange();
+            return this.locations;
         } catch (e) {
-            Toast.error('Could not initiate booking.');
+            return [];
         }
+    },
+
+    async startBooking(carId) {
+        if (window.Customer?.closeDetailModal) {
+            window.Customer.closeDetailModal();
+        }
+
+        const numId = Number(carId);
+        this.bookingData.car_id = numId;
+
+        // 1. Instant Car resolution from in-memory cache (0ms!)
+        const localCar = (window.Customer?.cars || []).find(c => c.id === numId) || 
+                         (window.Customer?.activeCar?.id === numId ? window.Customer.activeCar : null) || 
+                         this.car;
+
+        if (localCar) {
+            this.car = localCar;
+        }
+
+        if (window._cachedLocations && (!this.locations || !this.locations.length)) {
+            this.locations = window._cachedLocations;
+        }
+
+        this.populateTimeSelects();
+        this.populateLocationSelects();
+
+        // 2. Extract values from Hero Search Widget (#search-pickup-date, #search-return-date, etc.)
+        const searchPDate = document.getElementById('search-pickup-date')?.value;
+        const searchRDate = document.getElementById('search-return-date')?.value;
+        const searchPLoc = document.getElementById('search-pickup-location')?.value;
+        const searchRLoc = document.getElementById('search-dropoff-location')?.value;
+        const sameLocChecked = document.getElementById('same-location-checkbox')?.checked;
+
+        const now = new Date();
+        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        const inFourDays = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 4);
+
+        let pDateVal = '';
+        let pTimeVal = '10:00';
+        let rDateVal = '';
+        let rTimeVal = '10:00';
+        let pLocVal = searchPLoc || (this.car?.location ? String(typeof this.car.location === 'object' ? this.car.location.id : this.car.location) : (this.locations[0]?.id ? String(this.locations[0].id) : '1'));
+        let rLocVal = (searchRLoc && searchRLoc !== '') ? searchRLoc : (sameLocChecked ? pLocVal : pLocVal);
+
+        if (searchPDate) {
+            if (searchPDate.includes('T')) {
+                const pParts = searchPDate.split('T');
+                pDateVal = pParts[0];
+                if (pParts[1]) pTimeVal = pParts[1].substring(0, 5);
+            } else {
+                pDateVal = searchPDate;
+            }
+        } else {
+            pDateVal = tomorrow.toISOString().split('T')[0];
+        }
+
+        if (searchRDate) {
+            if (searchRDate.includes('T')) {
+                const rParts = searchRDate.split('T');
+                rDateVal = rParts[0];
+                if (rParts[1]) rTimeVal = rParts[1].substring(0, 5);
+            } else {
+                rDateVal = searchRDate;
+            }
+        } else {
+            rDateVal = inFourDays.toISOString().split('T')[0];
+        }
+
+        const findClosestTime = (timeStr) => {
+            if (!timeStr) return '10:00';
+            const [hStr, mStr] = timeStr.split(':');
+            const h = Math.min(23, Math.max(6, parseInt(hStr || '10')));
+            const m = parseInt(mStr || '0');
+            const roundedM = m >= 45 ? '00' : (m >= 15 ? '30' : '00');
+            const finalH = (m >= 45 && h < 23) ? h + 1 : h;
+            return `${String(finalH).padStart(2, '0')}:${roundedM}`;
+        };
+
+        pTimeVal = findClosestTime(pTimeVal);
+        rTimeVal = findClosestTime(rTimeVal);
+
+        const pDateEl = document.getElementById('b-pickup-date');
+        const rDateEl = document.getElementById('b-return-date');
+        const pTimeEl = document.getElementById('b-pickup-time');
+        const rTimeEl = document.getElementById('b-return-time');
+        const pLocEl = document.getElementById('b-pickup-loc');
+        const rLocEl = document.getElementById('b-return-loc');
+
+        if (pDateEl) {
+            pDateEl.value = pDateVal;
+            pDateEl.min = tomorrow.toISOString().split('T')[0];
+        }
+        if (rDateEl) {
+            rDateEl.value = rDateVal;
+            rDateEl.min = tomorrow.toISOString().split('T')[0];
+        }
+        if (pTimeEl) pTimeEl.value = pTimeVal;
+        if (rTimeEl) rTimeEl.value = rTimeVal;
+        if (pLocEl) pLocEl.value = pLocVal;
+        if (rLocEl) rLocEl.value = rLocVal;
+
+        const user = API.getUser();
+        if (user) {
+            this.bookingData.driver_name = user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username;
+            this.bookingData.driver_phone = user.phone_number || '';
+            this.bookingData.driver_email = user.email || '';
+            this.bookingData.driver_license = user.driver_license_number || '';
+        }
+
+        this.currentStep = 1;
+
+        // 3. Open modal IMMEDIATELY with zero perceived delay!
+        this.openWizardModal();
+        this.updateStepView();
+
+        // 4. Background parallel resolution (locations, fresh car specs, and pricing quote)
+        (async () => {
+            try {
+                if (!this.locations || !this.locations.length) {
+                    await this.preloadLocations();
+                }
+
+                if (!this.car || !this.car.features) {
+                    const freshCar = await API.get(`/cars/${numId}/`);
+                    this.car = freshCar;
+                    this.updateStepView();
+                }
+
+                await this.onScheduleChange();
+            } catch (e) {
+                console.warn('Booking init background notice:', e);
+            }
+        })();
     },
 
     openWizardModal() {
@@ -527,8 +557,16 @@ export const BookingWizard = {
 
     async processFinalPayment() {
         const payBtn = document.getElementById('pay-now-btn');
-        payBtn.disabled = true;
-        payBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Reservation...';
+        if (!API.isAuthenticated()) {
+            Toast.info('Please sign in or register to complete your reservation.');
+            Auth.openAuthModal('otp');
+            return;
+        }
+
+        if (payBtn) {
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Reservation...';
+        }
 
         try {
             const booking = await API.post('/bookings/', {

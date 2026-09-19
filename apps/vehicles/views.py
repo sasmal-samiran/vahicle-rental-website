@@ -121,18 +121,19 @@ class CarListView(generics.ListAPIView):
         # Search Logging: Write to SearchLog on every search or filter query
         query_text = search_query or ''
         active_filters = {}
-        for key in ['category', 'status', 'max_price', 'transmission', 'fuel_type', 'seats', 'location_id', 'pickup_date', 'return_date']:
+        for key in ['category', 'status', 'min_price', 'max_price', 'transmission', 'fuel_type', 'seats', 'location_id', 'pickup_date', 'return_date']:
             val = request.query_params.get(key)
             if val:
                 active_filters[key] = val
 
         search_log_id = None
         if query_text or active_filters:
-            session_id = request.session.session_key
-            if not session_id:
+            session = getattr(request, 'session', None)
+            session_id = getattr(session, 'session_key', None) if session else None
+            if session and not session_id:
                 try:
-                    request.session.save()
-                    session_id = request.session.session_key
+                    session.save()
+                    session_id = session.session_key
                 except Exception:
                     session_id = None
 
@@ -170,12 +171,22 @@ class CarListView(generics.ListAPIView):
 class CarDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CarDetailSerializer
-    queryset = Car.objects.select_related('category', 'location').prefetch_related(
-        'images', 'reviews__customer'
-    ).annotate(
-        annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
-        annotated_total_reviews=Count('reviews', filter=Q(reviews__is_approved=True))
-    )
+
+    def get_queryset(self):
+        from django.db.models import Prefetch
+        from apps.reviews.models import Review
+        return Car.objects.select_related('category', 'location').prefetch_related(
+            'images',
+            Prefetch(
+                'reviews',
+                queryset=Review.objects.filter(is_approved=True).select_related('customer').order_by('-created_at'),
+                to_attr='approved_reviews'
+            )
+        ).annotate(
+            annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+            annotated_total_reviews=Count('reviews', filter=Q(reviews__is_approved=True))
+        )
+
 
 class CheckCarAvailabilityView(APIView):
     permission_classes = [permissions.AllowAny]

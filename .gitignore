@@ -10,5 +10,8 @@ venv/
 db.sqlite3
 .db
 
+#logs
+logs/
+
 # extra 
 media/

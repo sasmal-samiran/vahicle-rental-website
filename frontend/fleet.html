@@ -15,13 +15,22 @@
 
         <div class="catalog-layout">
             <!-- Sidebar Filters -->
-            <aside class="filter-card">
+            <aside class="filter-card filters-collapsed">
                 <div class="filter-header">
-                    <h3 class="filter-title"><i class="fa-solid fa-sliders"></i> Filter Fleet</h3>
-                    <button class="btn btn-sm btn-outline" style="padding:4px 10px; font-size:0.75rem;"
-                        onclick="Customer.resetFilters()">Reset All</button>
+                    <h3 class="filter-title"><i class="fa-solid fa-sliders"></i> Filter</h3>
+                    <div class="filter-header-actions">
+                        <button type="button" class="btn btn-sm btn-outline filter-toggle-btn"
+                            id="fleet-filter-toggle" aria-expanded="false" aria-controls="fleet-filter-body"
+                            onclick="Customer.toggleFleetFilters()">
+                            <i class="fa-solid fa-chevron-down"></i>
+                            <span>Filters</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline filter-reset-btn"
+                            onclick="Customer.resetFilters()">Reset All</button>
+                    </div>
                 </div>
 
+                <div id="fleet-filter-body">
                 <div class="filter-group">
                     <label class="filter-group-title">Search Model or Brand</label>
                     <input type="text" id="fleet-search-input" class="form-control"
@@ -83,6 +92,7 @@
                         <div class="filter-chip" data-group="seats" data-value="5">5+</div>
                         <div class="filter-chip" data-group="seats" data-value="7">7+</div>
                     </div>
+                </div>
                 </div>
             </aside>
 

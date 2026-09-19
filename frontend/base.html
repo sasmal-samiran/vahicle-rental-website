@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="stylesheet" href="{% static 'css/customer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/assistant.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -79,6 +80,7 @@
 
     {% endblock %}
 
+    <div id="app-main-container">
     {% block search_widget %}
     <!-- Dedicated Search Banner -->
     <!-- Search Bar Form -->
@@ -122,10 +124,12 @@
                         </div>
                     </div>
 
-                    <label class="search-checkbox-row">
-                        <input type="checkbox" id="same-location-checkbox" checked />
-                        <span>Return vehicle to the same pickup location</span>
-                    </label>
+                    <div class="search-widget-bottom-bar">
+                        <label class="search-checkbox-row">
+                            <input type="checkbox" id="same-location-checkbox" checked />
+                            <span>Return vehicle to the same pickup location</span>
+                        </label>
+                    </div>
                 </form>
                 </div>
             </div>
@@ -134,11 +138,13 @@
     {% block content %}
     {% include 'components/index.html' %}
     {% endblock %}
+    </div>
 
     <!-- ==================== MODALS ==================== -->
     {% include 'components/register.html' %}
     {% include 'components/car_modals.html' %}
     {% include 'components/notification.html' %}
+    {% include 'components/assistant.html' %}
 
     {% block footer %}
     <!-- Footer -->

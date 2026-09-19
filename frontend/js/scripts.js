@@ -6,6 +6,9 @@ import { Customer } from './components/customer.js';
 import { BookingWizard } from './components/booking.js';
 import { CustomerPortal } from './components/customer-portal.js';
 import { Admin } from './components/admin.js';
+import { Assistant } from './components/assistant.js';
+import { Automation } from './components/automation.js';
+import { Router } from './components/router.js';
 import './components/app.js';
 
 Object.assign(window, {
@@ -16,10 +19,14 @@ Object.assign(window, {
     Customer,
     BookingWizard,
     CustomerPortal,
-    Admin
+    Admin,
+    Assistant,
+    Automation,
+    Router
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    Router.init();
     document.querySelectorAll('input[type="datetime-local"]').forEach(input => {
         input.addEventListener('click', () => {
             input.showPicker();

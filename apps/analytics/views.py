@@ -1,6 +1,9 @@
+import concurrent.futures
+import logging
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db import close_old_connections
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta
@@ -11,6 +14,14 @@ from apps.payments.models import Payment
 from apps.vehicles.serializers import CarListSerializer
 from .services import RecommendationService, AnalyticsService
 from .models import SearchLog, RecommendationClick, CarPopularityMetrics
+
+logger = logging.getLogger(__name__)
+
+analytics_executor = concurrent.futures.ThreadPoolExecutor(
+    max_workers=5,
+    thread_name_prefix="analytics_track_"
+)
+
 
 class AdminDashboardStatsView(APIView):
     permission_classes = [permissions.IsAdminUser]
@@ -286,11 +297,102 @@ class ContextRecommendationsView(APIView):
 # Search Logging & Recommendation Click Tracking Views
 # ============================================================================
 
+def _perform_click_tracking(user_id=None, session_key=None, car_id=None, rec_type='similar', position=1, clicked=True, booked=False, search_log_id=None, click_id=None):
+    """
+    Executes click tracking database operations in a background worker thread.
+    Cleans up Django DB connections to avoid connection leakage across threads.
+    """
+    close_old_connections()
+    try:
+        user = None
+        if user_id:
+            user = User.objects.filter(pk=user_id).first()
+
+        car = None
+        if car_id:
+            car = Car.objects.filter(pk=car_id).first()
+            if not car:
+                logger.warning(f"Background click tracking: Car {car_id} does not exist.")
+                return
+
+        # 1. Update existing RecommendationClick or create new
+        if click_id:
+            try:
+                rec_click = RecommendationClick.objects.get(pk=click_id)
+                if booked:
+                    rec_click.booked = True
+                if clicked:
+                    rec_click.clicked = True
+                rec_click.save(update_fields=['booked', 'clicked'])
+            except RecommendationClick.DoesNotExist:
+                pass
+        elif booked and car:
+            # Look up recent unbooked RecommendationClick for this user & car
+            recent_clicks = RecommendationClick.objects.filter(car=car, booked=False)
+            if user:
+                recent_clicks = recent_clicks.filter(user=user)
+            recent_click = recent_clicks.order_by('-created_at').first()
+            if recent_click:
+                recent_click.booked = True
+                if clicked:
+                    recent_click.clicked = True
+                recent_click.save(update_fields=['booked', 'clicked'])
+            else:
+                RecommendationClick.objects.create(
+                    user=user,
+                    car=car,
+                    recommendation_type=rec_type,
+                    position=position,
+                    clicked=clicked,
+                    booked=booked
+                )
+        elif car and rec_type:
+            RecommendationClick.objects.create(
+                user=user,
+                car=car,
+                recommendation_type=rec_type,
+                position=position,
+                clicked=clicked,
+                booked=booked
+            )
+
+        # 2. Update SearchLog clicked_car ONLY when details button is clicked
+        if car:
+            updated_search_log = None
+            if search_log_id:
+                try:
+                    s_log = SearchLog.objects.get(pk=search_log_id)
+                    s_log.clicked_car = car
+                    s_log.save(update_fields=['clicked_car'])
+                    updated_search_log = s_log
+                except SearchLog.DoesNotExist:
+                    pass
+
+            # If no explicit search_log_id was sent, link to the most recent unclicked SearchLog for this user/session
+            if not updated_search_log:
+                recent_qs = SearchLog.objects.filter(clicked_car__isnull=True)
+                if user:
+                    recent_qs = recent_qs.filter(user=user)
+                elif session_key:
+                    recent_qs = recent_qs.filter(session_id=session_key)
+                else:
+                    recent_qs = None
+
+                if recent_qs is not None and recent_qs.exists():
+                    recent_log = recent_qs.order_by('-created_at').first()
+                    if recent_log:
+                        recent_log.clicked_car = car
+                        recent_log.save(update_fields=['clicked_car'])
+    except Exception as e:
+        logger.error(f"Error in background click tracking thread: {e}", exc_info=True)
+    finally:
+        close_old_connections()
+
+
 class TrackClickView(APIView):
     """
-    Tracks clicks and conversions for recommendations and searches.
-    1. If recommendation_type or car_id is provided, creates/updates RecommendationClick.
-    2. If details button is clicked for a car from search, records clicked_car on the SearchLog!
+    Tracks clicks and conversions for recommendations and searches in a background thread pool.
+    Returns HTTP 200 immediately (< 5ms) without blocking database queries on the web request thread.
     """
     permission_classes = [permissions.AllowAny]
 
@@ -308,70 +410,26 @@ class TrackClickView(APIView):
         search_log_id = data.get('search_log_id')
         click_id = data.get('recommendation_click_id')
 
-        car = None
-        if car_id:
-            try:
-                car = Car.objects.get(pk=car_id)
-            except Car.DoesNotExist:
-                return Response({'error': f'Car with ID {car_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.user.id if (request.user and request.user.is_authenticated) else None
+        session_key = request.session.session_key if hasattr(request, 'session') and request.session else None
 
-        # 1. Update existing RecommendationClick if click_id is passed (e.g. marking booked=True upon booking)
-        rec_click = None
-        if click_id:
-            try:
-                rec_click = RecommendationClick.objects.get(pk=click_id)
-                if booked:
-                    rec_click.booked = True
-                if clicked:
-                    rec_click.clicked = True
-                rec_click.save()
-            except RecommendationClick.DoesNotExist:
-                pass
-        elif car and rec_type:
-            rec_click = RecommendationClick.objects.create(
-                user=request.user if request.user.is_authenticated else None,
-                car=car,
-                recommendation_type=rec_type,
-                position=position,
-                clicked=clicked,
-                booked=booked
-            )
-
-        # 2. Update SearchLog clicked_car ONLY when details button is clicked
-        updated_search_log = None
-        if car:
-            if search_log_id:
-                try:
-                    s_log = SearchLog.objects.get(pk=search_log_id)
-                    s_log.clicked_car = car
-                    s_log.save(update_fields=['clicked_car'])
-                    updated_search_log = s_log
-                except SearchLog.DoesNotExist:
-                    pass
-
-            # If no explicit search_log_id was sent, link to the most recent unclicked SearchLog for this user/session
-            if not updated_search_log:
-                recent_qs = SearchLog.objects.filter(clicked_car__isnull=True)
-                if request.user.is_authenticated:
-                    recent_qs = recent_qs.filter(user=request.user)
-                elif request.session.session_key:
-                    recent_qs = recent_qs.filter(session_id=request.session.session_key)
-                else:
-                    recent_qs = None
-
-                if recent_qs is not None and recent_qs.exists():
-                    recent_log = recent_qs.order_by('-created_at').first()
-                    if recent_log:
-                        recent_log.clicked_car = car
-                        recent_log.save(update_fields=['clicked_car'])
-                        updated_search_log = recent_log
+        # Queue tracking execution asynchronously to avoid DB latency blocking UI modals
+        analytics_executor.submit(
+            _perform_click_tracking,
+            user_id=user_id,
+            session_key=session_key,
+            car_id=car_id,
+            rec_type=rec_type,
+            position=position,
+            clicked=clicked,
+            booked=booked,
+            search_log_id=search_log_id,
+            click_id=click_id
+        )
 
         return Response({
             'status': 'success',
-            'message': 'Click tracked successfully.',
-            'recommendation_click_id': rec_click.id if rec_click else None,
-            'search_log_id': updated_search_log.id if updated_search_log else None,
-            'clicked_car_id': car.id if car else None
+            'message': 'Click tracked successfully in background thread.'
         }, status=status.HTTP_200_OK)
 
 

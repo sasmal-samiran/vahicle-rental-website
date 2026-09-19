@@ -101,7 +101,10 @@ export const API = {
                     .filter(value => typeof value === 'string')
                     .join(' ');
                 const errorMsg = data.error || data.detail || fieldErrors || 'An error occurred.';
-                throw new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+                const error = new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+                error.status = response.status;
+                error.retryable = data.retryable === true;
+                throw error;
             }
             return data;
         } catch (err) {

@@ -1,0 +1,145 @@
+<!-- ==================== SMART CHAT ASSISTANT WORKSTATION ==================== -->
+<div id="smart-assistant-widget" class="smart-assistant-container">
+    <!-- Chat Window Card / Workstation Drawer -->
+    <div id="assistant-chat-window" class="assistant-chat-window hidden" role="dialog" aria-labelledby="assistant-title"
+        aria-modal="false">
+        <!-- Header -->
+        <div class="assistant-header">
+            <div class="assistant-header-info">
+                <div class="assistant-avatar-wrapper">
+                    <div class="assistant-avatar">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <span class="assistant-live-dot" title="Online"></span>
+                </div>
+                <div class="assistant-header-text">
+                    <div class="assistant-title-row">
+                        <h3 id="assistant-title" class="assistant-title">Drive<span
+                                class="text-gradient-assistant">Luxe</span> Concierge</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="assistant-header-actions">
+                <button type="button" class="assistant-btn-icon" id="assistant-clear-btn" title="Reset & Clear Chat"
+                    aria-label="Reset & Clear Chat">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                <button type="button" class="assistant-btn-icon" id="assistant-close-btn" title="Minimize Chat"
+                    aria-label="Minimize Chat">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Conversation Body -->
+        <div class="assistant-body" id="assistant-messages-container">
+            <!-- Dynamic Messages & Tool Execution Steps inserted here via JS -->
+        </div>
+
+        <!-- Footer / Input Controls -->
+        <div class="assistant-footer">
+            <form id="assistant-input-form" class="assistant-input-form" autocomplete="off">
+                <div class="assistant-input-box">
+                    <div class="compact-assistant-msg-text-content" id="compact-assistant-msg-text-content">DriveLuxe AI agent</div>
+                    <textarea id="assistant-input" class="assistant-textarea"
+                        placeholder="Ask about luxury sedans, electric fleet, pricing, booking..." rows="1"
+                        maxlength="1000" aria-label="Message to DriveLuxe AI Concierge"></textarea>
+
+                    <button type="button" id="assistant-footer-expand-btn" class="assistant-footer-expand-btn"
+                        title="Open full chat" aria-label="Open full chat">
+                        <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                    </button>
+                    <button type="button" id="assistant-stop-btn" class="assistant-stop-btn hidden"
+                        title="Stop generating" aria-label="Stop generating">
+                        <i class="fa-solid fa-stop"></i>
+                    </button>
+                    <button type="submit" id="assistant-send-btn" class="assistant-send-btn" aria-label="Send message"
+                        disabled>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="assistant-footer-status">
+                    <span><i class="fa-solid fa-shield-halved" style="color:var(--success);"></i> Verified DriveLuxe AI
+                        Workstation</span>
+                    <span id="assistant-char-counter" class="assistant-char-counter"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== BOOKING DETAILS POPUP MODAL ==================== -->
+    <div class="modal-backdrop assistant-booking-modal-backdrop" id="assistant-booking-details-modal">
+        <div class="modal-card assistant-booking-modal-card">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title"><i class="fa-solid fa-calendar-check" style="color:var(--primary); margin-right:6px;"></i> Complete Rental Details</h3>
+                    <p class="modal-subtitle" style="font-size:0.82rem; color:var(--text-secondary); margin:3px 0 0;">
+                        Please provide the missing details to check availability &amp; proceed:
+                    </p>
+                </div>
+                <button type="button" class="modal-close" onclick="Assistant.closeBookingDetailsModal()">&times;</button>
+            </div>
+            <form id="assistant-booking-popup-form" onsubmit="event.preventDefault(); Assistant.submitBookingDetailsModal();">
+                <div class="modal-body">
+                    <div class="booking-popup-grid">
+                        <!-- Pickup Location -->
+                        <div class="booking-popup-group" id="group-popup-ploc">
+                            <label class="booking-popup-label" for="popup-pickup-location">
+                                <i class="fa-solid fa-location-dot"></i> Pickup Location <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="popup-pickup-location" class="form-control booking-popup-input" 
+                                placeholder="e.g. Mumbai Downtown, Airport Branch" required autocomplete="off" />
+                        </div>
+
+                        <!-- Return Location -->
+                        <div class="booking-popup-group" id="group-popup-rloc">
+                            <label class="booking-popup-label" for="popup-return-location">
+                                <i class="fa-solid fa-location-arrow"></i> Return Location <span class="text-muted" style="font-size:0.75rem; font-weight:normal;">(Optional)</span>
+                            </label>
+                            <input type="text" id="popup-return-location" class="form-control booking-popup-input" 
+                                placeholder="Same as pickup location" autocomplete="off" />
+                        </div>
+
+                        <!-- Pickup Date & Time -->
+                        <div class="booking-popup-group" id="group-popup-pdate">
+                            <label class="booking-popup-label" for="popup-pickup-date">
+                                <i class="fa-solid fa-calendar-day"></i> Pickup Date &amp; Time <span class="text-danger">*</span>
+                            </label>
+                            <div class="datetime-input-group">
+                                <input type="date" id="popup-pickup-date" class="form-control booking-popup-input date-input" required 
+                                    onchange="const r = document.getElementById('popup-return-date'); if(r && r.value < this.value) r.value = this.value; if(r) r.min = this.value;" />
+                                <input type="time" id="popup-pickup-time" class="form-control booking-popup-input time-input" value="10:00" />
+                            </div>
+                        </div>
+
+                        <!-- Return Date & Time -->
+                        <div class="booking-popup-group" id="group-popup-rdate">
+                            <label class="booking-popup-label" for="popup-return-date">
+                                <i class="fa-solid fa-calendar-check"></i> Return Date &amp; Time <span class="text-danger">*</span>
+                            </label>
+                            <div class="datetime-input-group">
+                                <input type="date" id="popup-return-date" class="form-control booking-popup-input date-input" required />
+                                <input type="time" id="popup-return-time" class="form-control booking-popup-input time-input" value="10:00" />
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Info (if known) -->
+                        <div class="booking-popup-group full-width" id="group-popup-car" style="display:none;">
+                            <div class="popup-car-badge">
+                                <i class="fa-solid fa-car-side"></i>
+                                <span>Selected Vehicle: <strong id="popup-car-label">DriveLuxe Vehicle</strong></span>
+                                <input type="hidden" id="popup-car-id" value="" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="Assistant.closeBookingDetailsModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="popup-submit-btn">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Rental Details
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

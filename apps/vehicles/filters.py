@@ -5,7 +5,7 @@ from .models import Car
 from apps.bookings.models import Booking
 
 class CarFilter(filters.FilterSet):
-    category = filters.CharFilter(field_name='category__slug', lookup_expr='iexact')
+    category = filters.CharFilter(method='filter_category')
     category_id = filters.NumberFilter(field_name='category__id')
     location_id = filters.NumberFilter(field_name='location__id')
     city = filters.CharFilter(field_name='location__city', lookup_expr='icontains')
@@ -23,6 +23,12 @@ class CarFilter(filters.FilterSet):
     class Meta:
         model = Car
         fields = ['category', 'category_id', 'location_id', 'city', 'transmission', 'fuel_type', 'min_price', 'max_price', 'seats', 'status', 'available_only']
+
+    def filter_category(self, queryset, name, value):
+        if not value:
+            return queryset
+        val = str(value).strip()
+        return queryset.filter(Q(category__slug__iexact=val) | Q(category__name__icontains=val))
 
     def filter_noop(self, queryset, name, value):
         return queryset

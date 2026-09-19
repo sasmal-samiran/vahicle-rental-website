@@ -52,15 +52,113 @@ export const Customer = {
         }
     },
 
+    toggleFleetFilters() {
+        const filterCard = document.querySelector('.filter-card');
+        const toggle = document.getElementById('fleet-filter-toggle');
+        if (!filterCard || !toggle) return;
+
+        const collapsed = filterCard.classList.toggle('filters-collapsed');
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.innerHTML = collapsed
+            ? '<i class="fa-solid fa-chevron-down"></i><span>Filters</span>'
+            : '<i class="fa-solid fa-chevron-up"></i><span>Hide filters</span>';
+    },
+
+    getDefaultFilters() {
+        return {
+            category: '',
+            search: '',
+            min_price: 0,
+            max_price: 10000,
+            status: '',
+            transmission: '',
+            fuel_type: '',
+            seats: '',
+            ordering: '',
+            pickup_location_id: '',
+            dropoff_location_id: '',
+            pickup_date: '',
+            return_date: ''
+        };
+    },
+
+    setFilters(newFilters = {}) {
+        Object.assign(this.filters, newFilters);
+
+        // Sync Search Input
+        const searchInput = document.getElementById('fleet-search-input');
+        if (searchInput) {
+            searchInput.value = this.filters.search || '';
+        }
+
+        // Sync Price Slider & Display
+        const priceSlider = document.getElementById('price-range-slider');
+        const priceMaxDisplay = document.getElementById('price-max-display');
+        if (priceSlider) {
+            const maxVal = this.filters.max_price !== undefined && this.filters.max_price !== null ? this.filters.max_price : 10000;
+            priceSlider.value = maxVal;
+            if (priceMaxDisplay) priceMaxDisplay.innerText = `₹${maxVal}`;
+        }
+
+        // Sync Category Tabs
+        const targetCat = (this.filters.category || '').toLowerCase();
+        document.querySelectorAll('.category-tab-btn').forEach(btn => {
+            const btnSlug = (btn.dataset.slug || '').toLowerCase();
+            const isActive = targetCat ? (btnSlug === targetCat || btn.innerText.toLowerCase().includes(targetCat)) : (btnSlug === '');
+            btn.classList.toggle('active', isActive);
+        });
+
+        // Sync Status Select
+        const statusSelect = document.getElementById('fleet-status-select');
+        if (statusSelect) {
+            statusSelect.value = this.filters.status || '';
+        }
+
+        // Sync Sort Select
+        const sortSelect = document.getElementById('fleet-sort-select');
+        if (sortSelect) {
+            sortSelect.value = this.filters.ordering || '';
+        }
+
+        // Sync Filter Chips (transmission, fuel_type, seats, status)
+        ['transmission', 'fuel_type', 'seats', 'status'].forEach(group => {
+            const val = this.filters[group];
+            document.querySelectorAll(`.filter-chip[data-group="${group}"]`).forEach(chip => {
+                const chipVal = (chip.dataset.value || '').toUpperCase();
+                const active = val ? (chipVal === String(val).toUpperCase()) : (chipVal === '');
+                chip.classList.toggle('active', active);
+            });
+        });
+    },
+
     parseUrlParams() {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('pickup_location')) this.filters.pickup_location_id = params.get('pickup_location');
-        if (params.get('dropoff_location')) this.filters.dropoff_location_id = params.get('dropoff_location');
-        if (params.get('pickup_date')) this.filters.pickup_date = params.get('pickup_date');
-        if (params.get('return_date')) this.filters.return_date = params.get('return_date');
-        if (params.get('category')) this.filters.category = params.get('category');
-        if (params.get('status')) this.filters.status = params.get('status');
-        if (params.get('search')) this.filters.search = params.get('search');
+        const parsed = this.getDefaultFilters();
+
+        if (this.filters.pickup_date && !params.get('pickup_date')) parsed.pickup_date = this.filters.pickup_date;
+        if (this.filters.return_date && !params.get('return_date')) parsed.return_date = this.filters.return_date;
+
+        if (params.get('pickup_location')) parsed.pickup_location_id = params.get('pickup_location');
+        if (params.get('dropoff_location')) parsed.dropoff_location_id = params.get('dropoff_location');
+        if (params.get('pickup_date')) parsed.pickup_date = params.get('pickup_date');
+        if (params.get('return_date')) parsed.return_date = params.get('return_date');
+        if (params.get('category')) parsed.category = params.get('category');
+        if (params.get('status')) parsed.status = params.get('status');
+        if (params.get('search')) parsed.search = params.get('search');
+        if (params.get('max_price')) {
+            const mp = parseFloat(params.get('max_price'));
+            if (!isNaN(mp)) parsed.max_price = mp;
+        }
+        if (params.get('min_price')) {
+            const minp = parseFloat(params.get('min_price'));
+            if (!isNaN(minp)) parsed.min_price = minp;
+        }
+        if (params.get('transmission')) parsed.transmission = params.get('transmission');
+        if (params.get('fuel_type')) parsed.fuel_type = params.get('fuel_type');
+        if (params.get('seats')) parsed.seats = params.get('seats');
+        if (params.get('ordering')) parsed.ordering = params.get('ordering');
+        
+        this.currentPage = 1;
         if (params.get('page')) {
             const p = parseInt(params.get('page'), 10);
             if (!isNaN(p) && p > 0) this.currentPage = p;
@@ -69,6 +167,9 @@ export const Customer = {
             const ps = parseInt(params.get('page_size'), 10);
             if (!isNaN(ps) && ps > 0) this.pageSize = ps;
         }
+
+        this.filters = parsed;
+        this.setFilters(parsed);
     },
 
     setDefaultDates() {
@@ -110,7 +211,6 @@ export const Customer = {
         // Search text input
         const searchInput = document.getElementById('fleet-search-input');
         if (searchInput) {
-            if (this.filters.search) searchInput.value = this.filters.search;
             searchInput.addEventListener('input', (e) => {
                 this.filters.search = e.target.value;
                 this.applyFiltersDebounced();
@@ -138,7 +238,6 @@ export const Customer = {
         // Status dropdown selector
         const statusSelect = document.getElementById('fleet-status-select');
         if (statusSelect) {
-            if (this.filters.status) statusSelect.value = this.filters.status;
             statusSelect.addEventListener('change', (e) => {
                 this.filters.status = e.target.value;
                 this.currentPage = 1;
@@ -146,7 +245,8 @@ export const Customer = {
             });
         }
 
-        // Filter chips (Status, Transmission, Fuel, Seats)
+        this.setFilters(this.filters);
+
         document.querySelectorAll('.filter-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 const group = chip.dataset.group;
@@ -227,7 +327,11 @@ export const Customer = {
     async loadLocations() {
         try {
             const data = await API.get('/locations/');
-            this.locations = data.results || data;
+            this.locations = data.results || data || [];
+            window._cachedLocations = this.locations;
+            if (BookingWizard) {
+                BookingWizard.locations = this.locations;
+            }
             const pickupSelect = document.getElementById('search-pickup-location');
             const dropoffSelect = document.getElementById('search-dropoff-location');
 
@@ -253,12 +357,20 @@ export const Customer = {
                 <button class="category-tab-btn ${!this.filters.category ? 'active' : ''}" data-slug="" onclick="Customer.selectCategory('')">
                     <i class="fa-solid fa-layer-group"></i> All Fleet
                 </button>
-            ` + this.categories.map(cat => `
-                <button class="category-tab-btn ${this.filters.category === cat.slug ? 'active' : ''}" data-slug="${cat.slug}" onclick="Customer.selectCategory('${cat.slug}')">
+            ` + this.categories.map(cat => {
+                const targetCat = (this.filters.category || '').toLowerCase();
+                const isActive = targetCat && (
+                    targetCat === (cat.slug || '').toLowerCase() ||
+                    targetCat === (cat.name || '').toLowerCase() ||
+                    (cat.name || '').toLowerCase().includes(targetCat)
+                );
+                return `
+                <button class="category-tab-btn ${isActive ? 'active' : ''}" data-slug="${cat.slug}" onclick="Customer.selectCategory('${cat.slug}')">
                     <i class="fa-solid ${cat.icon || 'fa-car'}"></i> ${cat.name}
                     <span class="category-count">${cat.car_count}</span>
                 </button>
-            `).join('');
+                `;
+            }).join('');
         } catch (e) {
             console.error('Categories error:', e);
         }
@@ -268,12 +380,14 @@ export const Customer = {
         this.filters.category = slug;
         this.currentPage = 1;
         document.querySelectorAll('.category-tab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.slug === slug);
+            const btnSlug = btn.dataset.slug || '';
+            const isActive = slug ? (btnSlug.toLowerCase() === slug.toLowerCase()) : (btnSlug === '');
+            btn.classList.toggle('active', isActive);
         });
         if (document.getElementById('cars-grid-container')) {
             this.fetchCars(1, false);
         } else {
-            window.location.href = `/fleet/?category=${slug}`;
+            window.location.href = `/fleet/${slug ? '?category=' + encodeURIComponent(slug) : ''}`;
         }
     },
 
@@ -378,6 +492,7 @@ export const Customer = {
                 category: this.filters.category,
                 search: this.filters.search,
                 status: this.filters.status,
+                min_price: this.filters.min_price,
                 max_price: this.filters.max_price,
                 transmission: this.filters.transmission,
                 fuel_type: this.filters.fuel_type,
@@ -600,6 +715,36 @@ export const Customer = {
         } else {
             url.searchParams.delete('page_size');
         }
+        if (this.filters.category) {
+            url.searchParams.set('category', this.filters.category);
+        } else {
+            url.searchParams.delete('category');
+        }
+        if (this.filters.search) {
+            url.searchParams.set('search', this.filters.search);
+        } else {
+            url.searchParams.delete('search');
+        }
+        if (this.filters.max_price && Number(this.filters.max_price) < 10000) {
+            url.searchParams.set('max_price', String(this.filters.max_price));
+        } else {
+            url.searchParams.delete('max_price');
+        }
+        if (this.filters.transmission) {
+            url.searchParams.set('transmission', this.filters.transmission);
+        } else {
+            url.searchParams.delete('transmission');
+        }
+        if (this.filters.fuel_type) {
+            url.searchParams.set('fuel_type', this.filters.fuel_type);
+        } else {
+            url.searchParams.delete('fuel_type');
+        }
+        if (this.filters.seats) {
+            url.searchParams.set('seats', this.filters.seats);
+        } else {
+            url.searchParams.delete('seats');
+        }
         window.history.replaceState({}, '', url.toString());
     },
 
@@ -712,106 +857,83 @@ export const Customer = {
 
     generateCarCardHtml(car, position = 1, source = 'search_details') {
         const isBookedForDates = car.status === 'AVAILABLE' && car.is_available_for_dates === false;
-        let statusBadgeHtml = '';
-        let actionBtnHtml = '';
+        const statusKey = isBookedForDates ? 'BOOKED_FOR_DATES' : car.status;
 
-        if (car.status === 'AVAILABLE' && !isBookedForDates) {
-            statusBadgeHtml = `
-                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(16,185,129,0.35); background:#10b981; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
-                    <i class="fa-solid fa-circle-check"></i> Available
-                </span>
-            `;
-            actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
-                    <i class="fa-regular fa-eye"></i> Details
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="BookingWizard.startBooking(${car.id})">
-                    <i class="fa-solid fa-calendar-check"></i> Book Now
-                </button>
-            `;
-        } else if (isBookedForDates) {
-            statusBadgeHtml = `
-                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(239,68,68,0.35); background:#ef4444; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
-                    <i class="fa-solid fa-calendar-xmark"></i> Reserved for Dates
-                </span>
-            `;
-            actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
-                    <i class="fa-regular fa-eye"></i> Details
-                </button>
-                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="Already reserved for your selected dates">
-                    <i class="fa-solid fa-calendar-xmark"></i> Booked Dates
-                </button>
-            `;
-        } else if (car.status === 'RENTED') {
-            statusBadgeHtml = `
-                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(245,158,11,0.35); background:#f59e0b; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
-                    <i class="fa-solid fa-clock"></i> Currently Rented
-                </span>
-            `;
-            actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
-                    <i class="fa-regular fa-eye"></i> Details
-                </button>
-                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="Currently out on an active customer rental">
-                    <i class="fa-solid fa-clock"></i> Rented Out
-                </button>
-            `;
-        } else if (car.status === 'MAINTENANCE') {
-            statusBadgeHtml = `
-                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; box-shadow:0 2px 8px rgba(239,68,68,0.35); background:#ef4444; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
-                    <i class="fa-solid fa-screwdriver-wrench"></i> In Maintenance
-                </span>
-            `;
-            actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
-                    <i class="fa-regular fa-eye"></i> Details
-                </button>
-                <button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed; background:#f1f5f9; color:var(--text-muted); border-color:var(--border-color);" title="Undergoing routine mechanical maintenance">
-                    <i class="fa-solid fa-wrench"></i> In Service
-                </button>
-            `;
-        } else {
-            statusBadgeHtml = `
-                <span class="badge" style="position:absolute; top:12px; right:12px; font-weight:700; font-size:0.75rem; background:#64748b; color:#ffffff; padding:4px 10px; border-radius:20px; z-index:2;">
-                    ${car.status}
-                </span>
-            `;
-            actionBtnHtml = `
-                <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
-                    <i class="fa-regular fa-eye"></i> Details
-                </button>
-            `;
-        }
+        const statusConfig = {
+            AVAILABLE: {
+                cls: 'status-available',
+                icon: 'fa-circle-check',
+                label: 'Available',
+                btn: `<button class="btn btn-primary btn-sm" onclick="BookingWizard.startBooking(${car.id})"><i class="fa-solid fa-calendar-check"></i> Book Now</button>`
+            },
+            BOOKED_FOR_DATES: {
+                cls: 'status-booked',
+                icon: 'fa-calendar-xmark',
+                label: 'Reserved for Dates',
+                btn: `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed;" title="Already reserved for your selected dates"><i class="fa-solid fa-calendar-xmark"></i> Booked Dates</button>`
+            },
+            RENTED: {
+                cls: 'status-rented',
+                icon: 'fa-clock',
+                label: 'Currently Rented',
+                btn: `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed;" title="Currently out on an active customer rental"><i class="fa-solid fa-clock"></i> Rented Out</button>`
+            },
+            MAINTENANCE: {
+                cls: 'status-maintenance',
+                icon: 'fa-screwdriver-wrench',
+                label: 'In Maintenance',
+                btn: `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.75; cursor:not-allowed;" title="Undergoing routine mechanical maintenance"><i class="fa-solid fa-wrench"></i> In Service</button>`
+            }
+        }[statusKey] || { cls: 'status-inactive', icon: 'fa-circle-info', label: car.status, btn: '' };
+
+        const statusBadgeHtml = `
+            <span class="car-status-pill ${statusConfig.cls}" title="${statusConfig.label}">
+                <i class="fa-solid ${statusConfig.icon}"></i> <span>${statusConfig.label}</span>
+            </span>
+        `;
+        const actionBtnHtml = `
+            <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
+                <i class="fa-regular fa-eye"></i> Details
+            </button>
+            ${statusConfig.btn}
+        `;
 
         // Build complete list of images for this car
         const allImages = [];
-        const primaryUrl = car.primary_image || car.main_image_url;
+        const primaryUrl = car.primary_image || car.main_image_url || car.image_url;
         if (primaryUrl) {
             allImages.push({ url: primaryUrl, label: 'Main View' });
         }
         if (Array.isArray(car.images)) {
             car.images.forEach((img, idx) => {
-                if (img && img.url && !allImages.some(item => item.url === img.url)) {
+                const imgUrl = typeof img === 'object' ? img.url : img;
+                if (imgUrl && !allImages.some(item => item.url === imgUrl)) {
                     allImages.push({
-                        url: img.url,
-                        label: img.view_type_display || img.caption || `View ${idx + 1}`
+                        url: imgUrl,
+                        label: (typeof img === 'object' ? (img.view_type_display || img.caption) : null) || `View ${idx + 1}`
                     });
                 }
             });
         }
+
+        const carTitle = car.display_name || `${car.brand || ''} ${car.model || ''}`.trim() || 'Vehicle';
+        const catIcon = (typeof car.category === 'object' && car.category?.icon) ? car.category.icon : 'fa-car';
+        const catName = (typeof car.category === 'object' ? car.category?.name : car.category) || 'Car';
+        const locationName = (typeof car.location === 'object' ? car.location?.name : car.location) || 'Main Branch';
+        const carRating = (car.average_rating !== undefined && car.average_rating !== null) ? car.average_rating : '5.0';
+        const carReviews = (car.total_reviews !== undefined && car.total_reviews !== null) ? car.total_reviews : 0;
 
         let carImgMarkup = '';
         if (allImages.length === 0) {
             carImgMarkup = `<div class="image-unavailable-placeholder"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>`;
         } else if (allImages.length === 1) {
             carImgMarkup = `
-                <img src="${allImages[0].url}" alt="${car.display_name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                <img src="${allImages[0].url}" alt="${carTitle}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                 <div class="image-unavailable-placeholder" style="display:none;"><i class="fa-solid fa-car-side"></i><span>Image Unavailable</span></div>
             `;
         } else {
             const slidesHtml = allImages.map((img, i) => `
-                <img src="${img.url}" alt="${car.display_name} - ${img.label}" class="car-gallery-slide ${i === 0 ? 'active' : ''}" data-index="${i}" loading="lazy" onerror="this.style.display='none';" />
+                <img src="${img.url}" alt="${carTitle} - ${img.label}" class="car-gallery-slide ${i === 0 ? 'active' : ''}" data-index="${i}" loading="lazy" onerror="this.style.display='none';" />
             `).join('');
 
             const dotsHtml = allImages.map((_, i) => `
@@ -844,10 +966,12 @@ export const Customer = {
             <div class="car-card animate-slide-in">
                 <div class="car-img-wrapper" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
                     ${carImgMarkup}
-                    <span class="badge badge-primary car-category-badge">
-                        <i class="fa-solid ${car.category?.icon || 'fa-car'}"></i> ${car.category?.name || 'Car'}
-                    </span>
-                    ${statusBadgeHtml}
+                    <div class="car-card-top-badges">
+                        <span class="badge badge-primary car-category-badge" title="${catName}">
+                            <i class="fa-solid ${catIcon}"></i> <span>${catName}</span>
+                        </span>
+                        ${statusBadgeHtml}
+                    </div>
                     <div class="car-price-tag">
                         ${formatCurrency(car.price_per_day)}<span> /day</span>
                     </div>
@@ -856,20 +980,20 @@ export const Customer = {
                     <div class="car-header-row">
                         <div>
                             <h3 class="car-title" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})" style="cursor:pointer;">${car.brand} ${car.model}</h3>
-                            <span class="car-year">${car.year}</span>
+                            <span class="car-year">${car.year || ''}</span>
                         </div>
                         <div class="car-rating">
-                            <i class="fa-solid fa-star"></i> ${car.average_rating} <span>(${car.total_reviews})</span>
+                            <i class="fa-solid fa-star"></i> ${carRating} <span>(${carReviews})</span>
                         </div>
                     </div>
                     <div class="car-location-tag">
-                        <i class="fa-solid fa-location-dot"></i> ${car.location ? `${car.location.name}` : 'Main Branch'}
+                        <i class="fa-solid fa-location-dot"></i> ${locationName}
                     </div>
                     <div class="car-specs-grid">
-                        <div class="car-spec-item"><i class="fa-solid fa-gear"></i> ${car.transmission}</div>
-                        <div class="car-spec-item"><i class="fa-solid fa-gas-pump"></i> ${car.fuel_type}</div>
-                        <div class="car-spec-item"><i class="fa-solid fa-user-group"></i> ${car.seats} Seats</div>
-                        <div class="car-spec-item"><i class="fa-solid fa-bolt"></i> ${car.power_hp} HP</div>
+                        <div class="car-spec-item"><i class="fa-solid fa-gear"></i> ${car.transmission || 'Automatic'}</div>
+                        <div class="car-spec-item"><i class="fa-solid fa-gas-pump"></i> ${car.fuel_type || 'Petrol'}</div>
+                        <div class="car-spec-item"><i class="fa-solid fa-user-group"></i> ${car.seats || 5} Seats</div>
+                        <div class="car-spec-item"><i class="fa-solid fa-bolt"></i> ${car.power_hp || 180} HP</div>
                     </div>
                     <div class="car-card-actions">
                         ${actionBtnHtml}
@@ -948,7 +1072,7 @@ export const Customer = {
     },
 
     renderCars() {
-        const grid = document.getElementById('cars-grid-container');
+        const grid = document.getElementById('cars-grid-container') || document.getElementById('featured-cars-grid');
         if (!grid) return;
 
         if (!this.cars.length) {
@@ -967,36 +1091,191 @@ export const Customer = {
     },
 
     resetFilters() {
-        this.filters.category = '';
-        this.filters.search = '';
-        this.filters.status = '';
-        this.filters.max_price = 10000;
-        this.filters.transmission = '';
-        this.filters.fuel_type = '';
-        this.filters.seats = '';
-        this.filters.ordering = '';
+        this.setFilters({
+            category: '',
+            search: '',
+            status: '',
+            min_price: 0,
+            max_price: 10000,
+            transmission: '',
+            fuel_type: '',
+            seats: '',
+            ordering: ''
+        });
         this.currentPage = 1;
-        
-        const slider = document.getElementById('price-range-slider');
-        if (slider) slider.value = 10000;
-        const priceMaxDisplay = document.getElementById('price-max-display');
-        if (priceMaxDisplay) priceMaxDisplay.innerText = '₹10000';
-        const searchInput = document.getElementById('fleet-search-input');
-        if (searchInput) searchInput.value = '';
-
-        const statusSelect = document.getElementById('fleet-status-select');
-        if (statusSelect) statusSelect.value = '';
-        
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        const allStatusChip = document.querySelector('.filter-chip[data-group="status"][data-value=""]');
-        if (allStatusChip) allStatusChip.classList.add('active');
-
-        document.querySelectorAll('.category-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.slug === ''));
         this.fetchCars(1, false);
     },
 
+    populateDetailModal(car) {
+        this.activeCar = car;
+        const modal = document.getElementById('car-detail-modal');
+        if (!modal) return;
+
+        let modalStatusBadge = '';
+        if (car.status === 'AVAILABLE') {
+            modalStatusBadge = '<span class="badge" style="background:#10b981; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-circle-check"></i> Available</span>';
+        } else if (car.status === 'RENTED') {
+            modalStatusBadge = '<span class="badge" style="background:#f59e0b; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-clock"></i> Currently Rented</span>';
+        } else if (car.status === 'MAINTENANCE') {
+            modalStatusBadge = '<span class="badge" style="background:#ef4444; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-wrench"></i> In Maintenance</span>';
+        }
+
+        const titleEl = document.getElementById('detail-car-title');
+        if (titleEl) titleEl.innerHTML = `${car.year || ''} ${car.brand || ''} ${car.model || ''} ${modalStatusBadge}`.trim();
+
+        const priceEl = document.getElementById('detail-car-price');
+        if (priceEl) priceEl.innerHTML = `${formatCurrency(car.price_per_day)}<span style="font-size:0.8rem; font-weight:normal; color:var(--text-secondary);"> /day</span>`;
+
+        const ratingEl = document.getElementById('detail-car-rating');
+        if (ratingEl) ratingEl.innerHTML = `<i class="fa-solid fa-star" style="color:var(--warning);"></i> ${car.average_rating || 4.8} (${car.total_reviews || 0} reviews)`;
+
+        const thumbsContainer = document.getElementById('detail-thumbs-container');
+        const mainImg = document.getElementById('detail-main-img');
+        const mainPlaceholder = document.getElementById('detail-main-img-placeholder');
+        const badgeEl = document.getElementById('detail-angle-badge');
+
+        const gallery = [
+            { url: car.primary_image || car.main_image_url || car.image_url, label: 'Main Overview' },
+            ...(car.images?.map(i => ({
+                url: typeof i === 'object' ? i.url : i,
+                label: (typeof i === 'object' ? (i.view_type_display || i.view_type || i.caption) : null) || 'Angle View'
+            })) || [])
+        ].filter(item => Boolean(item.url));
+
+        if (gallery.length && gallery[0].url) {
+            if (mainImg) {
+                mainImg.style.display = 'block';
+                mainImg.src = gallery[0].url;
+            }
+            if (mainPlaceholder) mainPlaceholder.style.display = 'none';
+            if (badgeEl) {
+                badgeEl.style.display = 'inline-flex';
+                badgeEl.innerHTML = `<i class="fa-solid fa-camera"></i> ${gallery[0].label}`;
+            }
+        } else {
+            if (mainImg) mainImg.style.display = 'none';
+            if (mainPlaceholder) mainPlaceholder.style.display = 'flex';
+            if (badgeEl) badgeEl.style.display = 'none';
+        }
+
+        if (thumbsContainer) {
+            if (gallery.length > 1) {
+                thumbsContainer.style.display = 'flex';
+                thumbsContainer.innerHTML = gallery.map((item, i) => `
+                    <div class="gallery-thumb-wrapper ${i === 0 ? 'active' : ''}" onclick="Customer.switchGalleryImage('${item.url}', '${item.label}', this)" style="cursor:pointer; flex-shrink:0; text-align:center;">
+                        <img src="${item.url}" class="gallery-thumb" style="width:70px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:2px solid ${i === 0 ? 'var(--primary)' : 'var(--border-color)'}; transition:var(--transition);" alt="${item.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div class="image-unavailable-placeholder thumb-size" style="width:70px; height:50px; display:none; margin:0 auto;"><i class="fa-solid fa-car-side"></i></div>
+                        <span style="font-size:0.65rem; color:var(--text-secondary); display:block; margin-top:2px; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.label}</span>
+                    </div>
+                `).join('');
+            } else {
+                thumbsContainer.style.display = 'none';
+                thumbsContainer.innerHTML = '';
+            }
+        }
+
+        const specsContainer = document.getElementById('detail-specs-table');
+        if (specsContainer) {
+            specsContainer.innerHTML = `
+                <tr><td>Brand & Model</td><td>${car.brand || ''} ${car.model || ''}</td></tr>
+                <tr><td>Model Year</td><td>${car.year || 'N/A'}</td></tr>
+                <tr><td>Status</td><td><strong>${car.status || 'AVAILABLE'}</strong></td></tr>
+                <tr><td>Transmission</td><td>${car.transmission || 'Automatic'}</td></tr>
+                <tr><td>Engine / Powertrain</td><td>${car.engine_capacity || 'N/A'}</td></tr>
+                <tr><td>Horsepower</td><td>${car.power_hp || 'N/A'} HP</td></tr>
+                <tr><td>Fuel Type</td><td>${car.fuel_type || 'Petrol'}</td></tr>
+                <tr><td>Seating Capacity</td><td>${car.seats || 5} Passengers</td></tr>
+                <tr><td>Luggage Capacity</td><td>${car.luggage_capacity || 2} Bags</td></tr>
+                <tr><td>Daily Mileage</td><td>${car.mileage_limit || 'Unlimited'}</td></tr>
+                <tr><td>Security Deposit</td><td>${formatCurrency(car.security_deposit || 0)}</td></tr>
+                <tr><td>Location</td><td>${(typeof car.location === 'object' ? car.location?.name : car.location) || 'City Hub'}</td></tr>
+            `;
+        }
+
+        const featuresContainer = document.getElementById('detail-features-container');
+        if (featuresContainer) {
+            const feats = car.features || ['Apple CarPlay', 'GPS Navigation', 'Rearview Camera', 'Keyless Entry'];
+            featuresContainer.innerHTML = feats.map(f => `
+                <div class="feature-pill"><i class="fa-solid fa-circle-check"></i> ${f}</div>
+            `).join('');
+        }
+
+        const descEl = document.getElementById('detail-description');
+        if (descEl) descEl.innerText = car.description || 'Premium rental vehicle in flawless showroom condition.';
+
+        const reviewsContainer = document.getElementById('detail-reviews-container');
+        if (reviewsContainer) {
+            const reviews = car.recent_reviews || [];
+            if (!reviews.length) {
+                reviewsContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No customer reviews yet.</p>';
+            } else {
+                reviewsContainer.innerHTML = reviews.map(r => {
+                    const revInitial = (r.customer_name ? r.customer_name[0] : 'U').toUpperCase();
+                    const revAvatar = r.customer_avatar
+                        ? `<div class="user-avatar-circle" style="width:28px; height:28px; font-size:0.75rem; flex-shrink:0; overflow:hidden;"><img src="${r.customer_avatar}" alt="${r.customer_name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.outerHTML='<span>${revInitial}</span>';" /></div>`
+                        : `<div class="user-avatar-circle" style="width:28px; height:28px; font-size:0.75rem; flex-shrink:0; background:linear-gradient(135deg, var(--primary), var(--secondary));">${revInitial}</div>`;
+
+                    return `
+                    <div style="padding:14px 0; border-bottom:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                ${revAvatar}
+                                <strong style="font-size:0.88rem;">${r.customer_name}</strong>
+                            </div>
+                            <div style="font-size:0.8rem; display:flex; gap:2px;">
+                                ${Array.from({length: 5}, (_, i) => `<i class="fa-solid fa-star" style="color:${i < r.rating ? '#f59e0b' : '#cbd5e1'};"></i>`).join('')}
+                            </div>
+                        </div>
+                        <div style="font-weight:600; font-size:0.85rem; margin-bottom:2px;">${r.title || ''}</div>
+                        <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">${r.comment}</div>
+                    </div>
+                `;
+                }).join('');
+            }
+        }
+
+        const bookBtn = document.getElementById('detail-book-btn');
+        if (bookBtn) {
+            const isBookedForDates = car.status === 'AVAILABLE' && car.is_available_for_dates === false;
+            if (car.status === 'AVAILABLE' && !isBookedForDates) {
+                bookBtn.disabled = false;
+                bookBtn.className = 'btn btn-primary';
+                bookBtn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Book This Vehicle';
+                bookBtn.title = 'Proceed to reserve this vehicle.';
+                bookBtn.onclick = () => {
+                    this.closeDetailModal();
+                    BookingWizard.startBooking(car.id);
+                };
+            } else if (isBookedForDates) {
+                bookBtn.disabled = true;
+                bookBtn.className = 'btn btn-secondary';
+                bookBtn.innerHTML = '<i class="fa-solid fa-calendar-xmark"></i> Reserved for Selected Dates';
+                bookBtn.title = 'This vehicle is booked by another customer for your selected dates. Please choose different dates or select another car.';
+                bookBtn.onclick = null;
+            } else if (car.status === 'RENTED') {
+                bookBtn.disabled = true;
+                bookBtn.className = 'btn btn-secondary';
+                bookBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Currently Rented Out';
+                bookBtn.title = 'This vehicle is currently rented by another customer.';
+                bookBtn.onclick = null;
+            } else if (car.status === 'MAINTENANCE') {
+                bookBtn.disabled = true;
+                bookBtn.className = 'btn btn-secondary';
+                bookBtn.innerHTML = '<i class="fa-solid fa-wrench"></i> Currently In Service';
+                bookBtn.title = 'This vehicle is undergoing routine maintenance.';
+                bookBtn.onclick = null;
+            } else {
+                bookBtn.disabled = true;
+                bookBtn.className = 'btn btn-secondary';
+                bookBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Unavailable';
+                bookBtn.title = 'This vehicle is unavailable.';
+                bookBtn.onclick = null;
+            }
+        }
+    },
+
     async openDetailModal(carId, source = 'search_details', position = 1) {
-        // Track click and write clicked_car to SearchLog only when details button is clicked!
+        // 1. Non-blocking click tracking in background thread
         try {
             API.post('/analytics/track-click/', {
                 car_id: carId,
@@ -1011,176 +1290,31 @@ export const Customer = {
             }).catch(e => console.warn('Click tracking notice:', e));
         } catch (e) {}
 
+        const modal = document.getElementById('car-detail-modal');
+
+        // 2. Instant Render from In-Memory Data (0ms latency!)
+        const numId = Number(carId);
+        const cachedCar = (this.cars || []).find(c => c.id === numId) || (this.activeCar?.id === numId ? this.activeCar : null);
+
+        if (cachedCar) {
+            this.populateDetailModal(cachedCar);
+            if (modal) modal.classList.add('active');
+        }
+
+        // 3. Background enrich & fetch fresh vehicle details + similar recommendations
         try {
-            const car = await API.get(`/cars/${carId}/`);
-            this.activeCar = car;
+            const freshCarPromise = API.get(`/cars/${carId}/`);
+            this.loadSimilarCars(carId);
 
-            const modal = document.getElementById('car-detail-modal');
-            if (!modal) return;
-
-            let modalStatusBadge = '';
-            if (car.status === 'AVAILABLE') {
-                modalStatusBadge = '<span class="badge" style="background:#10b981; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-circle-check"></i> Available</span>';
-            } else if (car.status === 'RENTED') {
-                modalStatusBadge = '<span class="badge" style="background:#f59e0b; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-clock"></i> Currently Rented</span>';
-            } else if (car.status === 'MAINTENANCE') {
-                modalStatusBadge = '<span class="badge" style="background:#ef4444; color:#ffffff; font-size:0.75rem; padding:3px 8px; border-radius:12px; margin-left:8px;"><i class="fa-solid fa-wrench"></i> In Maintenance</span>';
+            const car = await freshCarPromise;
+            this.populateDetailModal(car);
+            if (modal && !modal.classList.contains('active')) {
+                modal.classList.add('active');
             }
-
-            document.getElementById('detail-car-title').innerHTML = `${car.year} ${car.brand} ${car.model} ${modalStatusBadge}`;
-            document.getElementById('detail-car-price').innerHTML = `${formatCurrency(car.price_per_day)}<span style="font-size:0.8rem; font-weight:normal; color:var(--text-secondary);"> /day</span>`;
-            document.getElementById('detail-car-rating').innerHTML = `<i class="fa-solid fa-star" style="color:var(--warning);"></i> ${car.average_rating} (${car.total_reviews} reviews)`;
-
-            const thumbsContainer = document.getElementById('detail-thumbs-container');
-            const mainImg = document.getElementById('detail-main-img');
-            const mainPlaceholder = document.getElementById('detail-main-img-placeholder');
-            const badgeEl = document.getElementById('detail-angle-badge');
-
-            const gallery = [
-                { url: car.primary_image || car.main_image_url, label: 'Main Overview' },
-                ...(car.images?.map(i => ({
-                    url: i.url,
-                    label: i.view_type_display || i.view_type || i.caption || 'Angle View'
-                })) || [])
-            ].filter(item => Boolean(item.url));
-
-            if (gallery.length && gallery[0].url) {
-                if (mainImg) {
-                    mainImg.style.display = 'block';
-                    mainImg.src = gallery[0].url;
-                }
-                if (mainPlaceholder) mainPlaceholder.style.display = 'none';
-                if (badgeEl) {
-                    badgeEl.style.display = 'inline-flex';
-                    badgeEl.innerHTML = `<i class="fa-solid fa-camera"></i> ${gallery[0].label}`;
-                }
-            } else {
-                if (mainImg) mainImg.style.display = 'none';
-                if (mainPlaceholder) mainPlaceholder.style.display = 'flex';
-                if (badgeEl) badgeEl.style.display = 'none';
-            }
-
-            if (thumbsContainer) {
-                if (gallery.length > 1) {
-                    thumbsContainer.style.display = 'flex';
-                    thumbsContainer.innerHTML = gallery.map((item, i) => `
-                        <div class="gallery-thumb-wrapper ${i === 0 ? 'active' : ''}" onclick="Customer.switchGalleryImage('${item.url}', '${item.label}', this)" style="cursor:pointer; flex-shrink:0; text-align:center;">
-                            <img src="${item.url}" class="gallery-thumb" style="width:70px; height:50px; object-fit:cover; border-radius:var(--radius-sm); border:2px solid ${i === 0 ? 'var(--primary)' : 'var(--border-color)'}; transition:var(--transition);" alt="${item.label}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                            <div class="image-unavailable-placeholder thumb-size" style="width:70px; height:50px; display:none; margin:0 auto;"><i class="fa-solid fa-car-side"></i></div>
-                            <span style="font-size:0.65rem; color:var(--text-secondary); display:block; margin-top:2px; max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.label}</span>
-                        </div>
-                    `).join('');
-                } else {
-                    thumbsContainer.style.display = 'none';
-                    thumbsContainer.innerHTML = '';
-                }
-            }
-
-            const specsContainer = document.getElementById('detail-specs-table');
-            if (specsContainer) {
-                specsContainer.innerHTML = `
-                    <tr><td>Brand & Model</td><td>${car.brand} ${car.model}</td></tr>
-                    <tr><td>Model Year</td><td>${car.year}</td></tr>
-                    <tr><td>Status</td><td><strong>${car.status}</strong></td></tr>
-                    <tr><td>Transmission</td><td>${car.transmission}</td></tr>
-                    <tr><td>Engine / Powertrain</td><td>${car.engine_capacity || 'N/A'}</td></tr>
-                    <tr><td>Horsepower</td><td>${car.power_hp} HP</td></tr>
-                    <tr><td>Fuel Type</td><td>${car.fuel_type}</td></tr>
-                    <tr><td>Seating Capacity</td><td>${car.seats} Passengers</td></tr>
-                    <tr><td>Luggage Capacity</td><td>${car.luggage_capacity} Bags</td></tr>
-                    <tr><td>Daily Mileage</td><td>${car.mileage_limit}</td></tr>
-                    <tr><td>Security Deposit</td><td>${formatCurrency(car.security_deposit)}</td></tr>
-                    <tr><td>Location</td><td>${car.location?.name || 'City Hub'}</td></tr>
-                `;
-            }
-
-            const featuresContainer = document.getElementById('detail-features-container');
-            if (featuresContainer) {
-                const feats = car.features || ['Apple CarPlay', 'GPS Navigation', 'Rearview Camera', 'Keyless Entry'];
-                featuresContainer.innerHTML = feats.map(f => `
-                    <div class="feature-pill"><i class="fa-solid fa-circle-check"></i> ${f}</div>
-                `).join('');
-            }
-
-            const descEl = document.getElementById('detail-description');
-            if (descEl) descEl.innerText = car.description || 'Premium rental vehicle in flawless showroom condition.';
-
-            const reviewsContainer = document.getElementById('detail-reviews-container');
-            if (reviewsContainer) {
-                const reviews = car.recent_reviews || [];
-                if (!reviews.length) {
-                    reviewsContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No customer reviews yet.</p>';
-                } else {
-                    reviewsContainer.innerHTML = reviews.map(r => {
-                        const revInitial = (r.customer_name ? r.customer_name[0] : 'U').toUpperCase();
-                        const revAvatar = r.customer_avatar
-                            ? `<div class="user-avatar-circle" style="width:28px; height:28px; font-size:0.75rem; flex-shrink:0; overflow:hidden;"><img src="${r.customer_avatar}" alt="${r.customer_name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.outerHTML='<span>${revInitial}</span>';" /></div>`
-                            : `<div class="user-avatar-circle" style="width:28px; height:28px; font-size:0.75rem; flex-shrink:0; background:linear-gradient(135deg, var(--primary), var(--secondary));">${revInitial}</div>`;
-
-                        return `
-                        <div style="padding:14px 0; border-bottom:1px solid var(--border-color);">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    ${revAvatar}
-                                    <strong style="font-size:0.88rem;">${r.customer_name}</strong>
-                                </div>
-                                <div style="font-size:0.8rem; display:flex; gap:2px;">
-                                    ${Array.from({length: 5}, (_, i) => `<i class="fa-solid fa-star" style="color:${i < r.rating ? '#f59e0b' : '#cbd5e1'};"></i>`).join('')}
-                                </div>
-                            </div>
-                            <div style="font-weight:600; font-size:0.85rem; margin-bottom:2px;">${r.title || ''}</div>
-                            <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">${r.comment}</div>
-                        </div>
-                    `;
-                    }).join('');
-                }
-            }
-
-            const bookBtn = document.getElementById('detail-book-btn');
-            if (bookBtn) {
-                const isBookedForDates = car.status === 'AVAILABLE' && car.is_available_for_dates === false;
-                if (car.status === 'AVAILABLE' && !isBookedForDates) {
-                    bookBtn.disabled = false;
-                    bookBtn.className = 'btn btn-primary';
-                    bookBtn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Book This Vehicle';
-                    bookBtn.title = 'Proceed to reserve this vehicle.';
-                    bookBtn.onclick = () => {
-                        this.closeDetailModal();
-                        BookingWizard.startBooking(car.id);
-                    };
-                } else if (isBookedForDates) {
-                    bookBtn.disabled = true;
-                    bookBtn.className = 'btn btn-secondary';
-                    bookBtn.innerHTML = '<i class="fa-solid fa-calendar-xmark"></i> Reserved for Selected Dates';
-                    bookBtn.title = 'This vehicle is booked by another customer for your selected dates. Please choose different dates or select another car.';
-                    bookBtn.onclick = null;
-                } else if (car.status === 'RENTED') {
-                    bookBtn.disabled = true;
-                    bookBtn.className = 'btn btn-secondary';
-                    bookBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Currently Rented Out';
-                    bookBtn.title = 'This vehicle is currently rented by another customer.';
-                    bookBtn.onclick = null;
-                } else if (car.status === 'MAINTENANCE') {
-                    bookBtn.disabled = true;
-                    bookBtn.className = 'btn btn-secondary';
-                    bookBtn.innerHTML = '<i class="fa-solid fa-wrench"></i> Currently In Service';
-                    bookBtn.title = 'This vehicle is undergoing routine maintenance.';
-                    bookBtn.onclick = null;
-                } else {
-                    bookBtn.disabled = true;
-                    bookBtn.className = 'btn btn-secondary';
-                    bookBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Unavailable';
-                    bookBtn.title = 'This vehicle is unavailable.';
-                    bookBtn.onclick = null;
-                }
-            }
-
-            // Load AI-matched Similar Cars using analytics recommendation engine
-            this.loadSimilarCars(car.id);
-
-            modal.classList.add('active');
         } catch (e) {
-            Toast.error('Could not load car details.');
+            if (!cachedCar) {
+                Toast.error('Could not load car details.');
+            }
         }
     },
 

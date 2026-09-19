@@ -5,12 +5,34 @@ import { Notifications } from './notifications.js';
 import { Customer } from './customer.js';
 import { CustomerPortal } from './customer-portal.js';
 import { Admin } from './admin.js';
+import { Assistant } from './assistant.js';
+import { BookingWizard } from './booking.js';
+import { Automation } from './automation.js';
+import { Router } from './router.js';
+
+// Expose modules to global window for accessibility and interactive inline handlers
+Object.assign(window, {
+    Toast,
+    Auth,
+    Notifications,
+    Customer,
+    CustomerPortal,
+    Admin,
+    Assistant,
+    BookingWizard,
+    Automation,
+    Router
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Initialize Components
     Toast.init();
     await Auth.init();
     Notifications.init();
+    Assistant.init();
+    if (Router && typeof Router.init === 'function') {
+        Router.init();
+    }
 
     const params = new URLSearchParams(window.location.search);
     const redirectMessage = sessionStorage.getItem('authRedirectMessage');
@@ -47,9 +69,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Navbar Scroll Effect & ScrollSpy (Light Theme)
     const navbar = document.querySelector('.navbar');
     const navLinksList = document.querySelectorAll('.nav-links a');
-    const currentPath = window.location.pathname;
 
     const updateActiveNav = () => {
+        const currentPath = window.location.pathname;
         if (navbar) {
             if (window.scrollY > 20) {
                 navbar.classList.add('scrolled');
@@ -100,6 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.addEventListener('scroll', updateActiveNav, { passive: true });
+    window.addEventListener('spa:navigated', updateActiveNav);
     updateActiveNav();
 
     // 3. Mobile & Tablet Navigation Menu Toggle

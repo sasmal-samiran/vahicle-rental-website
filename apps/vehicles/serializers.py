@@ -151,7 +151,7 @@ class CarListSerializer(serializers.ModelSerializer):
         return BookingService.is_car_available(obj, start, end)
 
 class CarDetailSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
+    category = CategorySimpleSerializer(read_only=True)
     location = LocationSerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), source='category', write_only=True, required=False, allow_null=True
@@ -211,15 +211,14 @@ class CarDetailSerializer(serializers.ModelSerializer):
         return self.get_primary_image(obj)
 
     def get_average_rating(self, obj):
-        if hasattr(obj, 'annotated_avg_rating'):
-            return round(float(obj.annotated_avg_rating), 1) if obj.annotated_avg_rating is not None else 4.9
-        avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
-        return round(float(avg), 1) if avg else 4.9
+        if hasattr(obj, 'annotated_avg_rating') and obj.annotated_avg_rating is not None:
+            return round(float(obj.annotated_avg_rating), 1)
+        return 4.9
 
     def get_total_reviews(self, obj):
-        if hasattr(obj, 'annotated_total_reviews'):
-            return obj.annotated_total_reviews or 0
-        return obj.reviews.filter(is_approved=True).count()
+        if hasattr(obj, 'annotated_total_reviews') and obj.annotated_total_reviews is not None:
+            return obj.annotated_total_reviews
+        return 0
 
     def get_is_available_for_dates(self, obj):
         if obj.status != 'AVAILABLE':
@@ -248,6 +247,9 @@ class CarDetailSerializer(serializers.ModelSerializer):
 
     def get_recent_reviews(self, obj):
         from apps.reviews.serializers import ReviewSerializer
-        reviews = obj.reviews.filter(is_approved=True).order_by('-created_at')[:5]
+        if hasattr(obj, 'approved_reviews'):
+            reviews = obj.approved_reviews[:5]
+        else:
+            reviews = obj.reviews.filter(is_approved=True).select_related('customer').order_by('-created_at')[:5]
         return ReviewSerializer(reviews, many=True).data
 

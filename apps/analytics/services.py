@@ -18,13 +18,14 @@ class RecommendationService:
             'category', 'location', 'popularity_metrics'
         ).prefetch_related('images').annotate(
             annotated_avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+            annotated_total_reviews=Count('reviews', filter=Q(reviews__is_approved=True)),
             annotated_bookings_count=Count('bookings', filter=Q(bookings__status__in=['CONFIRMED', 'COMPLETED', 'ONGOING']))
         )
     
     def _get_car_avg_rating(self, car: Car) -> float:
-        if hasattr(car, 'annotated_avg_rating'):
-            return round(float(car.annotated_avg_rating), 1) if car.annotated_avg_rating is not None else 4.8
-        return float(car.average_rating)
+        if hasattr(car, 'annotated_avg_rating') and car.annotated_avg_rating is not None:
+            return round(float(car.annotated_avg_rating), 1)
+        return 4.8
 
     def _get_car_popularity_score(self, car: Car) -> float:
         avg_rating = self._get_car_avg_rating(car)
@@ -32,7 +33,7 @@ class RecommendationService:
         if hasattr(car, 'annotated_bookings_count') and car.annotated_bookings_count is not None:
             bookings_count = car.annotated_bookings_count
         else:
-            bookings_count = car.bookings.count()
+            bookings_count = 0
         booking_score = min(4.0, (bookings_count or 0) * 1.0)
 
         conversion_bonus = 0.0
@@ -75,10 +76,10 @@ class RecommendationService:
         """
         Get cars similar to the given car (content-based filtering)
         """
-        # Calculate similarity scores
+        car_rating = self._get_car_avg_rating(car)
         similar_cars = []
         for candidate in self.available_cars.exclude(id=car.id):
-            similarity = self._calculate_similarity(car, candidate)
+            similarity = self._calculate_similarity(car, candidate, car1_rating=car_rating)
             similar_cars.append((candidate, similarity))
         
         similar_cars.sort(key=lambda x: x[1], reverse=True)
@@ -312,16 +313,18 @@ class RecommendationService:
 
         return score
     
-    def _calculate_similarity(self, car1: Car, car2: Car) -> float:
+    def _calculate_similarity(self, car1: Car, car2: Car, car1_rating: Optional[float] = None) -> float:
         """
         Calculate similarity between two cars using multiple features
         """
         similarity = 0.0
         
-        # Category similarity
-        if car1.category and car2.category and car1.category.id == car2.category.id:
+        # Category similarity (using category_id to avoid foreign key queries)
+        c1_cat = getattr(car1, 'category_id', None) or (car1.category.id if car1.category else None)
+        c2_cat = getattr(car2, 'category_id', None) or (car2.category.id if car2.category else None)
+        if c1_cat and c2_cat and c1_cat == c2_cat:
             similarity += 3.0
-        elif car1.category and car2.category:
+        elif c1_cat and c2_cat:
             similarity += 1.0
         
         # Brand similarity
@@ -354,7 +357,9 @@ class RecommendationService:
             similarity += 0.5
         
         # Rating similarity
-        if abs(self._get_car_avg_rating(car1) - self._get_car_avg_rating(car2)) < 0.5:
+        r1 = car1_rating if car1_rating is not None else self._get_car_avg_rating(car1)
+        r2 = self._get_car_avg_rating(car2)
+        if abs(r1 - r2) < 0.5:
             similarity += 1.0
         
         return similarity
