@@ -7,8 +7,6 @@ from .models import Payment
 from .serializers import (
     PaymentSerializer,
     InitiatePaymentSerializer,
-    VerifyRazorpaySerializer,
-    VerifyStripeSerializer,
     MockCheckoutSerializer
 )
 from .services import PaymentService
@@ -38,59 +36,6 @@ class InitiatePaymentView(APIView):
 
         except Booking.DoesNotExist:
             return Response({'error': 'Booking not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-class VerifyRazorpayView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        serializer = VerifyRazorpaySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-
-        try:
-            payment = Payment.objects.get(pk=data['payment_id'])
-            if not request.user.is_staff and payment.booking.customer != request.user:
-                return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
-
-            payment = PaymentService.finalize_success(
-                payment=payment,
-                payment_method='RAZORPAY',
-                gateway_payment_id=data['razorpay_payment_id'],
-                signature=data.get('razorpay_signature')
-            )
-            return Response({
-                'success': True,
-                'detail': 'Payment verified and booking confirmed!',
-                'payment': PaymentSerializer(payment).data
-            })
-        except Payment.DoesNotExist:
-            return Response({'error': 'Payment record not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-class VerifyStripeView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        serializer = VerifyStripeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-
-        try:
-            payment = Payment.objects.get(pk=data['payment_id'])
-            if not request.user.is_staff and payment.booking.customer != request.user:
-                return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
-
-            payment = PaymentService.finalize_success(
-                payment=payment,
-                payment_method='STRIPE_CARD',
-                gateway_payment_id=data['payment_intent_id']
-            )
-            return Response({
-                'success': True,
-                'detail': 'Stripe payment verified and booking confirmed!',
-                'payment': PaymentSerializer(payment).data
-            })
-        except Payment.DoesNotExist:
-            return Response({'error': 'Payment record not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 class MockCheckoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]

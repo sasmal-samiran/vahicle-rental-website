@@ -359,6 +359,7 @@ export const Auth = {
             this.closeRegisterModal();
             this.updateNavUser();
             document.dispatchEvent(new CustomEvent('auth:change', { detail: { user: res.user } }));
+            this.checkAndResumePendingBooking();
         } catch (err) {
             if (regOtpErr) {
                 regOtpErr.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${err.message || 'Invalid verification code.'}`;
@@ -484,6 +485,7 @@ export const Auth = {
             Toast.success(`Welcome, ${res.user.full_name || res.user.username}!`);
             this.closeAuthModal();
             document.dispatchEvent(new CustomEvent('auth:change', { detail: { user: res.user } }));
+            this.checkAndResumePendingBooking();
 
             if (res.user.role === 'ADMIN' && window.location.pathname.includes('admin')) {
                 window.location.reload();
@@ -529,6 +531,7 @@ export const Auth = {
             passwordInput.value = '';
             this.closeAuthModal();
             document.dispatchEvent(new CustomEvent('auth:change', { detail: { user: res.user } }));
+            this.checkAndResumePendingBooking();
 
             if (res.user.role === 'ADMIN' && window.location.pathname.includes('admin')) {
                 window.location.reload();
@@ -595,6 +598,19 @@ export const Auth = {
                 adminPortalLink.classList.add('hidden');
                 adminPortalLink.style.display = 'none';
             }
+        }
+    },
+
+    checkAndResumePendingBooking() {
+        const pendingCarId = sessionStorage.getItem('pending_booking_car_id') || window._pendingBookingCarId;
+        if (pendingCarId) {
+            sessionStorage.removeItem('pending_booking_car_id');
+            window._pendingBookingCarId = null;
+            setTimeout(() => {
+                if (window.BookingWizard?.startBooking) {
+                    window.BookingWizard.startBooking(Number(pendingCarId));
+                }
+            }, 300);
         }
     },
 

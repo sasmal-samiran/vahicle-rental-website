@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 from apps.vehicles.models import Car
 from apps.users.models import User
 

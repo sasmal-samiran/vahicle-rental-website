@@ -1,8 +1,8 @@
 from rest_framework import generics, viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Q
 from django.utils import timezone
+from django.db.models import Q
 from apps.vehicles.models import Car, Location
 from .models import Booking, Coupon
 from .serializers import (
@@ -90,7 +90,7 @@ class CustomerBookingListCreateView(APIView):
             car = Car.objects.get(pk=data['car_id'])
             pickup = Location.objects.get(pk=data['pickup_location_id'])
             dropoff = Location.objects.get(pk=data['dropoff_location_id'] if 'dropoff_location_id' in data else data['return_location_id'])
-        except (Car.DoesNotExist, Location.DoesNotExist) as e:
+        except (Car.DoesNotExist, Location.DoesNotExist):
             return Response({'error': 'Invalid car or location selected.'}, status=status.HTTP_404_NOT_FOUND)
 
         try:

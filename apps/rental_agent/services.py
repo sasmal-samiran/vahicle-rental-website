@@ -1,12 +1,8 @@
 from django.db.models import Q, Avg, Count
 from apps.vehicles.models import Car
-from apps.vehicles.serializers import CarListSerializer, CarDetailSerializer
 from apps.bookings.models import Booking
+from apps.vehicles.serializers import CarListSerializer, CarDetailSerializer
 from apps.analytics.services import RecommendationService
-
-from utils.logger import get_logger
-
-logger = get_logger("booking_agent")
 
 def search_available_cars(user=None, location=None, category=None, brand=None, model=None, min_price=None, max_price=None, fuel_type=None, seats=None, limit=12):
     q = Q(status="AVAILABLE")

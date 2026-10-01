@@ -1,4 +1,3 @@
-import os
 import datetime
 from decimal import Decimal
 from django.test import TestCase
@@ -7,11 +6,9 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from apps.vehicles.models import Category, Location, Car, CarImage
+from apps.vehicles.models import Category, Location, Car
 from apps.bookings.models import Booking, Coupon
 from apps.bookings.services import PricingService, BookingService
-from apps.users.services import OTPService
-from apps.payments.models import Payment
 
 User = get_user_model()
 

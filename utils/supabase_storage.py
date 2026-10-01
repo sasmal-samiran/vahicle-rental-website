@@ -7,7 +7,7 @@ from PIL import Image
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files.base import File, ContentFile
+from django.core.files.base import File
 from django.core.files.uploadedfile import UploadedFile
 
 logger = logging.getLogger(__name__)

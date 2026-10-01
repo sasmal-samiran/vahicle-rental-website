@@ -60,49 +60,31 @@ def generate_sse_stream(user, user_input, history, last_model=None):
         yield chunk
 
 
-class PublicRentalAgentView(APIView):
+class BaseRentalAgentView(APIView):
+    def post(self, request):
+        user_input = request.data.get("message", "")
+        history = request.data.get("history", [])
+        last_model = request.data.get("model") or request.data.get("last_model")
+
+        if not user_input or not str(user_input).strip():
+            return Response(
+                {"error": "Message parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        response = StreamingHttpResponse(
+            generate_sse_stream(user=request.user, user_input=user_input, history=history, last_model=last_model),
+            content_type="text/event-stream"
+        )
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"
+        response["Access-Control-Allow-Origin"] = "*"
+        return response
+
+
+class PublicRentalAgentView(BaseRentalAgentView):
     permission_classes = [permissions.AllowAny]
 
-    def post(self, request):
-        user_input = request.data.get("message", "")
-        history = request.data.get("history", [])
-        last_model = request.data.get("model") or request.data.get("last_model")
 
-        if not user_input or not str(user_input).strip():
-            return Response(
-                {"error": "Message parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        response = StreamingHttpResponse(
-            generate_sse_stream(user=request.user, user_input=user_input, history=history, last_model=last_model),
-            content_type="text/event-stream"
-        )
-        response["Cache-Control"] = "no-cache"
-        response["X-Accel-Buffering"] = "no"
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
-
-
-class PrivateRentalAgentView(APIView):
+class PrivateRentalAgentView(BaseRentalAgentView):
     permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        user_input = request.data.get("message", "")
-        history = request.data.get("history", [])
-        last_model = request.data.get("model") or request.data.get("last_model")
-
-        if not user_input or not str(user_input).strip():
-            return Response(
-                {"error": "Message parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        response = StreamingHttpResponse(
-            generate_sse_stream(user=request.user, user_input=user_input, history=history, last_model=last_model),
-            content_type="text/event-stream"
-        )
-        response["Cache-Control"] = "no-cache"
-        response["X-Accel-Buffering"] = "no"
-        response["Access-Control-Allow-Origin"] = "*"
-        return response

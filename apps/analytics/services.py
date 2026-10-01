@@ -1,13 +1,11 @@
-# analytics/services.py
-from django.db.models import Q, Avg, Count, F, FloatField, Case, When, Value
+from django.db.models import Q, Avg, Count, F, FloatField, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import timedelta
 import numpy as np
-from typing import List, Dict, Any, Optional
-from apps.vehicles.models import Car, Category
+from typing import List, Dict, Optional
+from apps.vehicles.models import Car
 from apps.bookings.models import Booking
-from apps.reviews.models import Review
 from apps.users.models import User
 
 class RecommendationService:
@@ -497,7 +495,6 @@ class AnalyticsService:
         3. Most frequently inspected/clicked vehicle models.
         """
         from .models import SearchLog, RecommendationClick
-        from django.db.models import Count
 
         counts = {}
 

@@ -2,8 +2,8 @@ from rest_framework import status, generics, permissions, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
 from django.db.models import Q
+from utils.supabase_storage import SupabaseStorageService
 from .models import User
 from .serializers import (
     UserSerializer,
@@ -171,16 +171,10 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
             self.request.data.get('remove_profile_picture') in [True, 'true', '1']
         )
 
-        from utils.supabase_storage import SupabaseStorageService
         if profile_picture_file:
-            old_path = user.profile_image_path
-            new_path = SupabaseStorageService.upload_profile_image(user.id, profile_picture_file)
-            user.profile_image_path = new_path
+            user.profile_image_path = SupabaseStorageService.upload_profile_image(user.id, profile_picture_file)
             user.save(update_fields=['profile_image_path', 'updated_at'])
-            if old_path and old_path != new_path:
-                SupabaseStorageService.delete_profile_image(old_path)
         elif remove_picture and user.profile_image_path:
-            SupabaseStorageService.delete_profile_image(user.profile_image_path)
             user.profile_image_path = None
             user.save(update_fields=['profile_image_path', 'updated_at'])
 

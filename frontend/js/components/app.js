@@ -10,19 +10,6 @@ import { BookingWizard } from './booking.js';
 import { Automation } from './automation.js';
 import { Router } from './router.js';
 
-// Expose modules to global window for accessibility and interactive inline handlers
-Object.assign(window, {
-    Toast,
-    Auth,
-    Notifications,
-    Customer,
-    CustomerPortal,
-    Admin,
-    Assistant,
-    BookingWizard,
-    Automation,
-    Router
-});
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Initialize Components

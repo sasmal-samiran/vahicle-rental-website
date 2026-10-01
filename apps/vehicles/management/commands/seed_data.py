@@ -1,14 +1,12 @@
-import os
-import datetime
+import os, datetime
 from decimal import Decimal
-from django.core.files import File
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from car_rental_backend import settings
 from apps.vehicles.models import Category, Location, Car, CarImage
 from apps.vehicles.services import VehicleService
-from apps.bookings.models import Booking, BookingAddon, Coupon
+from apps.bookings.models import Booking, Coupon
 from apps.payments.models import Payment
 from apps.reviews.models import Review
 from apps.notifications.models import Notification
@@ -346,13 +344,7 @@ class Command(BaseCommand):
         'luggage_capacity': 3, 'mileage_limit': '250 km/day',
         'engine_capacity': '2.5L Petrol Hybrid', 'power_hp': 215,
         'price_per_day': Decimal('6500.00'), 'security_deposit': Decimal('15000.00'),
-        # 'main_image_path': 'media/cars/toyota_camry.jpg',
         'main_image_url': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80',
-        # 'gallery_image_paths': [
-        #     {'path': 'media/car_gallery/camry_front.jpg', 'view_type': 'FRONT'},
-        #     {'path': 'media/car_gallery/camry_side.jpg', 'view_type': 'SIDE'},
-        #     {'path': 'media/car_gallery/camry_interior.jpg', 'view_type': 'INTERIOR'},
-        # ],
         'features': [
             'Leather Seats', 'Panoramic Sunroof', 'Adaptive Cruise Control',
             'Automatic Climate Control', 'Wireless Charging', 'Premium Audio'
@@ -368,13 +360,7 @@ class Command(BaseCommand):
         'luggage_capacity': 3, 'mileage_limit': '200 km/day',
         'engine_capacity': '1.5L Turbo Petrol', 'power_hp': 201,
         'price_per_day': Decimal('9500.00'), 'security_deposit': Decimal('25000.00'),
-        # 'main_image_path': 'media/cars/mercedes_c_class.jpg',
         'main_image_url': 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80',
-        # 'gallery_image_paths': [
-        #     {'path': 'media/car_gallery/mercedes_front.jpg', 'view_type': 'FRONT'},
-        #     {'path': 'media/car_gallery/mercedes_side.jpg', 'view_type': 'SIDE'},
-        #     {'path': 'media/car_gallery/mercedes_interior.jpg', 'view_type': 'INTERIOR'},
-        # ],
         'features': [
             'MBUX Infotainment', 'Leather Interior', 'Panoramic Sunroof',
             'Ambient Lighting', '360-Degree Camera', 'Wireless Apple CarPlay'

@@ -1,11 +1,11 @@
 import json
 from typing import Optional, List, Dict, Any
-from django.db.models import Q, Avg, Count
+from django.db.models import Q
 from langchain.tools import tool
 
 from apps.vehicles.models import Car, Location
 from apps.vehicles.serializers import parse_datetime_param, CarListSerializer
-from apps.bookings.services import BookingService, PricingService
+from apps.bookings.services import BookingService
 from utils.logger import get_logger
 
 logger = get_logger("booking_agent")

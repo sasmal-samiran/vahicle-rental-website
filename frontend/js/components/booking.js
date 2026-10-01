@@ -74,6 +74,25 @@ export const BookingWizard = {
     },
 
     async startBooking(carId) {
+        // Enforce user authentication before displaying booking steps
+        if (!API.isAuthenticated()) {
+            if (window.Customer?.closeDetailModal) {
+                window.Customer.closeDetailModal();
+            }
+            this.closeWizardModal();
+            const numId = Number(carId);
+            sessionStorage.setItem('pending_booking_car_id', String(numId));
+            window._pendingBookingCarId = numId;
+            Toast.info('Please sign in to proceed with your booking.');
+            if (window.Auth?.openAuthModal) {
+                window.Auth.openAuthModal('otp');
+            } else {
+                const modal = document.getElementById('auth-modal');
+                if (modal) modal.classList.add('active');
+            }
+            return;
+        }
+
         if (window.Customer?.closeDetailModal) {
             window.Customer.closeDetailModal();
         }
@@ -549,6 +568,11 @@ export const BookingWizard = {
     },
 
     selectPaymentProvider(provider) {
+        if (provider === 'RAZORPAY' || provider === 'STRIPE') {
+            const name = provider === 'RAZORPAY' ? 'Razorpay' : 'Stripe';
+            Toast.warning(`${name} gateway is currently not available. Please use Instant Sandbox Checkout.`);
+            return;
+        }
         this.bookingData.payment_method = provider;
         document.querySelectorAll('.payment-card').forEach(c => {
             c.classList.toggle('selected', c.dataset.provider === provider);
@@ -587,53 +611,11 @@ export const BookingWizard = {
 
             this.activeBooking = booking;
 
-            if (this.bookingData.payment_method === 'RAZORPAY') {
-                const initRes = await API.post('/payments/initiate/', {
-                    booking_code: booking.booking_code,
-                    provider: 'RAZORPAY',
-                    currency: 'INR'
-                });
-                
-                if (window.Razorpay && initRes.gateway_order_id && !initRes.gateway_order_id.includes('mock')) {
-                    const options = {
-                        key: initRes.razorpay_key,
-                        amount: Math.round(initRes.amount * 100),
-                        currency: 'INR',
-                        name: 'DriveLuxe Rentals',
-                        description: `Rental for ${this.car.display_name}`,
-                        order_id: initRes.gateway_order_id,
-                        handler: async (response) => {
-                            await API.post('/payments/verify/razorpay/', {
-                                payment_id: initRes.payment_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_signature: response.razorpay_signature
-                            });
-                            this.showConfirmationStep();
-                        }
-                    };
-                    const rzp = new window.Razorpay(options);
-                    rzp.open();
-                } else {
-                    await API.post('/payments/mock-checkout/', {
-                        booking_code: booking.booking_code,
-                        payment_method: 'RAZORPAY'
-                    });
-                    this.showConfirmationStep();
-                }
-            } else if (this.bookingData.payment_method === 'STRIPE') {
-                await API.post('/payments/mock-checkout/', {
-                    booking_code: booking.booking_code,
-                    payment_method: 'STRIPE_CARD'
-                });
-                this.showConfirmationStep();
-            } else {
-                await API.post('/payments/mock-checkout/', {
-                    booking_code: booking.booking_code,
-                    payment_method: 'CARD'
-                });
-                this.showConfirmationStep();
-            }
+            await API.post('/payments/mock-checkout/', {
+                booking_code: booking.booking_code,
+                payment_method: 'SANDBOX_CHECKOUT'
+            });
+            this.showConfirmationStep();
         } catch (err) {
             Toast.error(err.message);
             payBtn.disabled = false;

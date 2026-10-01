@@ -3,22 +3,21 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q, Avg, Count
 from django.utils.dateparse import parse_datetime, parse_date
+from django.db.models import Q, Avg, Count
 from .models import Category, Location, Car, CarImage
 from .serializers import (
     CategorySerializer,
-    CategorySimpleSerializer,
     LocationSerializer,
     CarListSerializer,
     CarDetailSerializer,
-    CarImageSerializer
+    parse_datetime_param
 )
 from .filters import CarFilter
 from .services import VehicleService, CarSearchService
 from apps.analytics.services import RecommendationService
-from apps.bookings.models import Booking
 from apps.analytics.models import SearchLog
+from apps.bookings.models import Booking
 
 class StandardCarPagination(PageNumberPagination):
     page_size = 9
@@ -80,7 +79,6 @@ class CarListView(generics.ListAPIView):
         pickup_str = self.request.query_params.get('pickup_date')
         return_str = self.request.query_params.get('return_date')
         if pickup_str and return_str:
-            from .serializers import parse_datetime_param
             start = parse_datetime_param(pickup_str, is_end=False)
             end = parse_datetime_param(return_str, is_end=True)
             if start and end and end > start:
@@ -276,10 +274,7 @@ class AdminCarViewSet(viewsets.ModelViewSet):
     def delete_gallery_image(self, request, pk=None, image_id=None):
         car = self.get_object()
         try:
-            from utils.supabase_storage import SupabaseStorageService
             image = car.images.get(pk=image_id)
-            if image.image_path:
-                SupabaseStorageService.delete_gallery_image(image.image_path)
             image.delete()
             return Response({'detail': 'Image removed successfully.'}, status=status.HTTP_200_OK)
         except CarImage.DoesNotExist:

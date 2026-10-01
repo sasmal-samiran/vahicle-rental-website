@@ -419,17 +419,7 @@ export const Assistant = {
                 sender: item.sender,
                 text: item.text || '',
                 model: item.model || null,
-                timestamp: item.timestamp,
-                // toolSteps: item.sender === 'assistant'
-                //     ? (item.toolSteps || [])
-                //         .filter(step => step && step.status === 'completed')
-                //         .map(step => ({
-                //             tool: step.tool,
-                //             input: step.input || {},
-                //             output: step.output || '',
-                //             status: step.status
-                //         }))
-                //     : []
+                timestamp: item.timestamp
             }))
             .slice(-10);
 

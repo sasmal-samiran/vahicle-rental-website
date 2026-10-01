@@ -1,8 +1,7 @@
 import math
 from decimal import Decimal
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime, parse_date
-from apps.vehicles.models import Car, Location
+from apps.vehicles.models import Car
 from apps.notifications.services import NotificationService
 from .models import Booking, BookingAddon, Coupon
 

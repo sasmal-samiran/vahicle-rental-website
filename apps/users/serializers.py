@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import User, OTPVerification
+from django.db.models import Sum
+from .models import User
 from utils.supabase_storage import SupabaseStorageService
 
 class UserSerializer(serializers.ModelSerializer):
@@ -35,7 +36,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_total_spent(self, obj):
         if hasattr(obj, 'bookings'):
-            from django.db.models import Sum
             total = obj.bookings.filter(payment_status='PAID').aggregate(Sum('total_amount'))['total_amount__sum']
             return float(total) if total else 0.0
         return 0.0

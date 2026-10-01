@@ -1,7 +1,7 @@
 import random
 from datetime import timedelta
 from django.utils import timezone
-from .models import OTPVerification, User
+from .models import OTPVerification
 
 class OTPService:
     @staticmethod

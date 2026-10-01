@@ -1,6 +1,5 @@
 from django_filters import rest_framework as filters
 from django.db.models import Q
-from django.utils.dateparse import parse_datetime, parse_date
 from .models import Car
 from apps.bookings.models import Booking
 

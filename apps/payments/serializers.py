@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Payment, Refund
+from .models import Payment
 
 class PaymentSerializer(serializers.ModelSerializer):
     booking_code = serializers.CharField(source='booking.booking_code', read_only=True)
@@ -16,20 +16,10 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 class InitiatePaymentSerializer(serializers.Serializer):
     booking_code = serializers.CharField(required=True)
-    provider = serializers.ChoiceField(choices=['RAZORPAY', 'STRIPE', 'SANDBOX'], default='SANDBOX')
+    provider = serializers.CharField(default='SANDBOX')
     currency = serializers.CharField(default='INR')
-
-class VerifyRazorpaySerializer(serializers.Serializer):
-    payment_id = serializers.IntegerField(required=True)
-    razorpay_payment_id = serializers.CharField(required=True)
-    razorpay_order_id = serializers.CharField(required=True)
-    razorpay_signature = serializers.CharField(required=False, default='')
-
-class VerifyStripeSerializer(serializers.Serializer):
-    payment_id = serializers.IntegerField(required=True)
-    payment_intent_id = serializers.CharField(required=True)
 
 class MockCheckoutSerializer(serializers.Serializer):
     booking_code = serializers.CharField(required=True)
-    payment_method = serializers.ChoiceField(choices=['CARD', 'UPI', 'NETBANKING', 'APPLE_PAY', 'GOOGLE_PAY'], default='CARD')
+    payment_method = serializers.CharField(default='CARD')
     card_last_four = serializers.CharField(max_length=4, default='4242')

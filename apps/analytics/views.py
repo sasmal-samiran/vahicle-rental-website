@@ -4,16 +4,15 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import close_old_connections
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
 from apps.vehicles.models import Car, Category
 from apps.bookings.models import Booking
 from apps.users.models import User
-from apps.payments.models import Payment
 from apps.vehicles.serializers import CarListSerializer
 from .services import RecommendationService, AnalyticsService
-from .models import SearchLog, RecommendationClick, CarPopularityMetrics
+from .models import SearchLog, RecommendationClick
 
 logger = logging.getLogger(__name__)
 

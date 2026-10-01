@@ -28,25 +28,7 @@ class BookingAddonSerializer(serializers.ModelSerializer):
         model = BookingAddon
         fields = ['id', 'name', 'daily_rate', 'total_price']
 
-class BookingListSerializer(serializers.ModelSerializer):
-    car = CarListSerializer(read_only=True)
-    pickup_location = LocationSerializer(read_only=True)
-    return_location = LocationSerializer(read_only=True)
-    customer_name = serializers.CharField(source='customer.get_full_name', read_only=True)
-    has_reviewed = serializers.SerializerMethodField()
-    review = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Booking
-        fields = [
-            'id', 'booking_code', 'car', 'pickup_location', 'return_location',
-            'start_date', 'end_date', 'total_days', 'daily_rate', 'rental_charge',
-            'insurance_plan', 'insurance_amount', 'addons_total', 'tax_amount',
-            'deposit_amount', 'discount_amount', 'total_amount', 'status',
-            'payment_status', 'driver_name', 'customer_name', 'created_at'
-            , 'has_reviewed', 'review'
-        ]
-
+class BookingReviewMixin:
     def get_has_reviewed(self, obj):
         return hasattr(obj, 'review')
 
@@ -61,7 +43,26 @@ class BookingListSerializer(serializers.ModelSerializer):
             'created_at': review.created_at,
         }
 
-class BookingDetailSerializer(serializers.ModelSerializer):
+class BookingListSerializer(BookingReviewMixin, serializers.ModelSerializer):
+    car = CarListSerializer(read_only=True)
+    pickup_location = LocationSerializer(read_only=True)
+    return_location = LocationSerializer(read_only=True)
+    customer_name = serializers.CharField(source='customer.get_full_name', read_only=True)
+    has_reviewed = serializers.SerializerMethodField()
+    review = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Booking
+        fields = [
+            'id', 'booking_code', 'car', 'pickup_location', 'return_location',
+            'start_date', 'end_date', 'total_days', 'daily_rate', 'rental_charge',
+            'insurance_plan', 'insurance_amount', 'addons_total', 'tax_amount',
+            'deposit_amount', 'discount_amount', 'total_amount', 'status',
+            'payment_status', 'driver_name', 'customer_name', 'created_at',
+            'has_reviewed', 'review'
+        ]
+
+class BookingDetailSerializer(BookingReviewMixin, serializers.ModelSerializer):
     car = CarListSerializer(read_only=True)
     pickup_location = LocationSerializer(read_only=True)
     return_location = LocationSerializer(read_only=True)
@@ -82,20 +83,6 @@ class BookingDetailSerializer(serializers.ModelSerializer):
             'driver_license', 'special_requests', 'cancellation_reason',
             'has_reviewed', 'review', 'created_at', 'updated_at'
         ]
-
-    def get_has_reviewed(self, obj):
-        return hasattr(obj, 'review')
-
-    def get_review(self, obj):
-        review = getattr(obj, 'review', None)
-        if not review:
-            return None
-        return {
-            'rating': review.rating,
-            'title': review.title,
-            'comment': review.comment,
-            'created_at': review.created_at,
-        }
 
 class PriceQuoteRequestSerializer(serializers.Serializer):
     car_id = serializers.IntegerField(required=True)
