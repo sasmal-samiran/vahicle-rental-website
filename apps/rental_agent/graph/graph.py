@@ -62,15 +62,30 @@ class RentalGraph:
         self,
         state: AgentState
     ):
-        if not state["user"].is_authenticated:
-            open_login_modal = create_tools(state["user"])
-            return open_login_modal["open_login_modal"].ainvoke(state)
+        user = state.get("user")
+        is_authenticated = bool(user and getattr(user, "is_authenticated", False))
+        if not is_authenticated:
+            tools_map = create_tools(user)
+            await tools_map["open_login_modal"].ainvoke({})
+            return {
+                "result": {"status": "auth_required", "action": "open_login_modal"},
+                "response": "Please sign in to proceed with your booking. I have opened the sign-in window for you."
+            }
         return await self.booking_graph.ainvoke(state)
 
     async def cancellation_node(
         self,
         state: AgentState
     ):
+        user = state.get("user")
+        is_authenticated = bool(user and getattr(user, "is_authenticated", False))
+        if not is_authenticated:
+            tools_map = create_tools(user)
+            await tools_map["open_login_modal"].ainvoke({})
+            return {
+                "result": {"status": "auth_required", "action": "open_login_modal"},
+                "response": "Please sign in to manage or cancel your reservations. I have opened the sign-in window for you."
+            }
         result = await self.cancellation_graph.ainvoke(state)
         return {
             "result": result.get("result"),

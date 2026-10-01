@@ -264,6 +264,8 @@ class RentalAgent:
                         # Dynamic model output is already streamed by on_chat_model_stream. Only workflow response nodes should produce chat text from chain events.
                         event_name = event.get("name")
                         response_nodes = {
+                            "booking",
+                            "cancellation",
                             "select_or_verify_car",
                             "check_car",
                             "ask_confirmation",
