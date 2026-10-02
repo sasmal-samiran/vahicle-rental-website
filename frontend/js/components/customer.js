@@ -892,9 +892,6 @@ export const Customer = {
             </span>
         `;
         const actionBtnHtml = `
-            <button class="btn btn-outline btn-sm" onclick="Customer.openDetailModal(${car.id}, '${source}', ${position})">
-                <i class="fa-regular fa-eye"></i> Details
-            </button>
             ${statusConfig.btn}
         `;
 
@@ -1019,7 +1016,7 @@ export const Customer = {
             let current = parseInt(galleryEl.dataset.current, 10) || 0;
             let next = (current + 1) % total;
             this.updateCardGalleryIndex(galleryEl, next);
-        }, 1100);
+        }, 1800);
 
         this.galleryIntervals.set(galleryEl, intervalId);
     },
@@ -1047,7 +1044,7 @@ export const Customer = {
                 let curr = parseInt(galleryEl.dataset.current, 10) || 0;
                 let nxt = (curr + 1) % total;
                 this.updateCardGalleryIndex(galleryEl, nxt);
-            }, 1100);
+            }, 1800);
             this.galleryIntervals.set(galleryEl, intervalId);
         }
     },
